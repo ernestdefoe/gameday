@@ -19,67 +19,47 @@ not pretend to have ported one — it sticks the thread while the game is being
 played and unsticks it afterwards, which says the same thing in a way readers
 already understand. Needs `flarum/sticky`; without it the setting says so.
 
-**Finishes it with a recap that is worth reading:**
+**Finishes it with a recap that is worth reading.** A real one, written from a
+real box score:
 
-> **Final: Notre Dame 41, Wisconsin 13.**
->
-> Notre Dame were never troubled.
->
-> Notre Dame out-gained Wisconsin 350 to 284. Wisconsin gave it away twice,
-> Notre Dame not at all.
->
-> **Notre Dame** — C.J. Carr 19/29 for 239 and two touchdowns; Aneyas Williams
-> 20 carries for 90 and two touchdowns; Jordan Faison 4 catches for 81.
->
-> **Wisconsin** — Colton Joseph 19/30 for 217 and a touchdown, with an
-> interception; Abu Sama III 15 carries for 49; Malachi Coleman 4 catches for 76
-> and a touchdown.
->
-> **Notre Dame / Wisconsin**
-> First downs — 20 / 16
-> Total yards — 350 / 284
-> …
+![A Game Day recap of an NFL game: the final score, how it was won, the players worth naming, and a comparison](screenshots/recap-football.png)
+
+The recap is posted the moment a game settles and rewritten in place when the
+box score arrives — the provider publishes statistics minutes to hours after the
+final whistle, and waiting would delay the one thing everybody in the thread is
+waiting for. A game the provider never covered simply keeps the score.
 
 ## More than one sport
 
 The recap's *structure* is fixed — a score, a result, a sentence on how it went,
 the players worth naming, a comparison — and its *words* come from the sport.
-Pick one in **Admin → Game Day → Sport**.
+
+Here is the same code on a Premier League match, from the same afternoon:
+
+![A Game Day recap of a Premier League match: shots, possession, corners, cards](screenshots/recap-soccer.png)
 
 American football talks about yards, turnovers and a quarterback's line. Soccer
 talks about shots, possession and yellow cards, treats a draw as an ordinary
 result rather than a curiosity, and names no players at all, because ESPN's
-match summary carries no player breakdown to name one from:
+match summary carries no player breakdown to name one from. Basketball, baseball
+and ice hockey each have their own words and their own thresholds — three points
+is a rout in football and a coin toss in basketball.
 
-> **Final: Everton 2, Manchester United 2.**
->
-> A draw.
->
-> Everton had 18 shots to Manchester United's 9, 6 on target against 4.
->
-> **Everton / Manchester United**
-> Possession — 45.4% / 54.6%
-> Shots — 18 / 9
-> …
+Which sport a game is described in comes from **its season's league** in Picks,
+so a board following the NFL and the Premier League gets both right on the same
+Sunday. **Admin → Game Day → Sport** is the fallback, for a season created
+before leagues existed.
 
 Adding a league is a class implementing `Service\Sports\Sport` and one line in
 `Service\Sports\Sports` — an extension can register its own without editing a
 file it does not own, and the admin dropdown picks it up from the server rather
 than from a second list in the JavaScript.
 
-Which fixtures exist is Picks' business, not this extension's; the sport setting
-only decides how a finished game is described.
-
 Everything below the score is earned. A yardage line is only printed when the
 two are far enough apart to mean something; a turnover line only when somebody
 actually lost the ball; a comparison line only when at least one side has the
 figure. A recap that always has three sentences has three sentences of nothing
 on the day nothing happened.
-
-The recap is posted the moment a game settles and rewritten in place when the
-box score arrives — the provider publishes statistics minutes to hours after the
-final whistle, and waiting would delay the one thing everybody in the thread is
-waiting for. A game the provider never covered simply keeps the score.
 
 ## Installing
 
