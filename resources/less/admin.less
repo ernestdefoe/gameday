@@ -1,0 +1,60 @@
+/*
+ * The team-to-tag mapping table.
+ *
+ * 🚨 Painted here rather than left to inherit. A settings page renders inside
+ * Flarum's own form styles, which have no opinion about a table — so an
+ * unstyled one arrives with no spacing, no header weight and rows that touch,
+ * on the screen an operator uses once and judges the extension by.
+ */
+.GamedayTagMapper {
+  &-loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted-color);
+    padding: 8px 0;
+  }
+
+  &-table {
+    width: 100%;
+    margin: 12px 0;
+    border-collapse: collapse;
+
+    th,
+    td {
+      text-align: left;
+      padding: 6px 10px 6px 0;
+      border-bottom: 1px solid var(--control-bg);
+      vertical-align: middle;
+    }
+
+    th {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted-color);
+    }
+
+    // The picker column is the only one that needs to be wide, and letting it
+    // size to its longest tag name pushes the two text columns off a phone.
+    td:last-child {
+      width: 40%;
+    }
+
+    select {
+      width: 100%;
+    }
+  }
+
+  &-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &-saved {
+    color: var(--success-color, #2f9e44);
+    font-size: 13px;
+  }
+}

@@ -1,0 +1,44 @@
+ernestdefoe-gameday:
+  admin:
+    settings:
+      title: Game Day
+      enabled_label: Post game threads
+      enabled_help: >-
+        Nothing is posted until this is on. Turning it off leaves every thread
+        already opened exactly where it is.
+      author_label: Post threads as
+      author_help: >-
+        The member ID the threads and recaps are posted as. There is no default:
+        posting as whoever happens to be user 1 puts a founder's name on a
+        hundred threads they did not write.
+      lead_label: Open a thread this many minutes before kickoff
+      lead_help: Three hours by default.
+      fallback_tag_label: Tag to use when neither team has one
+      fallback_tag_help: >-
+        A neutral-site game belongs to neither side, which is exactly when this
+        earns its keep. Leave it empty to post those threads untagged.
+      recaps_label: Post a recap when the game finishes
+      recaps_help: >-
+        The score first, filled out with the box score when it arrives — the
+        provider publishes statistics minutes to hours after the final whistle,
+        so the post is rewritten in place rather than made to wait.
+      sticky_label: Stick the thread to the top while the game is on
+      sticky_help: >-
+        Flarum has no "live" state for a discussion, and this does not pretend
+        otherwise — sticky is the nearest honest equivalent, and it comes off
+        again when the game ends. Needs the Sticky extension.
+      sticky_missing: The Sticky extension is not enabled, so this does nothing.
+      tags_missing: The Tags extension is not enabled, so game threads are posted untagged.
+    tags:
+      title: Which tag each team's games go in
+      description: >-
+        The home team's tag is used first, then the away team's, then the
+        fallback above. A board with one football tag can map everybody to it.
+      team: Team
+      conference: Conference
+      tag: Tag
+      none: No tag of its own
+      save: Save mapping
+      saved: Mapping saved.
+      loading: Loading teams…
+      empty: No teams yet — sync them in Picks first.

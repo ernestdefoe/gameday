@@ -1,0 +1,42 @@
+{
+    "name": "ernestdefoe/gameday",
+    "description": "A thread for every game, opened before kickoff and finished with a recap that says how the game was won.",
+    "type": "flarum-extension",
+    "keywords": ["flarum", "extension", "college football", "cfb", "sports", "game thread"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ernest Defoe",
+            "email": "ernestdefoe@gmail.com"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/ernestdefoe/gameday/issues",
+        "source": "https://github.com/ernestdefoe/gameday"
+    },
+    "require": {
+        "php": "^8.3",
+        "flarum/core": "^2.0",
+        "ernestdefoe/picks": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "ErnestDefoe\\Gameday\\": "src/"
+        }
+    },
+    "extra": {
+        "flarum-extension": {
+            "title": "Game Day",
+            "category": "feature",
+            "icon": {
+                "name": "fas fa-football",
+                "backgroundColor": "#8a3a1f",
+                "color": "#fff"
+            },
+            "optional-dependencies": [
+                "flarum/tags",
+                "flarum/sticky"
+            ]
+        }
+    }
+}
