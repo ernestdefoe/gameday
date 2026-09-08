@@ -127,7 +127,7 @@ class Threads
             ->get();
 
         foreach ($rows as $row) {
-            $game = PickEvent::with(['homeTeam', 'awayTeam'])->find($row->event_id);
+            $game = PickEvent::with(['homeTeam', 'awayTeam', 'week.season'])->find($row->event_id);
 
             if ($game === null || $game->status !== PickEvent::STATUS_FINISHED) {
                 continue;
@@ -141,7 +141,7 @@ class Threads
             $postId = null;
 
             if ($this->settings->recaps() && $author !== null) {
-                $postId = $this->post($row->discussion_id, $author, $this->recap()->text($this->game($game), $box));
+                $postId = $this->post($row->discussion_id, $author, $this->recap($game)->text($this->game($game), $box));
             }
 
             /*
@@ -152,7 +152,7 @@ class Threads
              */
             $row->state = GamedayThread::RESOLVED;
             $row->recap_post_id = $postId;
-            $row->stats_at = $postId !== null && $this->recap()->usable($box) ? Carbon::now() : null;
+            $row->stats_at = $postId !== null && $this->recap($game)->usable($box) ? Carbon::now() : null;
             $row->resolved_at = Carbon::now();
             $row->save();
 
@@ -201,11 +201,19 @@ class Threads
         foreach ($rows as $row) {
             $box = $this->boxScore->forEvent((int) $row->event_id);
 
-            if (!$this->recap()->usable($box)) {
+            /*
+             * 🚨 Whether a box score is usable does not depend on the sport —
+             * it is two sides with figures in them — but the game is loaded
+             * first anyway, so there is one `recap($game)` in this method
+             * rather than one that takes the game and one that quietly does
+             * not. The eager load is two queries either way.
+             */
+            $game = PickEvent::with(['homeTeam', 'awayTeam', 'week.season'])->find($row->event_id);
+
+            if (!$this->recap($game)->usable($box)) {
                 continue;
             }
 
-            $game = PickEvent::with(['homeTeam', 'awayTeam'])->find($row->event_id);
             $post = CommentPost::find($row->recap_post_id);
 
             if ($game === null || $post === null) {
@@ -220,7 +228,7 @@ class Threads
                 continue;
             }
 
-            $post->setContentAttribute($this->recap()->text($this->game($game), $box), $author);
+            $post->setContentAttribute($this->recap($game)->text($this->game($game), $box), $author);
             $post->save();
 
             $row->stats_at = Carbon::now();
@@ -350,14 +358,50 @@ class Threads
         return $id > 0 ? User::find($id) : null;
     }
 
-    protected function recap(): Recap
+    /**
+     * The recap for one game, in that game's own sport.
+     *
+     * 🚨 The sport comes from the GAME's season, not from the setting, whenever
+     * the season names a league. A board following the NFL and the Premier
+     * League has both on the same forum on the same Sunday, and one setting
+     * would describe half of them in the wrong vocabulary — talking about yards
+     * and turnovers under a 2–2 draw.
+     *
+     * 🚨 The setting is the fallback rather than dead weight: a season created
+     * before any of this existed carries the default league, and an operator
+     * following one competition should not have to set the sport again on every
+     * season they create.
+     */
+    protected function recap(?PickEvent $game = null): Recap
     {
         return new Recap(
             $this->settings->emphasis(
                 fn (string $extension): bool => $this->extensions->isEnabled($extension)
             ),
-            $this->sports->get($this->settings->sport()),
+            $this->sports->get($this->sportFor($game)),
         );
+    }
+
+    protected function sportFor(?PickEvent $game): string
+    {
+        $season = $game?->week?->season;
+
+        if ($season !== null && method_exists($season, 'leagueDefinition')) {
+            $sport = $season->leagueDefinition()->sport;
+
+            /*
+             * 🚨 Only when this build actually HAS that sport. Picks can name a
+             * league whose vocabulary was added there and not here — the two are
+             * separate extensions on separate release lines — and the registry's
+             * own fallback would then quietly answer gridiron. Falling through
+             * to the setting instead at least uses a value somebody chose.
+             */
+            if ($this->sports->has($sport)) {
+                return $sport;
+            }
+        }
+
+        return $this->settings->sport();
     }
 
     /** @return array{home_name: string, away_name: string, home_score: int, away_score: int} */
