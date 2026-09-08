@@ -2,6 +2,9 @@
 
 namespace ErnestDefoe\Gameday\Service;
 
+use ErnestDefoe\Gameday\Service\Sports\Gridiron;
+use ErnestDefoe\Gameday\Service\Sports\Sport;
+
 /**
  * The post a game thread ends with.
  *
@@ -26,6 +29,12 @@ namespace ErnestDefoe\Gameday\Service;
  * need a Markdown extension with table support, which most boards do not have,
  * and the failure mode is a screenful of pipes. One statistic per line reads
  * better on a phone anyway, which is where most of these are read.
+ *
+ * 🚨 The STRUCTURE lives here and the WORDS live in the sport, exactly as on the
+ * Convoro side. Every game has a score, a result, a sentence or two on how it
+ * went, the players worth naming and a comparison; that a team out-gains another
+ * by 350 yards or has 62% of the ball is `Sports\Sport`, and it is why adding a
+ * league is a class of sentences rather than a second `Recap`.
  */
 class Recap
 {
@@ -33,26 +42,9 @@ class Recap
     public const EMPHASIS_BBCODE = 'bbcode';
     public const EMPHASIS_MARKDOWN = 'markdown';
 
-    /**
-     * The comparison, in the order somebody reads a game: how far each side
-     * moved the ball, how they moved it, then the things that decide close
-     * ones. Possession is last because it is the least explanatory number on
-     * the list and the one most often mistaken for one that matters.
-     */
-    private const TABLE = [
-        'firstDowns' => 'First downs',
-        'totalYards' => 'Total yards',
-        'netPassingYards' => 'Passing yards',
-        'rushingYards' => 'Rushing yards',
-        'thirdDownEff' => 'Third down',
-        'fourthDownEff' => 'Fourth down',
-        'totalPenaltiesYards' => 'Penalties',
-        'turnovers' => 'Turnovers',
-        'possessionTime' => 'Possession',
-    ];
-
     public function __construct(
-        protected string $emphasis = self::EMPHASIS_NONE
+        protected string $emphasis = self::EMPHASIS_NONE,
+        protected Sport $sport = new Gridiron()
     ) {
     }
 
@@ -69,13 +61,13 @@ class Recap
 
         $blocks = [
             $this->bold(sprintf('Final: %s %d, %s %d.', $home, $homeScore, $away, $awayScore)),
-            $this->outcome($home, $away, $homeScore, $awayScore),
+            $this->sport->outcome($home, $away, $homeScore, $awayScore),
         ];
 
         $stats = $this->sides($box);
 
         if ($stats !== null) {
-            $said = $this->howItWent($stats, $home, $away);
+            $said = $this->sport->narrative($stats, $home, $away);
 
             if ($said !== []) {
                 $blocks[] = implode(' ', $said);
@@ -114,98 +106,6 @@ class Recap
 
     /* ------------------------------------------------------------- the prose */
 
-    protected function outcome(string $home, string $away, int $homeScore, int $awayScore): string
-    {
-        if ($homeScore === $awayScore) {
-            return 'It finished level.';
-        }
-
-        $winner = $homeScore > $awayScore ? $home : $away;
-        $margin = abs($homeScore - $awayScore);
-
-        /*
-         * 🚨 The margin is described, not just stated. "Won it" is equally true
-         * of a one-point game and a fifty-point one, which makes it worth
-         * nothing in either.
-         */
-        return match (true) {
-            $margin <= 3 => $winner . ' took it by ' . $margin . '.',
-            $margin >= 28 => $winner . ' were never troubled.',
-            $margin >= 17 => $winner . ' had it comfortably.',
-            default => $winner . ' won it by ' . $margin . '.',
-        };
-    }
-
-    /**
-     * 🚨 Each sentence is earned. A yardage line only when the two are far
-     * enough apart to mean something, a turnover line only when somebody
-     * actually lost the ball. A recap that always has three sentences has three
-     * sentences of nothing on the day nothing happened.
-     *
-     * @param  array{home: array<string, mixed>, away: array<string, mixed>} $sides
-     * @return array<int, string>
-     */
-    protected function howItWent(array $sides, string $home, string $away): array
-    {
-        $out = [];
-
-        $homeYards = $this->number($sides['home']['stats']['totalYards'] ?? null);
-        $awayYards = $this->number($sides['away']['stats']['totalYards'] ?? null);
-
-        if ($homeYards !== null && $awayYards !== null) {
-            [$leader, $trailer, $more, $fewer] = $homeYards >= $awayYards
-                ? [$home, $away, $homeYards, $awayYards]
-                : [$away, $home, $awayYards, $homeYards];
-
-            $out[] = $more - $fewer < 40
-                // Two teams within forty yards did not win it there, and saying
-                // one "out-gained" the other implies they did.
-                ? sprintf('There was almost nothing in the yardage — %d to %d.', $more, $fewer)
-                : sprintf('%s out-gained %s %d to %d.', $leader, $trailer, $more, $fewer);
-        }
-
-        $homeAway = $this->number($sides['home']['stats']['turnovers'] ?? null);
-        $awayAway = $this->number($sides['away']['stats']['turnovers'] ?? null);
-
-        if ($homeAway !== null && $awayAway !== null && $homeAway + $awayAway > 0) {
-            $out[] = $homeAway === $awayAway
-                ? sprintf('They gave it away %s each.', $this->times($homeAway))
-                : sprintf(
-                    '%s gave it away %s, %s %s.',
-                    $homeAway > $awayAway ? $home : $away,
-                    $this->times(max($homeAway, $awayAway)),
-                    $homeAway > $awayAway ? $away : $home,
-                    min($homeAway, $awayAway) === 0 ? 'not at all' : $this->times(min($homeAway, $awayAway)),
-                );
-        }
-
-        return $out;
-    }
-
-    protected function times(int $n): string
-    {
-        return match ($n) {
-            0 => 'not at all',
-            1 => 'once',
-            2 => 'twice',
-            default => $n . ' times',
-        };
-    }
-
-    /**
-     * 🚨 Its own wording rather than `times()`. "With once picked off" is what
-     * counting words give you when they are reused for something that is not a
-     * count of occasions, and it reads as a typo.
-     */
-    protected function picks(int $n): string
-    {
-        return match (true) {
-            $n < 1 => '',
-            $n === 1 => ', with an interception',
-            default => ', with ' . $this->word($n) . ' interceptions',
-        };
-    }
-
     /** @param array<string, array{name: string, stats: array<string, string>}> $leaders */
     protected function leaderLine(array $leaders): string
     {
@@ -222,14 +122,14 @@ class Recap
          */
         $byPlayer = [];
 
-        foreach (['passing', 'rushing', 'receiving'] as $category) {
+        foreach (array_keys($this->sport->leaderCategories()) as $category) {
             $leader = $leaders[$category] ?? null;
 
             if (!is_array($leader) || ($leader['name'] ?? '') === '') {
                 continue;
             }
 
-            $said = $this->player($category, (array) ($leader['stats'] ?? []));
+            $said = $this->sport->playerLine($category, (array) ($leader['stats'] ?? []));
 
             if ($said !== '') {
                 $byPlayer[(string) $leader['name']][] = $said;
@@ -245,54 +145,6 @@ class Recap
         return $parts === [] ? '' : implode('; ', $parts) . '.';
     }
 
-    /** @param array<string, string> $stats */
-    protected function player(string $category, array $stats): string
-    {
-        $yards = $this->number($stats['YDS'] ?? null);
-
-        if ($yards === null) {
-            return '';
-        }
-
-        $touchdowns = $this->number($stats['TD'] ?? null) ?? 0;
-        $scores = match (true) {
-            $touchdowns < 1 => '',
-            $touchdowns === 1 => ' and a touchdown',
-            default => ' and ' . $this->word($touchdowns) . ' touchdowns',
-        };
-
-        return match ($category) {
-            'passing' => sprintf(
-                '%s for %d%s%s',
-                (string) ($stats['C/ATT'] ?? ''),
-                $yards,
-                $scores,
-                $this->picks($this->number($stats['INT'] ?? null) ?? 0),
-            ),
-            'rushing' => sprintf('%s for %d%s', $this->carries($this->number($stats['CAR'] ?? null)), $yards, $scores),
-            'receiving' => sprintf('%s for %d%s', $this->catches($this->number($stats['REC'] ?? null)), $yards, $scores),
-            default => '',
-        };
-    }
-
-    protected function carries(?int $n): string
-    {
-        return $n === null ? 'ran' : ($n === 1 ? 'one carry' : $n . ' carries');
-    }
-
-    protected function catches(?int $n): string
-    {
-        return $n === null ? 'caught' : ($n === 1 ? 'one catch' : $n . ' catches');
-    }
-
-    protected function word(int $n): string
-    {
-        return match ($n) {
-            2 => 'two', 3 => 'three', 4 => 'four', 5 => 'five', 6 => 'six',
-            default => (string) $n,
-        };
-    }
-
     /* -------------------------------------------------------- the comparison */
 
     /** @param array{home: array<string, mixed>, away: array<string, mixed>} $sides */
@@ -300,7 +152,7 @@ class Recap
     {
         $lines = [];
 
-        foreach (self::TABLE as $key => $label) {
+        foreach ($this->sport->comparison() as $key => $label) {
             $homeValue = trim((string) ($sides['home']['stats'][$key] ?? ''));
             $awayValue = trim((string) ($sides['away']['stats'][$key] ?? ''));
 
@@ -312,8 +164,8 @@ class Recap
             $lines[] = sprintf(
                 '%s — %s / %s',
                 $label,
-                $homeValue === '' ? '—' : $homeValue,
-                $awayValue === '' ? '—' : $awayValue,
+                $homeValue === '' ? '—' : $this->sport->formatStat($key, $homeValue),
+                $awayValue === '' ? '—' : $this->sport->formatStat($key, $awayValue),
             );
         }
 
@@ -339,17 +191,6 @@ class Recap
         };
     }
 
-    /** A figure the feed wrote as a string, when it really is a number. */
-    protected function number($value): ?int
-    {
-        if (!is_string($value) && !is_int($value)) {
-            return null;
-        }
-
-        $value = trim((string) $value);
-
-        return preg_match('/^-?\d+$/', $value) === 1 ? (int) $value : null;
-    }
 
     /**
      * @param  array<string, mixed>|null $box

@@ -17,6 +17,15 @@ ernestdefoe-gameday:
       fallback_tag_help: >-
         A neutral-site game belongs to neither side, which is exactly when this
         earns its keep. Leave it empty to post those threads untagged.
+      sport_options:
+        gridiron: American football
+        soccer: Football (soccer)
+      sport_label: Sport
+      sport_help: >-
+        Which sport's words a recap is written in. A football recap talks about
+        yards, turnovers and a quarterback's line; a soccer one talks about
+        shots, possession and a draw. The fixtures themselves are Picks'
+        business — this only decides how the game is described.
       recaps_label: Post a recap when the game finishes
       recaps_help: >-
         The score first, filled out with the box score when it arrives — the

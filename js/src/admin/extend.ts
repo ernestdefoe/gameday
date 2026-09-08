@@ -5,6 +5,32 @@ import TeamTagMapper from './components/TeamTagMapper';
 declare const m: any;
 const t = (k: string) => app.translator.trans('ernestdefoe-gameday.admin.settings.' + k);
 
+/**
+ * The sports the server knows about, labelled in the forum's language.
+ *
+ * 🚨 The KEYS come from the server, never from a list written here. A second
+ * copy of the registry in the bundle is a copy that goes stale the first time
+ * an extension registers a league — which is the whole point of the registry.
+ *
+ * 🚨 The LABELS are translated where a translation exists and fall back to the
+ * server's own name where it does not. A sport an extension registered has no
+ * key in our locale file and never will, and an untranslated English name is a
+ * far better dropdown entry than a raw translation key.
+ */
+function sportOptions(): Record<string, string> {
+  const sports: Record<string, string> = (app.data as any)?.gamedaySports ?? { gridiron: 'American football' };
+  const out: Record<string, string> = {};
+
+  for (const key of Object.keys(sports)) {
+    const id = 'ernestdefoe-gameday.admin.settings.sport_options.' + key;
+    const translated = app.translator.trans(id, {}, true) as unknown as string;
+
+    out[key] = typeof translated === 'string' && translated !== id ? translated : sports[key];
+  }
+
+  return out;
+}
+
 export default [
   new Extend.Admin()
     .setting(() => ({
@@ -34,6 +60,14 @@ export default [
       label: t('fallback_tag_label'),
       help: t('fallback_tag_help'),
       default: 0,
+    }))
+    .setting(() => ({
+      setting: 'ernestdefoe-gameday.sport',
+      type: 'select',
+      label: t('sport_label'),
+      help: t('sport_help'),
+      options: sportOptions(),
+      default: 'gridiron',
     }))
     .setting(() => ({
       setting: 'ernestdefoe-gameday.recaps',

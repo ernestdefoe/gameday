@@ -6,12 +6,23 @@ use ErnestDefoe\Gameday\Api\Controller\TeamTagsController;
 use ErnestDefoe\Gameday\Console\EnrichCommand;
 use ErnestDefoe\Gameday\Console\TickCommand;
 use ErnestDefoe\Gameday\Service\Settings;
+use ErnestDefoe\Gameday\Service\Sports\Sports;
 use Flarum\Extend;
+use Flarum\Frontend\Document;
 
 return [
+    /*
+     * 🚨 The sport list reaches the admin from the registry rather than being
+     * written into the JavaScript. A second copy of the list in the bundle is
+     * a copy that goes stale the first time an extension registers a league —
+     * which is the whole reason the registry exists.
+     */
     (new Extend\Frontend('admin'))
         ->js(__DIR__ . '/js/dist/admin.js')
-        ->css(__DIR__ . '/resources/less/admin.less'),
+        ->css(__DIR__ . '/resources/less/admin.less')
+        ->content(function (Document $document): void {
+            $document->payload['gamedaySports'] = (new Sports())->choices();
+        }),
 
     new Extend\Locales(__DIR__ . '/resources/locale'),
 
@@ -26,6 +37,7 @@ return [
         ->default(Settings::PREFIX . 'author_id', 0)
         ->default(Settings::PREFIX . 'lead_minutes', 180)
         ->default(Settings::PREFIX . 'fallback_tag_id', 0)
+        ->default(Settings::PREFIX . 'sport', Sports::DEFAULT)
         ->default(Settings::PREFIX . 'recaps', true)
         ->default(Settings::PREFIX . 'sticky_while_live', true)
         ->serializeToForum('gamedayEnabled', Settings::PREFIX . 'enabled', 'boolval'),

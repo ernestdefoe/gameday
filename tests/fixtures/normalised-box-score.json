@@ -1,0 +1,169 @@
+{
+    "game": 401858438,
+    "home": {
+        "team": "Notre Dame",
+        "points": 41,
+        "stats": {
+            "firstDowns": "20",
+            "thirdDownEff": "3-9",
+            "fourthDownEff": "1-1",
+            "totalYards": "350",
+            "netPassingYards": "239",
+            "completionAttempts": "19-29",
+            "yardsPerPass": "8.2",
+            "rushingYards": "111",
+            "rushingAttempts": "32",
+            "yardsPerRushAttempt": "3.5",
+            "totalPenaltiesYards": "4-41",
+            "turnovers": "0",
+            "fumblesLost": "0",
+            "interceptions": "0",
+            "possessionTime": "31:36",
+            "passesDeflected": "5",
+            "qbHurries": "1",
+            "sacks": "2",
+            "tackles": "36",
+            "defensiveTDs": "1",
+            "tacklesForLoss": "6",
+            "totalFumbles": "1",
+            "fumblesRecovered": "1",
+            "passesIntercepted": "1",
+            "interceptionTDs": "1",
+            "interceptionYards": "55",
+            "kickingPoints": "11",
+            "kickReturns": "2",
+            "kickReturnTDs": "0",
+            "kickReturnYards": "42",
+            "passingTDs": "2",
+            "puntReturns": "1",
+            "puntReturnTDs": "0",
+            "puntReturnYards": "12",
+            "rushingTDs": "2"
+        },
+        "leaders": {
+            "passing": {
+                "name": "C.J. Carr",
+                "stats": {
+                    "C/ATT": "19/29",
+                    "YDS": "239",
+                    "AVG": "8.2",
+                    "TD": "2",
+                    "INT": "0"
+                }
+            },
+            "rushing": {
+                "name": "Aneyas Williams",
+                "stats": {
+                    "CAR": "20",
+                    "YDS": "90",
+                    "AVG": "4.5",
+                    "TD": "2",
+                    "LONG": "16"
+                }
+            },
+            "receiving": {
+                "name": "Jordan Faison",
+                "stats": {
+                    "REC": "4",
+                    "YDS": "81",
+                    "AVG": "20.3",
+                    "TD": "0",
+                    "LONG": "30"
+                }
+            },
+            "defensive": {
+                "name": "Drayk Bowen",
+                "stats": {
+                    "TOT": "9",
+                    "SOLO": "4",
+                    "SACKS": "0",
+                    "TFL": "1",
+                    "PD": "0",
+                    "QB HUR": "0",
+                    "TD": "0"
+                }
+            }
+        }
+    },
+    "away": {
+        "team": "Wisconsin",
+        "points": 13,
+        "stats": {
+            "firstDowns": "16",
+            "thirdDownEff": "5-13",
+            "fourthDownEff": "1-1",
+            "totalYards": "284",
+            "netPassingYards": "217",
+            "completionAttempts": "19-30",
+            "yardsPerPass": "7.2",
+            "rushingYards": "67",
+            "rushingAttempts": "31",
+            "yardsPerRushAttempt": "2.2",
+            "totalPenaltiesYards": "6-43",
+            "turnovers": "2",
+            "fumblesLost": "1",
+            "interceptions": "1",
+            "possessionTime": "28:24",
+            "passesDeflected": "5",
+            "qbHurries": "2",
+            "sacks": "1",
+            "tackles": "27",
+            "defensiveTDs": "0",
+            "tacklesForLoss": "1",
+            "totalFumbles": "1",
+            "fumblesRecovered": "0",
+            "kickReturns": "3",
+            "kickReturnTDs": "0",
+            "kickReturnYards": "51",
+            "passingTDs": "1",
+            "puntReturns": "1",
+            "puntReturnTDs": "0",
+            "puntReturnYards": "3",
+            "rushingTDs": "0"
+        },
+        "leaders": {
+            "passing": {
+                "name": "Colton Joseph",
+                "stats": {
+                    "C/ATT": "19/30",
+                    "YDS": "217",
+                    "AVG": "7.2",
+                    "TD": "1",
+                    "INT": "1"
+                }
+            },
+            "rushing": {
+                "name": "Abu Sama III",
+                "stats": {
+                    "CAR": "15",
+                    "YDS": "49",
+                    "AVG": "3.3",
+                    "TD": "0",
+                    "LONG": "7"
+                }
+            },
+            "receiving": {
+                "name": "Malachi Coleman",
+                "stats": {
+                    "REC": "4",
+                    "YDS": "76",
+                    "AVG": "19.0",
+                    "TD": "1",
+                    "LONG": "28"
+                }
+            },
+            "defensive": {
+                "name": "Mason Posa",
+                "stats": {
+                    "TOT": "15",
+                    "SOLO": "5",
+                    "SACKS": "0",
+                    "TFL": "0",
+                    "PD": "0",
+                    "QB HUR": "0",
+                    "TD": "0"
+                }
+            }
+        }
+    }
+}

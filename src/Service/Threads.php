@@ -4,6 +4,7 @@ namespace ErnestDefoe\Gameday\Service;
 
 use Carbon\Carbon;
 use ErnestDefoe\Gameday\GamedayThread;
+use ErnestDefoe\Gameday\Service\Sports\Sports;
 use ErnestDefoe\Gameday\TeamTag;
 use Flarum\Discussion\Discussion;
 use Flarum\Extension\ExtensionManager;
@@ -46,7 +47,8 @@ class Threads
         protected ConnectionInterface $db,
         protected Settings $settings,
         protected BoxScore $boxScore,
-        protected ExtensionManager $extensions
+        protected ExtensionManager $extensions,
+        protected Sports $sports = new Sports()
     ) {
     }
 
@@ -350,9 +352,12 @@ class Threads
 
     protected function recap(): Recap
     {
-        return new Recap($this->settings->emphasis(
-            fn (string $extension): bool => $this->extensions->isEnabled($extension)
-        ));
+        return new Recap(
+            $this->settings->emphasis(
+                fn (string $extension): bool => $this->extensions->isEnabled($extension)
+            ),
+            $this->sports->get($this->settings->sport()),
+        );
     }
 
     /** @return array{home_name: string, away_name: string, home_score: int, away_score: int} */

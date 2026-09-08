@@ -2,6 +2,7 @@
 
 namespace ErnestDefoe\Gameday\Service;
 
+use ErnestDefoe\Gameday\Service\Sports\Sports;
 use Flarum\Settings\SettingsRepositoryInterface;
 
 /**
@@ -52,6 +53,21 @@ class Settings
     public function recaps(): bool
     {
         return (bool) $this->get('recaps', true);
+    }
+
+    /**
+     * Which sport's vocabulary a recap is written in.
+     *
+     * 🚨 Gridiron by default, because every install that existed before this
+     * setting was college football and an upgrade must not change what their
+     * recaps say. An unknown value falls back to the same — a settings row
+     * naming a sport that has been removed is somebody's install, not a
+     * programming error, and a recap in the wrong words beats a scheduled job
+     * that dies.
+     */
+    public function sport(): string
+    {
+        return (string) $this->get('sport', Sports::DEFAULT);
     }
 
     /**

@@ -40,6 +40,36 @@ already understand. Needs `flarum/sticky`; without it the setting says so.
 > Total yards — 350 / 284
 > …
 
+## More than one sport
+
+The recap's *structure* is fixed — a score, a result, a sentence on how it went,
+the players worth naming, a comparison — and its *words* come from the sport.
+Pick one in **Admin → Game Day → Sport**.
+
+American football talks about yards, turnovers and a quarterback's line. Soccer
+talks about shots, possession and yellow cards, treats a draw as an ordinary
+result rather than a curiosity, and names no players at all, because ESPN's
+match summary carries no player breakdown to name one from:
+
+> **Final: Everton 2, Manchester United 2.**
+>
+> A draw.
+>
+> Everton had 18 shots to Manchester United's 9, 6 on target against 4.
+>
+> **Everton / Manchester United**
+> Possession — 45.4% / 54.6%
+> Shots — 18 / 9
+> …
+
+Adding a league is a class implementing `Service\Sports\Sport` and one line in
+`Service\Sports\Sports` — an extension can register its own without editing a
+file it does not own, and the admin dropdown picks it up from the server rather
+than from a second list in the JavaScript.
+
+Which fixtures exist is Picks' business, not this extension's; the sport setting
+only decides how a finished game is described.
+
 Everything below the score is earned. A yardage line is only printed when the
 two are far enough apart to mean something; a turnover line only when somebody
 actually lost the ball; a comparison line only when at least one side has the
@@ -76,6 +106,20 @@ Two commands run on Flarum's scheduler and need nothing else:
   and box scores
 - `flarum/tags` (optional — threads are posted untagged without it)
 - `flarum/sticky` (optional — the game-is-on state does nothing without it)
+
+## Tests
+
+The recap is a pure function of a game and its box score, so it is tested
+without a database, a network or Flarum:
+
+```sh
+php tests/run.php
+```
+
+The box score is CollegeFootballData's real answer for that Notre Dame game,
+normalised by Picks' own code rather than typed by hand. The same assertions run
+on the Convoro build of Game Day, which is how the two are kept saying the same
+things.
 
 ## Licence
 
