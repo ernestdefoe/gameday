@@ -22,10 +22,16 @@ declare(strict_types=1);
 require __DIR__ . '/../src/Service/Sports/Sport.php';
 require __DIR__ . '/../src/Service/Sports/Gridiron.php';
 require __DIR__ . '/../src/Service/Sports/Soccer.php';
+require __DIR__ . '/../src/Service/Sports/Hardwood.php';
+require __DIR__ . '/../src/Service/Sports/Diamond.php';
+require __DIR__ . '/../src/Service/Sports/Ice.php';
 require __DIR__ . '/../src/Service/Sports/Sports.php';
 require __DIR__ . '/../src/Service/Recap.php';
 
 use ErnestDefoe\Gameday\Service\Recap;
+use ErnestDefoe\Gameday\Service\Sports\Diamond;
+use ErnestDefoe\Gameday\Service\Sports\Hardwood;
+use ErnestDefoe\Gameday\Service\Sports\Ice;
 use ErnestDefoe\Gameday\Service\Sports\Soccer;
 use ErnestDefoe\Gameday\Service\Sports\Sports;
 
@@ -323,6 +329,125 @@ $tests['a sport with no player box score renders no empty line'] = function () {
     );
 
     ok(!str_contains($text, "A — \n"), 'an empty leader line was written', $text);
+};
+
+/*
+ * 🚨 The three sports added after the seam existed, each asserted against a
+ * REAL ESPN box score run through Picks' own adapter and normaliser — a
+ * Timberwolves/Bucks game, Braves/Phillies, Stars/Sabres. ESPN publishes no
+ * documentation for that API, and the four shape differences the adapter
+ * absorbs are exactly the ones nobody would think to invent, so a hand-written
+ * payload here would prove nothing at all.
+ *
+ * `tests/fixtures/regenerate.php` rebuilds them.
+ */
+$espn = static fn (string $sport): array => json_decode(
+    (string) file_get_contents(__DIR__ . '/fixtures/espn-' . $sport . '.json'),
+    true
+);
+
+$tests['basketball is described in basketball\'s words'] = function () use ($espn) {
+    $text = (new Recap(Recap::EMPHASIS_NONE, new Hardwood()))->text(
+        ['home_name' => 'Milwaukee Bucks', 'away_name' => 'Minnesota Timberwolves',
+         'home_score' => 103, 'away_score' => 106],
+        $espn('nba'),
+    );
+
+    /*
+     * 🚨 Three points is a rout in football and a coin toss here. Reusing
+     * gridiron's thresholds would call every basketball game comfortable.
+     */
+    ok(str_contains($text, 'Minnesota Timberwolves got out with it, by 3.'), 'the margin', $text);
+    ok(!str_contains($text, 'were never troubled'), 'a three-point game read as a rout', $text);
+
+    // The one line basketball has that nothing else does.
+    ok(str_contains($text, 'Giannis Antetokounmpo 23 points, 13 rebounds, 10 assists — a triple-double'), 'the triple-double', $text);
+
+    /*
+     * 🚨 And a quiet line stays quiet. Every basketball line would otherwise
+     * read "25 points, 3 rebounds, 2 assists" — three facts where one was
+     * interesting.
+     */
+    ok(str_contains($text, 'Anthony Edwards 25 points.'), 'a plain scoring line', $text);
+
+    ok(str_contains($text, 'Points in the paint'), 'the comparison is basketball\'s own', $text);
+    ok(!str_contains($text, 'Total yards'), 'gridiron vocabulary leaked in', $text);
+};
+
+$tests['baseball reads the group a figure came from'] = function () use ($espn) {
+    $text = (new Recap(Recap::EMPHASIS_NONE, new Diamond()))->text(
+        ['home_name' => 'Philadelphia Phillies', 'away_name' => 'Atlanta Braves',
+         'home_score' => 1, 'away_score' => 0],
+        $espn('mlb'),
+    );
+
+    ok(str_contains($text, 'Philadelphia Phillies took it by one.'), 'the margin', $text);
+    ok(str_contains($text, 'Philadelphia Phillies went deep once.'), 'the home run', $text);
+
+    // Batting and pitching are different jobs and read differently.
+    ok(str_contains($text, 'Kyle Schwarber 2 for 4, a home run, 1 driven in'), 'the batting line', $text);
+    ok(str_contains($text, 'Jesus Luzardo 9.0 innings, no earned runs, 12 struck out'), 'the pitching line', $text);
+
+    /*
+     * 🚨 The prefix, proved end to end. `hits` means three different things in
+     * ESPN's three baseball groups, and unprefixed the fielding figure would be
+     * printed as the batting line — a number that looks entirely plausible and
+     * is about somebody else. Four hits and two, not the fielding zeros.
+     */
+    ok(str_contains($text, 'Hits — 4 / 2'), 'the batting hits', $text);
+    ok(str_contains($text, 'Errors — 0 / 0'), 'the fielding errors', $text);
+
+    /*
+     * 🚨 A hitless night with nothing driven in is not worth a name. The
+     * batting leader is whoever drove in the most runs, and in a 1–0 game that
+     * is everybody, tied on nothing — so the first name in the order won it and
+     * "Ronald Acuna Jr. 0 for 3" was printed as though it were the highlight.
+     */
+    ok(!str_contains($text, '0 for 3'), 'a quiet night was named as a highlight', $text);
+};
+
+$tests['hockey names the goaltender and only the groups with people in them'] = function () use ($espn) {
+    $text = (new Recap(Recap::EMPHASIS_NONE, new Ice()))->text(
+        ['home_name' => 'Buffalo Sabres', 'away_name' => 'Dallas Stars',
+         'home_score' => 2, 'away_score' => 3],
+        $espn('nhl'),
+    );
+
+    ok(str_contains($text, 'Dallas Stars took it by one.'), 'the margin', $text);
+
+    /*
+     * 🚨 A whole sentence per case rather than clauses joined with a comma.
+     * Built up from parts, the night only the away side converted produced
+     * "Dallas Stars once." — the second clause leaning on a first that was
+     * never added.
+     */
+    ok(str_contains($text, 'Dallas Stars scored once on the power play.'), 'the power play', $text);
+    ok(!str_contains($text, "Stars once."), 'the sentence lost its verb', $text);
+
+    ok(str_contains($text, 'Jake Oettinger 21 saves'), 'the goaltender', $text);
+    ok(str_contains($text, 'a goal and an assist'), 'a skater', $text);
+
+    // 🚨 ESPN's fourth hockey group, `skaters`, has labels and no athletes.
+    ok(!str_contains($text, 'skaters'), 'an empty group reached the prose', $text);
+};
+
+$tests['an NFL game needs no new words at all'] = function () use ($espn) {
+    /*
+     * 🚨 The seam's best evidence. ESPN's NFL statistic names are IDENTICAL to
+     * CollegeFootballData's — `totalYards`, `thirdDownEff`, `possessionTime` —
+     * and so are its player labels, so a professional game is described by the
+     * college vocabulary that already existed, with nothing written for it.
+     */
+    $text = (new Recap())->text(
+        ['home_name' => 'Green Bay Packers', 'away_name' => 'Washington Commanders',
+         'home_score' => 27, 'away_score' => 18],
+        $espn('nfl'),
+    );
+
+    ok(str_contains($text, 'Green Bay Packers out-gained Washington Commanders 404 to 230.'), 'the yardage', $text);
+    ok(str_contains($text, 'Jordan Love 19/31 for 292 and two touchdowns'), 'the quarterback', $text);
+    ok(str_contains($text, 'Tucker Kraft 6 catches for 124 and a touchdown'), 'the receiver', $text);
+    ok(str_contains($text, 'Possession — 32:26 / 27:34'), 'the possession clock', $text);
 };
 
 $tests['an unknown sport falls back rather than throwing'] = function () {

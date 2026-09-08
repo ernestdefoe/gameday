@@ -20,6 +20,9 @@ ernestdefoe-gameday:
       sport_options:
         gridiron: American football
         soccer: Football (soccer)
+        hardwood: Basketball
+        diamond: Baseball
+        ice: Ice hockey
       sport_label: Sport
       sport_help: >-
         Which sport's words a recap is written in. A football recap talks about
