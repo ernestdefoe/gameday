@@ -277,16 +277,45 @@ class PerformersBlock extends AbstractBlock
     /**
      * How good a line is, as one number to sort on.
      *
-     * 🚨 Yards for the three offensive categories and tackles for defence —
-     * comparing a linebacker's tackles against a quarterback's yards would
-     * always give the quarterback, which is why the categories are ranked
-     * separately rather than pooled.
+     * 🚨 Weighted per category, not raw yards.
+     *
+     * The first version ranked a group on whichever single figure the category
+     * happened to carry, and "top five offence" came back as five
+     * quarterbacks — every time, because a passing day is measured in four
+     * hundred yards and a rushing day in a hundred and fifty. Comparing them
+     * unweighted does not rank players, it ranks positions.
+     *
+     * So: the ordinary fantasy weights, which exist precisely because they make
+     * these categories comparable, and which anybody who plays fantasy football
+     * can check at a glance. A passing yard is worth a quarter of a rushing
+     * yard; a touchdown is worth six of anything. Defence and special teams get
+     * the same treatment for the same reason — a linebacker's fourteen tackles
+     * and a corner's pick-six are not the same number and should not be
+     * compared as one.
      */
     protected function score(string $category, array $stats): float
     {
-        $field = self::CATEGORIES[$category]['sort'];
+        $num = fn (string $key) => (float) preg_replace('/[^0-9.].*$/', '', ltrim((string) ($stats[$key] ?? '0')));
 
-        return (float) preg_replace('/[^0-9.]/', '', (string) ($stats[$field] ?? '0'));
+        return match ($category) {
+            'passing' => $num('YDS') / 25 + $num('TD') * 4 - $num('INT') * 2,
+            'rushing', 'receiving' => $num('YDS') / 10 + $num('TD') * 6,
+            'defensive' => $num('TOT') + $num('SACKS') * 3 + $num('TFL') + $num('TD') * 6,
+            'interceptions' => $num('INT') * 6 + $num('YDS') / 10 + $num('TD') * 6,
+            // A kicker's afternoon IS his points; a long field goal is worth a
+            // nod on top of the three it already scored.
+            'kicking' => $num('PTS') + ($num('LONG') >= 50 ? 2 : 0),
+            /*
+             * 🚨 Punting measured against a baseline, not on its average. A
+             * 44-yard average is a good day and a 30-yard one is not, but as a
+             * raw number they are close enough that a punter would outrank a
+             * kick returner's touchdown — so what is scored is how far above
+             * an ordinary punt he was, plus the ones he pinned inside the 20.
+             */
+            'punting' => max(0, $num('AVG') - 40) + $num('In 20') * 2,
+            'kickReturns', 'puntReturns' => $num('YDS') / 10 + $num('TD') * 6,
+            default => 0.0,
+        };
     }
 
     /** The stat line as a football page would write it. */
