@@ -308,9 +308,15 @@ class Threads
      * Puts the discussion in a tag.
      *
      * 🚨 The home team's tag, then the away team's, then whatever the operator
-     * named. A neutral-site game belongs to neither, which is exactly when the
-     * fallback earns its keep — and a board with no tags extension at all skips
-     * this entirely rather than failing.
+     * named. A board with no tags extension at all skips this entirely rather
+     * than failing.
+     *
+     * 🚨 A neutral site changes NOTHING here, and this comment used to claim it
+     * did. A game at a neutral venue still has a designated home and away team
+     * — the feed says which, and the only thing the flag changes is that the
+     * title reads "A vs B" rather than "A at B". The fallback earns its keep
+     * when NEITHER team has been mapped to a tag, which is a fact about the
+     * mapping and not about the venue.
      */
     protected function tag(Discussion $discussion, PickEvent $game): void
     {

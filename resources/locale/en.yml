@@ -15,8 +15,10 @@ ernestdefoe-gameday:
       lead_help: Three hours by default.
       fallback_tag_label: Tag to use when neither team has one
       fallback_tag_help: >-
-        A neutral-site game belongs to neither side, which is exactly when this
-        earns its keep. Leave it empty to post those threads untagged.
+        Used when neither team in a game has been mapped to a tag below. Leave
+        it empty to post those threads untagged. A neutral-site game does not
+        need it: those still have a designated home team, and its tag is used
+        like any other.
       sport_options:
         gridiron: American football
         soccer: Football (soccer)
@@ -71,3 +73,4 @@ ernestdefoe-gameday:
     widget_field_title: Title
     widget_field_link: Link to the game thread
     widget_field_hide: Hide when there is no game
+    widget_field_scroll: Advance through the games on its own

@@ -2,6 +2,7 @@ import app from 'flarum/forum/app';
 import Component from 'flarum/common/Component';
 import extractText from 'flarum/common/utils/extractText';
 import type Mithril from 'mithril';
+import { startTicker } from '../tickerScroll';
 import {
   attach,
   currentBoards,
@@ -100,6 +101,16 @@ export default class ScoreboardWidget extends Component<Attrs> {
           // A named role only where it is actually a scrolling region, which
           // is what the class does; the label says what is scrolling.
           aria-label={extractText(t('scoreboard'))}
+          /*
+           * 🚨 Started on the ELEMENT, and it stops itself when the element
+           * leaves the document. Bespoke rebuilds its zone hosts on every
+           * redraw, so this strip is replaced constantly and `onremove` is not
+           * reliably called for it — a ticker that waited to be torn down
+           * would outlive its element many times over. See tickerScroll.
+           */
+          oncreate={(vnode: any) => {
+            if (s.autoScroll !== false) startTicker(vnode.dom as HTMLElement);
+          }}
         >
           {boards.map((b) => this.game(b, s, t))}
         </div>

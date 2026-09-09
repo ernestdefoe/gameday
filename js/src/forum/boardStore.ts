@@ -83,7 +83,7 @@ export function seed(given: WidgetBoard[]): void {
 
   boards = given;
   status = 'ready';
-  schedule();
+  schedule(true);
 }
 
 /** A component is on screen. */
@@ -98,6 +98,21 @@ export function attach(): void {
   }
 
   schedule();
+}
+
+/**
+ * 🚨 A pending poll is left alone.
+ *
+ * `attach()` runs on every remount, and Bespoke remounts on every redraw — so
+ * a `schedule()` that always cleared and restarted the timer would push the
+ * next poll fifteen seconds into the future every time anything on the page
+ * changed. On a busy page it would never fire at all, and the board would sit
+ * on its first answer looking live.
+ */
+function schedule(force = false): void {
+  if (timer && ! force) return;
+
+  reschedule();
 }
 
 /**
@@ -135,7 +150,7 @@ export function detach(): void {
  * inside the half hour before kickoff, which is the only window in which the
  * answer can change.
  */
-function schedule(): void {
+function reschedule(): void {
   if (timer) clearTimeout(timer);
   timer = null;
 
@@ -163,6 +178,30 @@ function nearKickoff(board: WidgetBoard): boolean {
   return new Date(board.kickoff).getTime() - Date.now() < 1800000;
 }
 
+/**
+ * Tell whichever host is drawing this that there is something new.
+ *
+ * 🚨 `m.redraw()` alone is not enough in Bespoke, and the reason is not
+ * obvious: its widgets are mounted with `m.render()` into their own roots, so a
+ * global redraw never reaches them. A widget that fetched and redrew like any
+ * Mithril component stayed blank until something else happened to force a full
+ * re-render — which, before the poll loop was fixed, the loop itself was doing
+ * several times a second. Fixing the loop is what made this visible.
+ *
+ * Both are called, and neither is required: Page Builder renders inside the
+ * normal tree and wants the redraw; Bespoke wants the zones re-rendered; a host
+ * with neither gets a harmless no-op.
+ */
+function announce(): void {
+  try {
+    m.redraw();
+  } catch (e) { /* not mounted */ }
+
+  try {
+    (app as any).bespoke?.renderZones?.();
+  } catch (e) { /* Bespoke absent, or too old to expose it */ }
+}
+
 function fetchBoards(): Promise<void> {
   // 🚨 One request, however many placements asked. Two widgets on a page are
   // two views of one scoreboard, not two scoreboards.
@@ -185,8 +224,10 @@ function fetchBoards(): Promise<void> {
     })
     .then(() => {
       inFlight = null;
-      schedule();
-      m.redraw();
+      // Forced: the state may have changed (a game went final), and the answer
+      // that just arrived is the one the next interval should be based on.
+      schedule(true);
+      announce();
     });
 
   return inFlight;

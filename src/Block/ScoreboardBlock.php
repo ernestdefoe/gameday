@@ -67,6 +67,13 @@ class ScoreboardBlock extends AbstractBlock
                 'default' => true,
                 'help' => 'Otherwise the block says so. Off-season, that is a panel saying nothing every day for months.',
             ],
+            [
+                'key' => 'autoScroll',
+                'type' => 'toggle',
+                'label' => 'Advance through the games on its own',
+                'default' => true,
+                'help' => 'Only where the strip is wide enough to scroll. It stops for hover, focus, touch and a hidden tab, and never runs for a reader who has asked for reduced motion.',
+            ],
         ];
     }
 

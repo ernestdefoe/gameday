@@ -26,6 +26,24 @@ interface Row {
 let CACHE: Row[] | null = null;
 
 /**
+ * Every tag on the site, cached for the same reason the rows are.
+ *
+ * 🚨 Fetched, not read out of the store. `app.store.all('tags')` returns
+ * whatever some other screen happened to load, and in the admin that is the
+ * first page of the tag list — fifty tags, mostly the top-level ones. On a
+ * board with a forum per school that meant the picker offered conferences and
+ * not one of the team forums the games are actually meant to go in.
+ */
+let TAGS: TagOption[] | null = null;
+
+interface TagOption {
+  id: number;
+  name: string;
+  /** The parent's name, so two tags called the same thing can be told apart. */
+  under: string;
+}
+
+/**
  * Which tag each team's games are posted in.
  *
  * Talks straight to the JSON API rather than through store models: there is one
@@ -43,6 +61,10 @@ export default class TeamTagMapper extends Component {
 
     if (CACHE === null) {
       this.load();
+    }
+
+    if (TAGS === null) {
+      this.loadTags();
     }
   }
 
@@ -65,11 +87,68 @@ export default class TeamTagMapper extends Component {
   }
 
   /** Every tag on the site, for the picker. */
-  tags(): { id: number; name: string }[] {
-    return app.store
-      .all<any>('tags')
-      .map((tag: any) => ({ id: Number(tag.id()), name: tag.name() as string }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+  tags(): TagOption[] {
+    return TAGS ?? [];
+  }
+
+  /**
+   * Page through the whole tag list.
+   *
+   * 🚨 Paged, because the endpoint caps a page at fifty however large a limit
+   * is asked for. A board with a hundred and fifty forums would otherwise be
+   * offered a third of them, silently, with no sign that the list was cut.
+   */
+  loadTags(offset = 0, carry: TagOption[] = []): void {
+    const LIMIT = 50;
+    const MAX_PAGES = 12;
+
+    app
+      .request<any>({
+        method: 'GET',
+        url: `${app.forum.attribute('apiUrl')}/tags`,
+        params: { page: { limit: LIMIT, offset }, include: 'parent' },
+      })
+      .then((response: any) => {
+        const rows: any[] = response?.data ?? [];
+
+        // Parent names come from the sideloaded `included` set; a tag whose
+        // parent did not travel is simply shown without one.
+        const names: Record<string, string> = {};
+        for (const item of [...rows, ...((response?.included as any[]) ?? [])]) {
+          if (item?.type === 'tags') names[String(item.id)] = item.attributes?.name ?? '';
+        }
+
+        const page = rows.map((row: any) => {
+          const parent = row.relationships?.parent?.data;
+
+          return {
+            id: Number(row.id),
+            name: String(row.attributes?.name ?? ''),
+            under: parent ? names[String(parent.id)] ?? '' : '',
+          };
+        });
+
+        const all = [...carry, ...page];
+
+        // A short page is the last page; there is nothing more to ask for.
+        if (rows.length === LIMIT && offset / LIMIT + 1 < MAX_PAGES) {
+          this.loadTags(offset + LIMIT, all);
+
+          return;
+        }
+
+        TAGS = all.sort((a, b) =>
+          // Grouped by parent, then by name — which is the order somebody
+          // scanning for "the Alabama forum under the SEC" reads in.
+          (a.under || '\uffff').localeCompare(b.under || '\uffff') || a.name.localeCompare(b.name)
+        );
+
+        m.redraw();
+      })
+      .catch(() => {
+        TAGS = TAGS ?? [];
+        m.redraw();
+      });
   }
 
   save() {
@@ -131,7 +210,12 @@ export default class TeamTagMapper extends Component {
                             // 0 is "no tag of its own", which the server stores
                             // by deleting the row rather than writing a zero.
                             m('option', { value: '0' }, t('none')),
-                            ...tags.map((tag) => m('option', { value: String(tag.id) }, tag.name)),
+                            // "SEC › Alabama", because a board with a forum per
+                            // school has several tags whose names only differ by
+                            // which conference they sit in.
+                            ...tags.map((tag) =>
+                              m('option', { value: String(tag.id) }, tag.under ? `${tag.under} › ${tag.name}` : tag.name)
+                            ),
                           ]
                         )
                       ),

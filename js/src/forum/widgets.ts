@@ -44,6 +44,7 @@ function bespoke(): void {
       { key: 'title', type: 'text', label: 'ernestdefoe-gameday.forum.widget_field_title', default: 'Game Day' },
       { key: 'showLink', type: 'toggle', label: 'ernestdefoe-gameday.forum.widget_field_link', default: true },
       { key: 'hideWhenEmpty', type: 'toggle', label: 'ernestdefoe-gameday.forum.widget_field_hide', default: true },
+      { key: 'autoScroll', type: 'toggle', label: 'ernestdefoe-gameday.forum.widget_field_scroll', default: true },
     ],
     /*
      * 🚨 No `board` attr, which is what tells the component to fetch. Bespoke
