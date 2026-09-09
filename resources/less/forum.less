@@ -680,9 +680,57 @@ html[data-theme='dark'] .GamedayWidget-crest {
    a broadcast graphic, not a table. A headshot with a crest on its corner is a
    lower-third, and a lower-third on a white card is a spreadsheet.
    ═══════════════════════════════════════════════════════════════════════════ */
+/*
+ * 🚨 These are the LIGHT values, defined on the bare selector, with the dark
+ * set layered over them below. Every one is declared here so no colour exists
+ * only inside a media query — which is how a card ends up drawing light text on
+ * a light ground for readers whose browser matched neither branch.
+ *
+ * The cards used to be dark in both themes, like the scoreboard. That is right
+ * for the scoreboard, which is meant to read like a stadium board and is the
+ * reason somebody opened the thread; it is wrong here, where three black
+ * panels sit in the middle of a light page and read as a hole in it.
+ */
 .GdPerformers {
+  --gdp-ink: #10161e;
+  --gdp-dim: #5a6879;
+  --gdp-card: linear-gradient(160deg, #ffffff, #f5f7fa 70%);
+  --gdp-edge: rgba(16, 22, 30, .10);
+  --gdp-shadow: 0 8px 22px -16px rgba(16, 22, 30, .35);
+  --gdp-rule: rgba(16, 22, 30, .09);
+  --gdp-chip: rgba(16, 22, 30, .06);
+  /* The showcase ground the club colour is laid over. */
+  --gdp-stage: linear-gradient(160deg, #eef1f6, #e2e7ee 72%);
+  --gdp-stageInk: #10161e;
+  --gdp-crest: .28;
+  --gdp-photoShadow: 0 8px 18px rgba(16, 22, 30, .28);
+  --gdp-faceRing: rgba(16, 22, 30, .12);
+  --gdp-faceBg: #e6eaf0;
+  --gdp-top: #a8102a;
+}
+
+.gdp-dark() {
   --gdp-ink: #f4f7fb;
   --gdp-dim: #93a1b4;
+  --gdp-card: linear-gradient(160deg, #1b2532, #10161e 62%, #0b1015);
+  --gdp-edge: rgba(255, 255, 255, .07);
+  --gdp-shadow: 0 10px 26px -16px rgba(0, 0, 0, .8);
+  --gdp-rule: rgba(255, 255, 255, .07);
+  --gdp-chip: rgba(255, 255, 255, .08);
+  --gdp-stage: linear-gradient(160deg, #223041, #0d1218 72%);
+  --gdp-stageInk: #f4f7fb;
+  --gdp-crest: .22;
+  --gdp-photoShadow: 0 8px 18px rgba(0, 0, 0, .55);
+  --gdp-faceRing: rgba(255, 255, 255, .18);
+  --gdp-faceBg: #202a37;
+  --gdp-top: #ffce4d;
+}
+
+html[data-theme='dark'] .GdPerformers { .gdp-dark(); }
+
+@media (prefers-color-scheme: dark) {
+  // Only where the reader has not explicitly chosen light.
+  html:not([data-theme='light']) .GdPerformers { .gdp-dark(); }
 }
 
 .GdPerformers-head {
@@ -717,8 +765,8 @@ html[data-theme='dark'] .GamedayWidget-crest {
 
   padding: 16px;
   border-radius: 14px;
-  background: linear-gradient(160deg, #1b2532, #10161e 62%, #0b1015);
-  box-shadow: 0 10px 26px -16px rgba(0, 0, 0, .8), inset 0 0 0 1px rgba(255, 255, 255, .07);
+  background: var(--gdp-card);
+  box-shadow: var(--gdp-shadow), inset 0 0 0 1px var(--gdp-edge);
   color: var(--gdp-ink);
 }
 
@@ -752,7 +800,7 @@ html[data-theme='dark'] .GamedayWidget-crest {
     // 🚨 Stronger and reaching further across than the first attempt, which
     // read as a muddy smudge in the corner rather than as the club's colour.
     linear-gradient(118deg, var(--gdp-team) -18%, transparent 78%),
-    linear-gradient(160deg, #223041, #0d1218 72%);
+    var(--gdp-stage);
 }
 
 /* The crest, huge and faint, the way a programme cover does it. */
@@ -765,13 +813,14 @@ html[data-theme='dark'] .GamedayWidget-crest {
   height: 168px;
   object-fit: contain;
   // .13 was invisible against the colour wash behind it.
-  opacity: .22;
+  opacity: var(--gdp-crest);
   pointer-events: none;
 }
 
 .GdPerformers-starBody {
   position: relative;
   z-index: 1;
+  color: var(--gdp-stageInk);
   // Room for the cutout on the right without the text ever running under it.
   max-width: 62%;
 }
@@ -845,7 +894,7 @@ html[data-theme='dark'] .GamedayWidget-crest {
   width: 156px;
   height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, .55));
+  filter: drop-shadow(var(--gdp-photoShadow));
   pointer-events: none;
 }
 
@@ -873,13 +922,13 @@ html[data-theme='dark'] .GamedayWidget-crest {
   gap: 10px;
   padding: 9px 0;
 
-  & + & { border-top: 1px solid rgba(255, 255, 255, .07); }
+  & + & { border-top: 1px solid var(--gdp-rule); }
 }
 
 /* First place gets the brand, and nothing else does — a list where every row
    is highlighted has no first place. */
-.GdPerformers-row--top .GdPerformers-rank { color: #ffce4d; }
-.GdPerformers-row--top .GdPerformers-name { color: #ffce4d; }
+.GdPerformers-row--top .GdPerformers-rank { color: var(--gdp-top); }
+.GdPerformers-row--top .GdPerformers-name { color: var(--gdp-top); }
 
 .GdPerformers-rank {
   font-size: .95rem;
@@ -905,8 +954,8 @@ html[data-theme='dark'] .GamedayWidget-crest {
   object-fit: cover;
   // The headshots come on a light studio ground; a ring keeps them from
   // floating on the dark card as a bright disc.
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18), 0 0 0 1px rgba(0, 0, 0, .4);
-  background: #202a37;
+  box-shadow: inset 0 0 0 1px var(--gdp-faceRing);
+  background: var(--gdp-faceBg);
 
   &--none {
     display: inline-flex;
@@ -925,7 +974,7 @@ html[data-theme='dark'] .GamedayWidget-crest {
   height: 20px;
   object-fit: contain;
   border-radius: 50%;
-  background: #0b1015;
+  background: var(--gdp-faceBg);
   padding: 2px;
 }
 
@@ -959,7 +1008,7 @@ html[data-theme='dark'] .GamedayWidget-crest {
 .GdPerformers-cat {
   padding: 1px 6px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, .08);
+  background: var(--gdp-chip);
   letter-spacing: .04em;
   // "Kick returns" was breaking across two lines and doubling the row height.
   white-space: nowrap;
