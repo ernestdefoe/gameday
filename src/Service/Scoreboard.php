@@ -183,8 +183,16 @@ class Scoreboard
              * both themes — it is built from chrome colours rather than the page
              * ground, which is what a real scoreboard looks like — and laying a
              * light-ground mark on it is how a navy crest becomes a navy smudge.
+             *
+             * 🚨 `logo_dark_url`, which this said it used and did not. Picks has
+             * carried both variants all along and this read the light one, so
+             * every comment above was describing an intention rather than the
+             * code under it — and a dark-crested team was a dark smudge on a
+             * dark panel, which reads as a missing image rather than as a bug.
+             * The accessor falls back to the standard logo on its own, so a
+             * team with no dark variant is unaffected.
              */
-            'logo' => (string) ($team->logo_url ?? ''),
+            'logo' => (string) ($team->logo_dark_url ?? $team->logo_url ?? ''),
             'score' => $score === null ? null : (int) $score,
         ];
     }

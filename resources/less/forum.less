@@ -292,6 +292,14 @@
 }
 
 .GamedayWidget-board {
+  /*
+   * 🚨 Capped, because a widget does not choose its column. In a sidebar this
+   * does nothing; dropped into a full-width Page Builder row it is the
+   * difference between a scoreboard and a team name at one end of the screen
+   * with its score at the other — technically the same information, and not
+   * readable as a score.
+   */
+  max-width: 420px;
   border-radius: 12px;
   overflow: hidden;
   padding: 12px 13px 11px;

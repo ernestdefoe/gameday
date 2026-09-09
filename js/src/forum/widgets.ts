@@ -68,14 +68,22 @@ function bespoke(): void {
  */
 function pageBuilder(): void {
   const component = {
-    view: (v: any) =>
-      m(ScoreboardWidget, {
+    view: (v: any) => {
+      const data = v.attrs.data || {};
+
+      /*
+       * 🚨 The KEY decides, not the value. ScoreboardBlock always answers with
+       * a `board` key and `null` in it means "nothing is on" — a real answer,
+       * to be shown. An ABSENT key means the resolve never reached us, and the
+       * two must not look alike: read as a value, a block whose data went
+       * missing would state on the page that no game was on while one was
+       * being played. Absent, we fall through to asking.
+       */
+      return m(ScoreboardWidget, {
         settings: v.attrs.settings || {},
-        // Resolved server-side by ScoreboardBlock, so the board is drawn with
-        // the page. `null` is a real answer here — "no game on" — and must not
-        // be confused with Bespoke's `undefined`, which means "go and ask".
-        board: (v.attrs.data || {}).board ?? null,
-      }),
+        board: 'board' in data ? data.board : undefined,
+      });
+    },
   };
 
   const registry = (app as any).pageBuilder;
