@@ -3,6 +3,7 @@
 namespace ErnestDefoe\Gameday;
 
 use ErnestDefoe\Gameday\Api\Controller\BoardController;
+use ErnestDefoe\Gameday\Api\Controller\CurrentBoardController;
 use ErnestDefoe\Gameday\Api\Controller\ReactionsController;
 use ErnestDefoe\Gameday\Api\Controller\TeamTagsController;
 use ErnestDefoe\Gameday\Api\Resource\DiscussionBoardField;
@@ -13,7 +14,7 @@ use ErnestDefoe\Gameday\Service\Sports\Sports;
 use Flarum\Extend;
 use Flarum\Frontend\Document;
 
-return [
+$extenders = [
     /*
      * 🚨 The sport list reaches the admin from the registry rather than being
      * written into the JavaScript. A second copy of the list in the bundle is
@@ -68,6 +69,11 @@ return [
          */
         ->get('/gameday/board/{id}', 'gameday.board', BoardController::class)
         /*
+         * What is on right now, for a widget. A different question from the one
+         * above — see CurrentBoardController.
+         */
+        ->get('/gameday/board', 'gameday.board.current', CurrentBoardController::class)
+        /*
          * The roar. Ephemeral and cache-backed — see Service\LiveReactions for
          * why none of this is ever written to the database.
          */
@@ -92,3 +98,24 @@ return [
             $event->hourly()->withoutOverlapping();
         }),
 ];
+
+/*
+ * The scoreboard as a Page Builder block — only where Page Builder is installed.
+ *
+ * 🚨 Guarded on the EXTENDER's class, not on the extension being enabled. This
+ * file is read at boot, before anything knows which extensions are on, and
+ * naming a class from an extension that is not installed is a fatal at compile
+ * time rather than a missing block. The block class itself is never mentioned
+ * outside this branch for the same reason: it extends a Page Builder base class
+ * that would not be there to extend.
+ *
+ * Bespoke needs no counterpart — its widgets are registered entirely from the
+ * JavaScript, through a queue it drains itself.
+ */
+if (class_exists(\Ernestdefoe\PageBuilder\Extend\PageBuilderBlock::class)) {
+    $extenders[] = new \Ernestdefoe\PageBuilder\Extend\PageBuilderBlock(
+        \ErnestDefoe\Gameday\Block\ScoreboardBlock::class
+    );
+}
+
+return $extenders;

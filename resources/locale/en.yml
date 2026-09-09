@@ -59,3 +59,15 @@ ernestdefoe-gameday:
     board_stale: Waiting for the feed
     board_red_zone: Red zone
     board_possession: "{team} have the ball"
+
+    # The scoreboard as a widget — see ScoreboardWidget.
+    widget_scoreboard: Scoreboard
+    widget_live: Live
+    widget_scheduled: Kickoff
+    widget_stale: Waiting for the feed
+    widget_red_zone: Red zone
+    widget_to_the_thread: Go to the game thread
+    widget_no_game: No game on right now.
+    widget_field_title: Title
+    widget_field_link: Link to the game thread
+    widget_field_hide: Hide when there is no game

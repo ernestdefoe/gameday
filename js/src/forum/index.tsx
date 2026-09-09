@@ -2,6 +2,7 @@ import app from 'flarum/forum/app';
 import { override } from 'flarum/common/extend';
 import DiscussionPage from 'flarum/forum/components/DiscussionPage';
 import GamedayBoard from './components/GamedayBoard';
+import registerWidgets from './widgets';
 
 declare const m: any;
 
@@ -20,6 +21,13 @@ declare const m: any;
  * to a game thread's heading, not a substitute for it.
  */
 app.initializers.add('ernestdefoe-gameday', () => {
+  /*
+   * The scoreboard offered to Bespoke and Page Builder. Registration only —
+   * nothing is drawn unless somebody places it, and neither host is required
+   * to be present.
+   */
+  registerWidgets();
+
   /*
    * 🚨 `override`, not `extend`. An extend callback's return value is thrown
    * away — it is for reaching into a mutable ItemList, not for changing what a
