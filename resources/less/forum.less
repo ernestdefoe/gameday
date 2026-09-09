@@ -700,10 +700,23 @@ html[data-theme='dark'] .GamedayWidget-crest {
   --gdp-rule: rgba(16, 22, 30, .09);
   --gdp-chip: rgba(16, 22, 30, .06);
   /* The showcase ground the club colour is laid over. */
-  --gdp-stage: linear-gradient(160deg, #eef1f6, #e2e7ee 72%);
-  --gdp-stageInk: #10161e;
-  --gdp-crest: .28;
-  --gdp-photoShadow: 0 8px 18px rgba(16, 22, 30, .28);
+  /*
+   * 🚨 The stage does NOT follow the theme, and the four tokens below are the
+   * only ones in this block that do not.
+   *
+   * The showcase is a club's colour with white on top of it — that is the whole
+   * idea of it. Flipping the stage light in the light theme put dark ink on top
+   * of a full-strength navy wash, which is unreadable, and the alternative
+   * (a pale stage) throws away the one panel on the page with any weight. So
+   * the stage stays dark on both grounds and the card around it changes, which
+   * is also what makes it read as a showcase rather than as another card.
+   */
+  --gdp-stage: linear-gradient(160deg, #223041, #0d1218 72%);
+  --gdp-stageInk: #ffffff;
+  --gdp-stageDim: rgba(255, 255, 255, .68);
+  --gdp-stageChip: rgba(255, 255, 255, .14);
+  --gdp-crest: .22;
+  --gdp-photoShadow: 0 8px 18px rgba(0, 0, 0, .55);
   --gdp-faceRing: rgba(16, 22, 30, .12);
   --gdp-faceBg: #e6eaf0;
   --gdp-top: #a8102a;
@@ -717,10 +730,6 @@ html[data-theme='dark'] .GamedayWidget-crest {
   --gdp-shadow: 0 10px 26px -16px rgba(0, 0, 0, .8);
   --gdp-rule: rgba(255, 255, 255, .07);
   --gdp-chip: rgba(255, 255, 255, .08);
-  --gdp-stage: linear-gradient(160deg, #223041, #0d1218 72%);
-  --gdp-stageInk: #f4f7fb;
-  --gdp-crest: .22;
-  --gdp-photoShadow: 0 8px 18px rgba(0, 0, 0, .55);
   --gdp-faceRing: rgba(255, 255, 255, .18);
   --gdp-faceBg: #202a37;
   --gdp-top: #ffce4d;
@@ -847,7 +856,7 @@ html[data-theme='dark'] .GdPerformers { .gdp-dark(); }
   font-weight: 700;
   letter-spacing: .12em;
   text-transform: uppercase;
-  color: var(--gdp-dim);
+  color: var(--gdp-stageDim);
 }
 
 .GdPerformers-starName {
@@ -867,7 +876,13 @@ html[data-theme='dark'] .GdPerformers { .gdp-dark(); }
   font-weight: 700;
   letter-spacing: .08em;
   text-transform: uppercase;
-  color: var(--gdp-dim);
+  color: var(--gdp-stageDim);
+}
+
+// The category chip sits on the stage, so it is cut out of it, not out of the card.
+.GdPerformers-starMeta .GdPerformers-cat {
+  background: var(--gdp-stageChip);
+  color: var(--gdp-stageInk);
 }
 
 .GdPerformers-starLine {
@@ -875,8 +890,8 @@ html[data-theme='dark'] .GdPerformers { .gdp-dark(); }
   font-size: .82rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--gdp-ink);
-  opacity: .92;
+  color: var(--gdp-stageInk);
+  opacity: .9;
 }
 
 /*
