@@ -2,7 +2,9 @@
 
 namespace ErnestDefoe\Gameday;
 
+use ErnestDefoe\Gameday\Api\Controller\BoardController;
 use ErnestDefoe\Gameday\Api\Controller\TeamTagsController;
+use ErnestDefoe\Gameday\Api\Resource\DiscussionBoardField;
 use ErnestDefoe\Gameday\Console\EnrichCommand;
 use ErnestDefoe\Gameday\Console\TickCommand;
 use ErnestDefoe\Gameday\Service\Settings;
@@ -24,7 +26,21 @@ return [
             $document->payload['gamedaySports'] = (new Sports())->choices();
         }),
 
+    /*
+     * 🚨 The forum bundle exists for ONE thing: the scoreboard at the head of a
+     * game thread. Everything else this extension does happens on a schedule,
+     * with nothing on the page to show for it — which is why there was no forum
+     * frontend here at all until the board needed one.
+     */
+    (new Extend\Frontend('forum'))
+        ->js(__DIR__ . '/js/dist/forum.js')
+        ->css(__DIR__ . '/resources/less/forum.less'),
+
     new Extend\Locales(__DIR__ . '/resources/locale'),
+
+    // `gamedayBoard` on a game thread, and null on every other discussion.
+    (new Extend\ApiResource(\Flarum\Api\Resource\DiscussionResource::class))
+        ->fields(DiscussionBoardField::class),
 
     /*
      * 🚨 Defaults registered here rather than read with `?? 180` at every call
@@ -44,7 +60,12 @@ return [
 
     (new Extend\Routes('api'))
         ->get('/gameday/team-tags', 'gameday.team-tags', TeamTagsController::class)
-        ->post('/gameday/team-tags', 'gameday.team-tags.save', TeamTagsController::class),
+        ->post('/gameday/team-tags', 'gameday.team-tags.save', TeamTagsController::class)
+        /*
+         * What the board says right now. This is the whole of "live" — without
+         * it a live scoreboard is a photograph of a live scoreboard.
+         */
+        ->get('/gameday/board/{id}', 'gameday.board', BoardController::class),
 
     (new Extend\Console())
         ->command(TickCommand::class)

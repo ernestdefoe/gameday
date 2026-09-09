@@ -1,0 +1,148 @@
+/*
+ * The scoreboard at the head of a game thread.
+ *
+ * 🚨 Dark in BOTH themes, on purpose. A scoreboard is a thing you look at in a
+ * stadium; one that turns white in light mode reads as a table of numbers. It
+ * is also why no crest needs a theme swap — the ground under them never
+ * changes — and why every colour here is a literal rather than a theme token.
+ */
+.GamedayBoard {
+  --gd-ink: #f4f7fb;
+  --gd-dim: #93a1b4;
+
+  position: relative;
+  margin: 0 0 18px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: linear-gradient(150deg, #1b2532, #10161e 60%, #0b1015);
+  box-shadow: 0 10px 28px -12px rgba(0, 0, 0, .7), inset 0 0 0 1px rgba(255, 255, 255, .07);
+  color: var(--gd-ink);
+}
+
+.GamedayBoard-strip {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+}
+
+.GamedayBoard-side {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+// The home side reads right-to-left so the two scores sit either side of the
+// clock, the way a scoreboard is actually laid out.
+.GamedayBoard-side:last-child { flex-direction: row-reverse; }
+
+.GamedayBoard-crest {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  img { width: 100%; height: 100%; object-fit: contain; }
+}
+
+.GamedayBoard-team { min-width: 0; font-weight: 700; letter-spacing: .2px; }
+.GamedayBoard-name { display: inline; }
+.GamedayBoard-abbr { display: none; }
+
+.GamedayBoard-score {
+  font-size: 2rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  margin-inline-start: auto;
+}
+.GamedayBoard-side:last-child .GamedayBoard-score { margin-inline: auto 0; }
+
+/*
+ * Possession. A marker plus a title, never colour alone — this is the one thing
+ * on the board somebody reads at a glance, and a glance is exactly what a
+ * colour-only cue takes away from the readers who most rely on it.
+ */
+.GamedayBoard-ball {
+  flex: 0 0 auto;
+  font-size: .7rem;
+  line-height: 1;
+  color: #ffce4d;
+  text-shadow: 0 0 10px rgba(255, 206, 77, .8);
+}
+.GamedayBoard-side--ball .GamedayBoard-team { color: #ffce4d; }
+
+.GamedayBoard-middle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 0 6px;
+  text-align: center;
+}
+.GamedayBoard-period {
+  font-size: .74rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--gd-dim);
+}
+.GamedayBoard-clock {
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.GamedayBoard-stale,
+.GamedayBoard-kickoff {
+  font-size: .72rem;
+  color: var(--gd-dim);
+}
+
+/* Down and distance, on its own line under the strip. */
+.GamedayBoard-situation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 18px 12px;
+  border-top: 1px solid rgba(255, 255, 255, .08);
+  font-size: .82rem;
+  font-weight: 700;
+  letter-spacing: .4px;
+}
+.GamedayBoard-down { color: var(--gd-ink); }
+.GamedayBoard-redzone {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #c8102e;
+  color: #fff;
+  font-size: .7rem;
+  text-transform: uppercase;
+}
+
+// A live board earns a pulse on its period line; a finished one does not.
+.GamedayBoard--live .GamedayBoard-period::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-inline-end: 6px;
+  border-radius: 50%;
+  background: #38d16a;
+  vertical-align: middle;
+  animation: gd-pulse 2s ease-in-out infinite;
+}
+@keyframes gd-pulse { 0%, 100% { opacity: 1 } 50% { opacity: .35 } }
+@media (prefers-reduced-motion: reduce) {
+  .GamedayBoard--live .GamedayBoard-period::before { animation: none; }
+}
+
+@media (max-width: 640px) {
+  .GamedayBoard-name { display: none; }
+  .GamedayBoard-abbr { display: inline; }
+  .GamedayBoard-crest { width: 34px; height: 34px; }
+  .GamedayBoard-score { font-size: 1.6rem; }
+}

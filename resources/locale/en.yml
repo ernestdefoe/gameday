@@ -54,3 +54,8 @@ ernestdefoe-gameday:
       saved: Mapping saved.
       loading: Loading teams…
       empty: No teams yet — sync them in Picks first.
+  forum:
+    board_scheduled: Kickoff
+    board_stale: Waiting for the feed
+    board_red_zone: Red zone
+    board_possession: "{team} have the ball"
