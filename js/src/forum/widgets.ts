@@ -1,5 +1,6 @@
 import app from 'flarum/forum/app';
 import ScoreboardWidget from './components/ScoreboardWidget';
+import registerPerformers from './performers';
 
 declare const m: any;
 
@@ -15,6 +16,7 @@ declare const m: any;
 export default function registerWidgets(): void {
   bespoke();
   pageBuilder();
+  registerPerformers();
 }
 
 /**

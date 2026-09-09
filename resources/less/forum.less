@@ -672,3 +672,176 @@ html[data-theme='dark'] .GamedayWidget-crest {
     }
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Players of the week.
+
+   🚨 Dark in both themes, like the scoreboard, and for the same reason: this is
+   a broadcast graphic, not a table. A headshot with a crest on its corner is a
+   lower-third, and a lower-third on a white card is a spreadsheet.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.GdPerformers {
+  --gdp-ink: #f4f7fb;
+  --gdp-dim: #93a1b4;
+}
+
+.GdPerformers-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.GdPerformers-week {
+  font-size: .74rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted-color);
+}
+
+.GdPerformers-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.GdPerformers-group {
+  padding: 16px;
+  border-radius: 14px;
+  background: linear-gradient(160deg, #1b2532, #10161e 62%, #0b1015);
+  box-shadow: 0 10px 26px -16px rgba(0, 0, 0, .8), inset 0 0 0 1px rgba(255, 255, 255, .07);
+  color: var(--gdp-ink);
+}
+
+.GdPerformers-groupTitle {
+  margin: 0 0 12px;
+  font-size: .76rem;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--gdp-dim);
+}
+
+.GdPerformers-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.GdPerformers-row {
+  display: grid;
+  grid-template-columns: 1.4rem 44px 1fr auto;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 0;
+
+  & + & { border-top: 1px solid rgba(255, 255, 255, .07); }
+}
+
+/* First place gets the brand, and nothing else does — a list where every row
+   is highlighted has no first place. */
+.GdPerformers-row--top .GdPerformers-rank { color: #ffce4d; }
+.GdPerformers-row--top .GdPerformers-name { color: #ffce4d; }
+
+.GdPerformers-rank {
+  font-size: .95rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--gdp-dim);
+  text-align: center;
+}
+
+.GdPerformers-face {
+  position: relative;
+  width: 44px;
+  height: 44px;
+}
+
+.GdPerformers-photo {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  // The headshots come on a light studio ground; a ring keeps them from
+  // floating on the dark card as a bright disc.
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18), 0 0 0 1px rgba(0, 0, 0, .4);
+  background: #202a37;
+
+  &--none {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    color: var(--gdp-dim);
+  }
+}
+
+.GdPerformers-crest {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: #0b1015;
+  padding: 2px;
+}
+
+.GdPerformers-who {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.GdPerformers-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.GdPerformers-meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--gdp-dim);
+}
+
+.GdPerformers-cat {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, .08);
+  letter-spacing: .06em;
+}
+
+.GdPerformers-line {
+  font-size: .82rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--gdp-ink);
+}
+
+.GdPerformers-empty {
+  margin: 0;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--control-bg);
+  color: var(--muted-color);
+  font-size: .88rem;
+}
+
+@media (max-width: 480px) {
+  .GdPerformers-row { grid-template-columns: 1.2rem 38px 1fr; }
+  .GdPerformers-face, .GdPerformers-photo { width: 38px; height: 38px; }
+  // The stat line moves under the name rather than being cut in half.
+  .GdPerformers-line { grid-column: 2 / -1; text-align: left; padding-top: 2px; }
+}

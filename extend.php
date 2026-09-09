@@ -116,6 +116,10 @@ if (class_exists(\Ernestdefoe\PageBuilder\Extend\PageBuilderBlock::class)) {
     $extenders[] = new \Ernestdefoe\PageBuilder\Extend\PageBuilderBlock(
         \ErnestDefoe\Gameday\Block\ScoreboardBlock::class
     );
+
+    $extenders[] = new \Ernestdefoe\PageBuilder\Extend\PageBuilderBlock(
+        \ErnestDefoe\Gameday\Block\PerformersBlock::class
+    );
 }
 
 return $extenders;
