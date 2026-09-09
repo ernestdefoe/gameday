@@ -19,6 +19,35 @@
   color: var(--gd-ink);
 }
 
+/*
+ * The hero board lines up with the POSTS, not with the window.
+ *
+ * `Page-hero` is full-bleed, so the board ran the whole width of the screen
+ * while the stream beneath it stopped short of the sidebar — a scoreboard that
+ * lined up with nothing on the page. Wrapping it in `.container` was not enough
+ * on its own: this theme's container is 1500px, so on any ordinary screen the
+ * container IS very nearly the whole window.
+ *
+ * 🚨 Built from core's OWN custom properties rather than this theme's numbers.
+ * `--sidebar-width` and `--gap` are declared on `.Page` and change with the
+ * breakpoint (190/260/280px), and `.Page-hero` sits inside `.Page`, so they are
+ * simply inherited here. A width copied out of the stylesheet would be right at
+ * one breakpoint, on one theme, until either moved.
+ */
+@media (min-width: 992px) {
+  .Page-hero > .container > .GamedayBoard {
+    // The sidebar is after the content in source order, so leaving its column
+    // free is a matter of width alone.
+    width: calc(100% - var(--sidebar-width, 190px) - var(--gap, 50px));
+  }
+
+  // Bespoke can put the sidebar on the left, and then the space has to be made
+  // in front of the board rather than behind it.
+  html[data-bespoke-side='left'] .Page-hero > .container > .GamedayBoard {
+    margin-inline-start: calc(var(--sidebar-width, 190px) + var(--gap, 50px));
+  }
+}
+
 .GamedayBoard-strip {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
