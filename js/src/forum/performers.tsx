@@ -86,15 +86,22 @@ export default function registerPerformers(): void {
                         : null,
                     ]),
 
+                    /*
+                     * 🚨 The stat line goes UNDER the name, not beside it.
+                     * Side by side, a line like "19 car, 183 yds, 4 TD" took
+                     * whatever width it needed and the name got the remainder —
+                     * so in a three-column layout every row read "Jaylin Car…".
+                     * A name is the thing somebody is looking for; it gets the
+                     * full width and the numbers go on their own line.
+                     */
                     m('span.GdPerformers-who', [
                       m('span.GdPerformers-name', p.name),
                       m('span.GdPerformers-meta', [
                         p.teamAbbr || p.team,
                         m('span.GdPerformers-cat', p.label),
                       ]),
+                      m('span.GdPerformers-line', p.line),
                     ]),
-
-                    m('span.GdPerformers-line', p.line),
                   ])
                 ))
               : null,

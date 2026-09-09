@@ -730,7 +730,7 @@ html[data-theme='dark'] .GamedayWidget-crest {
   position: relative;
   display: flex;
   align-items: flex-end;
-  min-height: 176px;
+  min-height: 190px;
   margin-bottom: 14px;
   padding: 16px;
   border-radius: 12px;
@@ -749,20 +749,23 @@ html[data-theme='dark'] .GamedayWidget-crest {
   inset: 0;
   z-index: -2;
   background:
-    linear-gradient(115deg, var(--gdp-team) -10%, transparent 62%),
-    linear-gradient(160deg, #223041, #0d1218 70%);
+    // 🚨 Stronger and reaching further across than the first attempt, which
+    // read as a muddy smudge in the corner rather than as the club's colour.
+    linear-gradient(118deg, var(--gdp-team) -18%, transparent 78%),
+    linear-gradient(160deg, #223041, #0d1218 72%);
 }
 
 /* The crest, huge and faint, the way a programme cover does it. */
 .GdPerformers-starCrest {
   position: absolute;
   z-index: -1;
-  top: -26px;
-  left: -20px;
-  width: 148px;
-  height: 148px;
+  top: -30px;
+  left: -24px;
+  width: 168px;
+  height: 168px;
   object-fit: contain;
-  opacity: .13;
+  // .13 was invisible against the colour wash behind it.
+  opacity: .22;
   pointer-events: none;
 }
 
@@ -837,9 +840,9 @@ html[data-theme='dark'] .GamedayWidget-crest {
 .GdPerformers-starPhoto {
   position: absolute;
   z-index: 0;
-  right: -6px;
-  bottom: -8px;
-  width: 148px;
+  right: -10px;
+  bottom: -6px;
+  width: 156px;
   height: auto;
   object-fit: contain;
   filter: drop-shadow(0 8px 18px rgba(0, 0, 0, .55));
@@ -863,9 +866,11 @@ html[data-theme='dark'] .GamedayWidget-crest {
 
 .GdPerformers-row {
   display: grid;
-  grid-template-columns: 1.4rem 44px 1fr auto;
+  // rank · face · everything else. The stat line lives inside the last column
+  // now, under the name — see the component.
+  grid-template-columns: 1.4rem 40px 1fr;
   align-items: center;
-  gap: 11px;
+  gap: 10px;
   padding: 9px 0;
 
   & + & { border-top: 1px solid rgba(255, 255, 255, .07); }
@@ -886,13 +891,16 @@ html[data-theme='dark'] .GamedayWidget-crest {
 
 .GdPerformers-face {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
 }
 
 .GdPerformers-photo {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
+  // ESPN's cutouts are head-and-shoulders on a wide canvas; centring on the
+  // top of the frame is what puts the face in the circle rather than a chin.
+  object-position: 50% 12%;
   border-radius: 50%;
   object-fit: cover;
   // The headshots come on a light studio ground; a ring keeps them from
@@ -939,7 +947,8 @@ html[data-theme='dark'] .GamedayWidget-crest {
 .GdPerformers-meta {
   display: flex;
   align-items: center;
-  gap: 7px;
+  flex-wrap: wrap;
+  gap: 6px;
   font-size: .7rem;
   font-weight: 700;
   letter-spacing: .08em;
@@ -951,15 +960,17 @@ html[data-theme='dark'] .GamedayWidget-crest {
   padding: 1px 6px;
   border-radius: 4px;
   background: rgba(255, 255, 255, .08);
-  letter-spacing: .06em;
+  letter-spacing: .04em;
+  // "Kick returns" was breaking across two lines and doubling the row height.
+  white-space: nowrap;
 }
 
 .GdPerformers-line {
-  font-size: .82rem;
+  font-size: .78rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  text-align: right;
   color: var(--gdp-ink);
+  opacity: .85;
 }
 
 .GdPerformers-empty {
