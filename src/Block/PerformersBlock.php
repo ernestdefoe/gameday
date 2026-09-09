@@ -168,17 +168,25 @@ class PerformersBlock extends AbstractBlock
         }
 
         $teams = [];
-        $names = [];
 
         foreach ($candidates as $list) {
             foreach ($list as $c) {
                 $teams[] = $c['teamId'];
-                $names[] = $c['name'];
             }
         }
 
         $teams = $this->teams($teams);
-        $photos = $this->photos($names);
+
+        // Name AND club, because the photo fallback needs both — see photos().
+        $people = [];
+
+        foreach ($candidates as $list) {
+            foreach ($list as $c) {
+                $people[] = ['name' => $c['name'], 'abbr' => $teams[$c['teamId']]['abbr'] ?? ''];
+            }
+        }
+
+        $photos = $this->photos($people);
         $colours = $this->colours(array_map(fn ($t) => $t['abbr'] ?? '', $teams));
 
         $groups = [];
@@ -416,18 +424,21 @@ class PerformersBlock extends AbstractBlock
      * row may carry "Demond Williams Jr". Reached by class name so a board
      * without Roster gets cards with no photograph rather than a fatal.
      *
+     * @param  list<array{name: string, abbr: string}> $people
      * @return array<string, string>
      */
-    protected function photos(array $names): array
+    protected function photos(array $people): array
     {
         $model = '\\ErnestDefoe\\Roster\\Player';
 
-        if ($names === [] || ! class_exists($model)) {
+        if ($people === [] || ! class_exists($model)) {
             return [];
         }
 
+        $names = array_values(array_unique(array_column($people, 'name')));
         $out = [];
 
+        // The easy half: the two feeds wrote the same name.
         foreach ($model::query()->whereIn('name', $names)->get() as $player) {
             $photo = trim((string) ($player->photo_url ?? ''));
 
@@ -436,41 +447,69 @@ class PerformersBlock extends AbstractBlock
             }
         }
 
-        return $out;
-    }
+        /*
+         * 🚨 The hard half: the same player under a different first name.
+         * CollegeFootballData writes "Samuel Omosigho" and ESPN's roster says
+         * "Sammy" — a nickname, not a typo, and no amount of normalising the
+         * string will bridge it.
+         *
+         * So the fallback is surname plus first initial, SCOPED TO THE CLUB.
+         * Surname and initial alone is a real collision across fifteen thousand
+         * players; the same club as well makes it a safe bet, and a wrong
+         * headshot on a player-of-the-week card is worse than none.
+         */
+        $missing = [];
 
-    /**
-     * Club colours, where the Roster extension happens to hold them.
-     *
-     * 🚨 Matched on the ABBREVIATION, not the name. Picks calls a club "Georgia
-     * Tech" and Roster calls it "Georgia Tech Yellow Jackets" — the same club,
-     * two feeds, two conventions — and the short code is the one thing both
-     * write identically.
-     *
-     * 🚨 Reached by class name, so a board without Roster gets cards in the
-     * theme's own colours rather than a fatal.
-     *
-     * @return array<string, string>
-     */
-    protected function colours(array $abbrs): array
-    {
-        $model = '\\ErnestDefoe\\Roster\\Team';
+        foreach ($people as $person) {
+            if (isset($out[$this->key($person['name'])])) {
+                continue;
+            }
 
-        $abbrs = array_values(array_filter(array_unique($abbrs)));
+            $parts = preg_split('/\s+/', trim((string) $person['name'])) ?: [];
 
-        if ($abbrs === [] || ! class_exists($model)) {
-            return [];
+            if (count($parts) < 2 || ($person['abbr'] ?? '') === '') {
+                continue;
+            }
+
+            $missing[] = [
+                'key' => $this->key($person['name']),
+                'abbr' => mb_strtoupper((string) $person['abbr']),
+                'initial' => mb_strtolower(mb_substr($parts[0], 0, 1)),
+                'surname' => mb_strtolower(end($parts)),
+            ];
         }
 
-        $out = [];
+        if ($missing === []) {
+            return $out;
+        }
 
-        foreach ($model::query()->whereIn('abbreviation', $abbrs)->get() as $team) {
-            $colour = ltrim(trim((string) $team->color), '#');
+        $rows = $model::query()
+            ->join('roster_teams', 'roster_teams.id', '=', 'roster_players.team_id')
+            ->whereIn('roster_teams.abbreviation', array_unique(array_column($missing, 'abbr')))
+            ->whereNotNull('roster_players.photo_url')
+            ->where('roster_players.photo_url', '!=', '')
+            ->get(['roster_players.name', 'roster_players.photo_url', 'roster_teams.abbreviation']);
 
-            // Six hex digits or nothing: a half-written colour in a gradient is
-            // a card that renders black.
-            if (preg_match('/^[0-9a-f]{6}$/i', $colour)) {
-                $out[mb_strtoupper((string) $team->abbreviation)] = '#' . $colour;
+        foreach ($missing as $want) {
+            foreach ($rows as $row) {
+                if (mb_strtoupper((string) $row->abbreviation) !== $want['abbr']) {
+                    continue;
+                }
+
+                $parts = preg_split('/\s+/', trim((string) $row->name)) ?: [];
+
+                if (count($parts) < 2) {
+                    continue;
+                }
+
+                if (
+                    mb_strtolower(end($parts)) === $want['surname']
+                    && mb_strtolower(mb_substr($parts[0], 0, 1)) === $want['initial']
+                ) {
+                    $out[$want['key']] = (string) $row->photo_url;
+
+                    break;
+                }
             }
         }
 
