@@ -1,6 +1,7 @@
 import app from 'flarum/forum/app';
 import Component from 'flarum/common/Component';
 import extractText from 'flarum/common/utils/extractText';
+import LiveReactions from './LiveReactions';
 
 declare const m: any;
 
@@ -104,6 +105,11 @@ export default class GamedayBoard extends Component<{ discussion: any }> {
 
           {this.side(b.home)}
         </div>
+
+        {/* 🚨 Only while the game is being played. A floating emoji says
+            "this is happening now"; on Saturday's finished game it says
+            nothing at all. */}
+        {b.state === 'live' ? m(LiveReactions, { discussion: this.attrs.discussion }) : null}
 
         {b.down || b.redZone ? (
           <div className="GamedayBoard-situation">

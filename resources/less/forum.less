@@ -146,3 +146,122 @@
   .GamedayBoard-crest { width: 34px; height: 34px; }
   .GamedayBoard-score { font-size: 1.6rem; }
 }
+
+/*
+ * The roar: reactions flying up the board while a game is live.
+ *
+ * 🚨 The sky is pointer-events:none and sits ABOVE the strip. It has to be
+ * above or the emoji fly behind the scores; it has to be click-through or it
+ * swallows every press on the board underneath, including the reaction buttons
+ * that put them there.
+ */
+.GamedayReactions { position: static; }
+
+.GamedayReactions-sky {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.GamedayReactions-float {
+  position: absolute;
+  bottom: 6px;
+  font-size: 1.5rem;
+  line-height: 1;
+  will-change: transform, opacity;
+  animation-name: gd-rise;
+  animation-timing-function: cubic-bezier(.25, .7, .4, 1);
+  animation-fill-mode: both;
+}
+
+@keyframes gd-rise {
+  0%   { transform: translate3d(0, 10px, 0) scale(.7); opacity: 0 }
+  12%  { opacity: 1 }
+  70%  { opacity: 1 }
+  100% { transform: translate3d(var(--gd-drift, 0), -150px, 0) scale(1.15); opacity: 0 }
+}
+
+/*
+ * 🚨 Reduced motion gets a fade, not nothing. Somebody who asked the system to
+ * calm animation down still wants to know the room reacted — silently dropping
+ * the whole feature is a different answer from the one they gave.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .GamedayReactions-float { animation-name: gd-fade; }
+  @keyframes gd-fade { 0% { opacity: 0 } 20%, 70% { opacity: 1 } 100% { opacity: 0 } }
+}
+
+.GamedayReactions-bar {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 18px 10px;
+}
+
+.GamedayReactions-btn {
+  border: 0;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 1.05rem;
+  line-height: 1.4;
+  cursor: pointer;
+  background: rgba(255, 255, 255, .07);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1);
+  transition: transform .12s ease, background .12s ease;
+
+  &:hover { background: rgba(255, 255, 255, .16); transform: translateY(-1px); }
+  &:active { transform: scale(.92); }
+  &:focus-visible { outline: 2px solid #ffce4d; outline-offset: 2px; }
+}
+
+.GamedayReactions-more {
+  margin-inline-start: 4px;
+  font-size: .74rem;
+  font-weight: 700;
+  color: var(--gd-dim);
+}
+
+/*
+ * Detached: the board has scrolled away, so the roar follows the reader.
+ *
+ * 🚨 Fixed to the viewport, not to the board. A live thread is read at the
+ * bottom — that is where the new posts are — and a roar that only happens
+ * inside a scoreboard pinned at the top is a roar nobody sees.
+ *
+ * The sky stays click-through; only the little bar takes presses, and it sits
+ * clear of Flarum's own back-to-top and composer controls.
+ */
+.GamedayReactions--detached .GamedayReactions-sky {
+  position: fixed;
+  inset: auto 16px 96px auto;
+  width: 220px;
+  height: 280px;
+  border-radius: 12px;
+  z-index: 5;
+}
+
+.GamedayReactions--detached .GamedayReactions-bar {
+  position: fixed;
+  inset: auto 16px 42px auto;
+  z-index: 6;
+  gap: 4px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(16, 22, 30, .92);
+  box-shadow: 0 10px 26px -10px rgba(0, 0, 0, .8), inset 0 0 0 1px rgba(255, 255, 255, .1);
+  backdrop-filter: blur(6px);
+}
+
+.GamedayReactions--detached .GamedayReactions-btn { font-size: .95rem; padding: 2px 6px; }
+
+// On a phone the detached bar would sit on top of the reply controls; keep it
+// tighter to the corner and smaller.
+@media (max-width: 640px) {
+  .GamedayReactions--detached .GamedayReactions-sky { width: 150px; height: 200px; inset: auto 10px 84px auto; }
+  .GamedayReactions--detached .GamedayReactions-bar { inset: auto 10px 34px auto; }
+}

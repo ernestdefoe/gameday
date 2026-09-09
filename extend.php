@@ -3,6 +3,7 @@
 namespace ErnestDefoe\Gameday;
 
 use ErnestDefoe\Gameday\Api\Controller\BoardController;
+use ErnestDefoe\Gameday\Api\Controller\ReactionsController;
 use ErnestDefoe\Gameday\Api\Controller\TeamTagsController;
 use ErnestDefoe\Gameday\Api\Resource\DiscussionBoardField;
 use ErnestDefoe\Gameday\Console\EnrichCommand;
@@ -65,7 +66,13 @@ return [
          * What the board says right now. This is the whole of "live" — without
          * it a live scoreboard is a photograph of a live scoreboard.
          */
-        ->get('/gameday/board/{id}', 'gameday.board', BoardController::class),
+        ->get('/gameday/board/{id}', 'gameday.board', BoardController::class)
+        /*
+         * The roar. Ephemeral and cache-backed — see Service\LiveReactions for
+         * why none of this is ever written to the database.
+         */
+        ->get('/gameday/reactions/{id}', 'gameday.reactions', ReactionsController::class)
+        ->post('/gameday/reactions/{id}', 'gameday.reactions.push', ReactionsController::class),
 
     (new Extend\Console())
         ->command(TickCommand::class)
