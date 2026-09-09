@@ -177,6 +177,15 @@ export default class ScoreboardWidget extends Component<Attrs> {
             <span className="GamedayWidget-period">{this.statusLine(b, t)}</span>
           </div>
 
+          {/*
+            🚨 Its own row, not appended to the period line. "Waiting for the
+            feed" beside "3rd Quarter" overflows a sidebar and is cut to
+            "3RD QUARTER · WAITI…", which reads as a rendering fault rather
+            than as the honest statement it is — and it appears precisely when
+            somebody is staring at the board wondering why it stopped.
+          */}
+          {b.clockStale ? <div className="GamedayWidget-stale">{t('stale')}</div> : null}
+
           {this.side(b.away)}
           {this.side(b.home)}
 
@@ -218,9 +227,10 @@ export default class ScoreboardWidget extends Component<Attrs> {
 
     // The clock beside the period where there is one worth printing — the shape
     // has already dropped it if it is stale or sitting at a period boundary.
+    // The clock beside the period only where there is one worth printing —
+    // shape() has already dropped it if it is stale or at a period boundary,
+    // and the staleness is said on its own row below.
     if (b.state === 'live') {
-      if (b.clockStale) return b.periodLine ? `${b.periodLine} · ${extractText(t('stale'))}` : extractText(t('stale'));
-
       return b.clock ? `${b.periodLine} · ${b.clock}` : b.periodLine;
     }
 
