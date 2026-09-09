@@ -702,16 +702,148 @@ html[data-theme='dark'] .GamedayWidget-crest {
 
 .GdPerformers-groups {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  // Wider than before: a showcase needs room for a cutout and a big number.
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
   gap: 14px;
 }
 
 .GdPerformers-group {
+  /*
+   * 🚨 A fallback colour on the group, so a club whose colour is missing gets
+   * the board's own red rather than an unresolved variable — which in a
+   * gradient renders as nothing at all.
+   */
+  --gdp-team: var(--primary-color);
+
   padding: 16px;
   border-radius: 14px;
   background: linear-gradient(160deg, #1b2532, #10161e 62%, #0b1015);
   box-shadow: 0 10px 26px -16px rgba(0, 0, 0, .8), inset 0 0 0 1px rgba(255, 255, 255, .07);
   color: var(--gdp-ink);
+}
+
+/* ── The showcase ───────────────────────────────────────────────────────────
+   The player of the week is not a row. It is the reason somebody looks at this
+   section, so it gets the club's colour, a cutout that breaks the frame, and
+   one number big enough to read across a room. */
+.GdPerformers-star {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: 176px;
+  margin-bottom: 14px;
+  padding: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/*
+ * 🚨 The club colour goes on its own layer, under everything, at part strength.
+ * Painted straight onto the card it would fight the white text — plenty of
+ * these are pale golds and light blues — so it sits behind a dark base and
+ * lifts it rather than replacing it.
+ */
+.GdPerformers-starBg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    linear-gradient(115deg, var(--gdp-team) -10%, transparent 62%),
+    linear-gradient(160deg, #223041, #0d1218 70%);
+}
+
+/* The crest, huge and faint, the way a programme cover does it. */
+.GdPerformers-starCrest {
+  position: absolute;
+  z-index: -1;
+  top: -26px;
+  left: -20px;
+  width: 148px;
+  height: 148px;
+  object-fit: contain;
+  opacity: .13;
+  pointer-events: none;
+}
+
+.GdPerformers-starBody {
+  position: relative;
+  z-index: 1;
+  // Room for the cutout on the right without the text ever running under it.
+  max-width: 62%;
+}
+
+.GdPerformers-starStat {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin-bottom: 2px;
+}
+
+.GdPerformers-starBig {
+  font-size: 3.1rem;
+  font-weight: 800;
+  line-height: .9;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  // A hairline of the club colour under the number, like a scoreboard trim.
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .25);
+}
+
+.GdPerformers-starUnit {
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--gdp-dim);
+}
+
+.GdPerformers-starName {
+  font-size: 1.14rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.GdPerformers-starMeta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 3px;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--gdp-dim);
+}
+
+.GdPerformers-starLine {
+  margin-top: 6px;
+  font-size: .82rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--gdp-ink);
+  opacity: .92;
+}
+
+/*
+ * 🚨 The cutout is anchored to the BOTTOM and allowed to overflow the top of
+ * its box. ESPN's headshots are head-and-shoulders on transparency, and
+ * fitting one inside the card leaves a floating head with air under the chin;
+ * letting it sit on the bottom edge is what makes it read as a person standing
+ * there rather than a photograph pasted on.
+ */
+.GdPerformers-starPhoto {
+  position: absolute;
+  z-index: 0;
+  right: -6px;
+  bottom: -8px;
+  width: 148px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, .55));
+  pointer-events: none;
 }
 
 .GdPerformers-groupTitle {
@@ -844,4 +976,13 @@ html[data-theme='dark'] .GamedayWidget-crest {
   .GdPerformers-face, .GdPerformers-photo { width: 38px; height: 38px; }
   // The stat line moves under the name rather than being cut in half.
   .GdPerformers-line { grid-column: 2 / -1; text-align: left; padding-top: 2px; }
+}
+
+@media (max-width: 560px) {
+  // The cutout is the first thing to go: on a narrow card it either covers the
+  // stat line or shrinks to a thumbnail, and neither is worth the width.
+  .GdPerformers-starPhoto { display: none; }
+  .GdPerformers-starBody { max-width: 100%; }
+  .GdPerformers-starBig { font-size: 2.5rem; }
+  .GdPerformers-star { min-height: 0; }
 }

@@ -179,6 +179,7 @@ class PerformersBlock extends AbstractBlock
 
         $teams = $this->teams($teams);
         $photos = $this->photos($names);
+        $colours = $this->colours(array_map(fn ($t) => $t['abbr'] ?? '', $teams));
 
         $groups = [];
 
@@ -204,11 +205,17 @@ class PerformersBlock extends AbstractBlock
             foreach (array_slice($list, 0, $limit) as $c) {
                 $team = $teams[$c['teamId']] ?? null;
 
+                [$big, $bigLabel] = $this->headline($c['category'], $c['stats']);
+
                 $players[] = [
                     'rank' => ++$rank,
                     'name' => $c['name'],
                     'label' => $c['label'],
                     'line' => $this->line($c['category'], $c['stats']),
+                    'big' => $big,
+                    'bigLabel' => $bigLabel,
+                    // The club's own colour, for the card behind the player.
+                    'color' => $colours[mb_strtoupper($team['abbr'] ?? '')] ?? null,
                     'team' => $team['name'] ?? '',
                     'teamAbbr' => $team['abbr'] ?? '',
                     'crest' => $team['crest'] ?? '',
@@ -345,6 +352,30 @@ class PerformersBlock extends AbstractBlock
         };
     }
 
+    /**
+     * The one number a showcase card leads with, and what to call it.
+     *
+     * 🚨 A card has room for one big figure and the eye goes to it first, so it
+     * has to be the figure that made the performance notable — yards for a
+     * passer, tackles for a linebacker, points for a kicker. The full line is
+     * still printed underneath; this is the headline, not a summary.
+     *
+     * @return array{0:string,1:string}
+     */
+    protected function headline(string $category, array $stats): array
+    {
+        $get = fn (string $k) => trim((string) ($stats[$k] ?? ''));
+
+        return match ($category) {
+            'passing', 'rushing', 'receiving', 'kickReturns', 'puntReturns' => [$get('YDS'), 'yards'],
+            'defensive' => [$get('TOT'), 'tackles'],
+            'interceptions' => [$get('INT'), (int) $get('INT') === 1 ? 'interception' : 'interceptions'],
+            'kicking' => [$get('PTS'), 'points'],
+            'punting' => [$get('AVG'), 'average'],
+            default => ['', ''],
+        };
+    }
+
     protected function tds(string $td): string
     {
         return (int) $td > 0 ? ', ' . (int) $td . ' TD' : '';
@@ -402,6 +433,44 @@ class PerformersBlock extends AbstractBlock
 
             if ($photo !== '') {
                 $out[$this->key((string) $player->name)] = $photo;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Club colours, where the Roster extension happens to hold them.
+     *
+     * 🚨 Matched on the ABBREVIATION, not the name. Picks calls a club "Georgia
+     * Tech" and Roster calls it "Georgia Tech Yellow Jackets" — the same club,
+     * two feeds, two conventions — and the short code is the one thing both
+     * write identically.
+     *
+     * 🚨 Reached by class name, so a board without Roster gets cards in the
+     * theme's own colours rather than a fatal.
+     *
+     * @return array<string, string>
+     */
+    protected function colours(array $abbrs): array
+    {
+        $model = '\\ErnestDefoe\\Roster\\Team';
+
+        $abbrs = array_values(array_filter(array_unique($abbrs)));
+
+        if ($abbrs === [] || ! class_exists($model)) {
+            return [];
+        }
+
+        $out = [];
+
+        foreach ($model::query()->whereIn('abbreviation', $abbrs)->get() as $team) {
+            $colour = ltrim(trim((string) $team->color), '#');
+
+            // Six hex digits or nothing: a half-written colour in a gradient is
+            // a card that renders black.
+            if (preg_match('/^[0-9a-f]{6}$/i', $colour)) {
+                $out[mb_strtoupper((string) $team->abbreviation)] = '#' . $colour;
             }
         }
 
