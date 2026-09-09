@@ -28,22 +28,25 @@ class PerformersBlock extends AbstractBlock
         'rushing' => ['label' => 'Rushing', 'sort' => 'YDS', 'group' => 'offence'],
         'receiving' => ['label' => 'Receiving', 'sort' => 'YDS', 'group' => 'offence'],
         'defensive' => ['label' => 'Defence', 'sort' => 'TOT', 'group' => 'defence'],
+        'interceptions' => ['label' => 'Interceptions', 'sort' => 'INT', 'group' => 'defence'],
+        'kicking' => ['label' => 'Kicking', 'sort' => 'PTS', 'group' => 'special'],
+        'punting' => ['label' => 'Punting', 'sort' => 'AVG', 'group' => 'special'],
+        'kickReturns' => ['label' => 'Kick returns', 'sort' => 'YDS', 'group' => 'special'],
+        'puntReturns' => ['label' => 'Punt returns', 'sort' => 'YDS', 'group' => 'special'],
     ];
 
     /**
-     * 🚨 Two groups, not three. ESPN names a leader for passing, rushing,
-     * receiving and defence, and gives kicking and returns only as TEAM totals
-     * — there is no per-player special-teams line in what Picks stores. A third
-     * column headed "Special teams" would have to be computed from a number
-     * belonging to eleven people, so it is absent rather than invented.
-     *
-     * The data does exist upstream: ESPN's game summary carries per-player
-     * kicking and punting under `boxscore.players`, which Picks fetches and
-     * does not keep. Capturing it is what a special-teams column needs.
+     * 🚨 Three groups now, and special teams is the reason the box score had to
+     * change. ESPN names a single LEADER for four categories and none at all
+     * for kicking, punting or returns — so a page built from `leaders` could
+     * never show a kicker. Picks keeps the per-athlete lines now, and this
+     * reads those where they exist and falls back to `leaders` where they do
+     * not, which is every box score fetched before that change.
      */
     private const GROUPS = [
         'offence' => 'Offence',
         'defence' => 'Defence',
+        'special' => 'Special teams',
     ];
 
     public function __construct(protected ConnectionInterface $db)
@@ -127,13 +130,16 @@ class PerformersBlock extends AbstractBlock
             }
 
             foreach (['home' => 'home_team_id', 'away' => 'away_team_id'] as $side => $column) {
-                foreach ((array) ($payload[$side]['leaders'] ?? []) as $category => $leader) {
-                    if (! isset(self::CATEGORIES[$category]) || ! is_array($leader)) {
-                        continue;
-                    }
+                /*
+                 * 🚨 `performers` where the box score has it, `leaders` where it
+                 * does not. Every score fetched before Picks started keeping the
+                 * per-athlete lines has only a leader per category — and those
+                 * games are still worth ranking, they simply contribute one
+                 * candidate each instead of five.
+                 */
+                $lines = $this->linesFor($payload[$side] ?? []);
 
-                    $name = trim((string) ($leader['name'] ?? ''));
-                    $stats = (array) ($leader['stats'] ?? []);
+                foreach ($lines as [$category, $name, $stats, $headshot]) {
                     $score = $this->score($category, $stats);
 
                     if ($name === '' || $score <= 0) {
@@ -145,8 +151,8 @@ class PerformersBlock extends AbstractBlock
                     /*
                      * 🚨 Keyed by player AND category, so a quarterback who led
                      * both passing and rushing appears once for each — which is
-                     * right, they are two performances — but the same passing
-                     * line cannot arrive twice from two sides of one payload.
+                     * right, they are two performances — but the same line
+                     * cannot arrive twice from two sides of one payload.
                      */
                     $candidates[$group][$this->key($name) . '|' . $category] = [
                         'score' => $score,
@@ -154,6 +160,7 @@ class PerformersBlock extends AbstractBlock
                         'label' => self::CATEGORIES[$category]['label'],
                         'name' => $name,
                         'stats' => $stats,
+                        'headshot' => $headshot,
                         'teamId' => (int) $row->{$column},
                     ];
                 }
@@ -205,7 +212,15 @@ class PerformersBlock extends AbstractBlock
                     'team' => $team['name'] ?? '',
                     'teamAbbr' => $team['abbr'] ?? '',
                     'crest' => $team['crest'] ?? '',
-                    'photo' => $photos[$this->key($c['name'])] ?? null,
+                    /*
+                     * 🚨 The feed's own headshot first. It comes with the stat
+                     * line and is the same person by construction; the Roster
+                     * match is a fallback for older box scores, and matching on
+                     * a name is always a guess about punctuation.
+                     */
+                    'photo' => ($c['headshot'] ?? '') !== ''
+                        ? $c['headshot']
+                        : ($photos[$this->key($c['name'])] ?? null),
                 ];
             }
 
@@ -213,6 +228,50 @@ class PerformersBlock extends AbstractBlock
         }
 
         return ['week' => $weekName ?: ('Week ' . $week), 'groups' => $groups];
+    }
+
+    /**
+     * Every rankable line on one side of a box score.
+     *
+     * @return list<array{0:string,1:string,2:array,3:string}>
+     */
+    protected function linesFor(array $side): array
+    {
+        $out = [];
+
+        foreach ((array) ($side['performers'] ?? []) as $category => $entries) {
+            if (! isset(self::CATEGORIES[$category])) {
+                continue;
+            }
+
+            foreach ((array) $entries as $entry) {
+                $out[] = [
+                    $category,
+                    trim((string) ($entry['name'] ?? '')),
+                    (array) ($entry['stats'] ?? []),
+                    (string) ($entry['headshot'] ?? ''),
+                ];
+            }
+        }
+
+        if ($out !== []) {
+            return $out;
+        }
+
+        foreach ((array) ($side['leaders'] ?? []) as $category => $leader) {
+            if (! isset(self::CATEGORIES[$category]) || ! is_array($leader)) {
+                continue;
+            }
+
+            $out[] = [
+                $category,
+                trim((string) ($leader['name'] ?? '')),
+                (array) ($leader['stats'] ?? []),
+                '',
+            ];
+        }
+
+        return $out;
     }
 
     /**
@@ -245,6 +304,14 @@ class PerformersBlock extends AbstractBlock
                 (float) $get('SACKS') > 0 ? $get('SACKS') . ((float) $get('SACKS') === 1.0 ? ' sack' : ' sacks') : '',
                 (int) $get('INT') > 0 ? $get('INT') . ' INT' : '',
             ]))),
+            'interceptions' => trim(sprintf('%s INT, %s yds%s', $get('INT'), $get('YDS'), $this->tds($get('TD')))),
+            'kicking' => trim(implode(', ', array_filter([
+                $get('FG') !== '' ? $get('FG') . ' FG' : '',
+                $get('LONG') !== '' ? 'long ' . $get('LONG') : '',
+                $get('PTS') !== '' ? $get('PTS') . ' pts' : '',
+            ]))),
+            'punting' => trim(sprintf('%s punts, %s avg', $get('NO'), $get('AVG'))),
+            'kickReturns', 'puntReturns' => trim(sprintf('%s ret, %s yds%s', $get('NO'), $get('YDS'), $this->tds($get('TD')))),
             default => '',
         };
     }
