@@ -43,6 +43,9 @@ class CurrentGame
      */
     public const PICK_FOR = 20;
 
+    /** See DiscussionBoardField for why Picks is reached by name. */
+    protected const EVENT = '\\Resofire\\Picks\\PickEvent';
+
     public function __construct(
         protected Scoreboard $scoreboard,
         protected Cache $cache
@@ -54,8 +57,19 @@ class CurrentGame
      */
     public function board(User $actor): ?array
     {
-        $threadId = $this->cache->remember(
-            'gameday.current-thread',
+        /*
+         * 🚨 Checked before anything queries `picks_events`. This extension is
+         * useless without Picks but must not be the thing that fatals when
+         * somebody disables it — and unlike the thread's own board, which is
+         * only built where a game thread exists, this runs on any page a widget
+         * was placed on.
+         */
+        if (! class_exists(self::EVENT)) {
+            return null;
+        }
+
+        $eventId = $this->cache->remember(
+            'gameday.current-game',
             self::PICK_FOR,
             // 0 rather than null: a cached null is not a cache hit, so an
             // out-of-season forum would run all three lookups on every request
@@ -63,56 +77,94 @@ class CurrentGame
             fn () => $this->choose() ?? 0
         );
 
-        if (! $threadId) {
+        if (! $eventId) {
             return null;
         }
 
-        $thread = GamedayThread::query()->find($threadId);
-        $event = $thread === null ? null : $this->event($thread->event_id);
+        $event = $this->event($eventId);
 
         if ($event === null) {
             return null;
         }
 
+        $thread = GamedayThread::query()->where('event_id', $eventId)->first();
+
         $board = $this->scoreboard->shape($event, $thread);
-        $board['discussion'] = $this->link($thread, $actor);
+        $board['discussion'] = $thread === null ? null : $this->link($thread, $actor);
 
         return $board;
     }
 
     /**
-     * The thread whose game the widget is about: live, else next, else the last
-     * one to finish.
+     * The game the widget is about: being played, else next to kick off, else
+     * the last one to finish.
+     *
+     * 🚨 Chosen from the FIXTURES, not from the game threads.
+     *
+     * An earlier version picked a thread and read its game, which meant a board
+     * following a full season showed nothing at all until somebody opened a
+     * thread — and Game Day only opens one a few hours before kickoff, if it is
+     * switched on at all. fbsfb.com found this the honest way: 666 fixtures
+     * ahead of it, 49 in the coming week, and a blank panel.
+     *
+     * A game being played is a fact about the game. The thread is where people
+     * talk about it, which is a link this may or may not have — and `link()`
+     * already withholds it from a reader who could not open it anyway.
      */
     protected function choose(): ?int
     {
-        $now = time();
+        $now = date('Y-m-d H:i:s');
+
+        /*
+         * In progress by either account: the feed says so, or Game Day has put
+         * its thread live. They usually agree; when they do not, the one that
+         * thinks a game is on is the one worth believing, because the cost of
+         * being wrong is a board that is a few minutes early rather than one
+         * that misses the game.
+         */
+        $live = $this->first(
+            fn ($q) => $q
+                ->where(function ($w) {
+                    $w->where('picks_events.status', 'in_progress')
+                      ->orWhere('gameday_threads.state', GamedayThread::LIVE);
+                })
+                ->orderBy('picks_events.match_date')
+        );
+
+        if ($live !== null) {
+            return $live;
+        }
+
+        $next = $this->first(
+            fn ($q) => $q
+                ->where('picks_events.match_date', '>', $now)
+                ->where('picks_events.status', '!=', 'finished')
+                ->orderBy('picks_events.match_date')
+        );
+
+        if ($next !== null) {
+            return $next;
+        }
 
         return $this->first(
-            fn ($q) => $q->where('gameday_threads.state', GamedayThread::LIVE)
-                ->orderBy('picks_events.match_date')
-        ) ?? $this->first(
-            fn ($q) => $q->where('gameday_threads.state', GamedayThread::OPEN)
-                ->where('picks_events.match_date', '>', date('Y-m-d H:i:s', $now))
-                ->orderBy('picks_events.match_date')
-        ) ?? $this->first(
-            fn ($q) => $q->where('gameday_threads.state', GamedayThread::RESOLVED)
-                ->where('picks_events.match_date', '>', date('Y-m-d H:i:s', $now - self::KEEP_FINAL_FOR))
+            fn ($q) => $q
+                ->where('picks_events.status', 'finished')
+                ->where('picks_events.match_date', '>', date('Y-m-d H:i:s', time() - self::KEEP_FINAL_FOR))
                 ->orderByDesc('picks_events.match_date')
         );
     }
 
     /**
-     * One thread id, or null.
+     * One fixture id, or null.
      *
-     * 🚨 Aliased to a bare `id` in the select. Two of the joined tables have an
-     * `id` column, so an unqualified select hands back the fixture's id for the
-     * thread's — a wrong row that looks entirely plausible right up until the
-     * widget shows a game nobody is discussing.
+     * 🚨 Aliased to a bare `id` in the select. Both joined tables have an `id`
+     * column, so an unqualified select hands back the thread's id for the
+     * fixture's — a wrong row that looks entirely plausible right up until the
+     * widget shows the wrong game.
      */
     protected function first(callable $narrow): ?int
     {
-        $query = $this->candidates()->select('gameday_threads.id as id');
+        $query = $this->candidates()->select('picks_events.id as id');
 
         $narrow($query);
 
@@ -122,18 +174,24 @@ class CurrentGame
     }
 
     /**
-     * Threads with both a fixture and a discussion still standing.
+     * Fixtures, with whatever thread each one has.
      *
-     * 🚨 Joined to `discussions` so a deleted or hidden thread cannot be chosen.
-     * Without it the widget goes on pointing at a thread nobody can open, and
-     * because the pick is cached it does so for everybody at once.
+     * 🚨 LEFT joins throughout. A fixture nobody has opened a thread for is
+     * still a game, and a thread whose discussion was deleted must not take its
+     * fixture down with it — but a thread pointing at a deleted or hidden
+     * discussion must not supply a link either, which is why the discussion is
+     * joined here and checked again, per reader, in link().
      */
     protected function candidates(): \Illuminate\Database\Eloquent\Builder
     {
-        return GamedayThread::query()
-            ->join('picks_events', 'picks_events.id', '=', 'gameday_threads.event_id')
-            ->join('discussions', 'discussions.id', '=', 'gameday_threads.discussion_id')
-            ->whereNull('discussions.hidden_at');
+        $model = self::EVENT;
+
+        return $model::query()
+            ->leftJoin('gameday_threads', 'gameday_threads.event_id', '=', 'picks_events.id')
+            ->leftJoin('discussions', function ($join) {
+                $join->on('discussions.id', '=', 'gameday_threads.discussion_id')
+                     ->whereNull('discussions.hidden_at');
+            });
     }
 
     /**
@@ -171,7 +229,7 @@ class CurrentGame
     /** See DiscussionBoardField for why Picks is reached by name. */
     protected function event(int $id): ?object
     {
-        $model = '\\Resofire\\Picks\\PickEvent';
+        $model = self::EVENT;
 
         if (! class_exists($model)) {
             return null;
