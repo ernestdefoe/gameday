@@ -53,6 +53,14 @@ class PerformersBlock extends AbstractBlock
     {
     }
 
+    /**
+     * How many finished games a week needs before it becomes THE week.
+     *
+     * Six is about a Thursday-and-Friday slate plus the early Saturday kicks —
+     * enough that the leaders are a week's leaders rather than one game's.
+     */
+    private const WEEK_READY_GAMES = 6;
+
     public function type(): string
     {
         return 'gameday-performers';
@@ -101,12 +109,35 @@ class PerformersBlock extends AbstractBlock
          * They arrive hours after a game finishes, so "this week" is empty all
          * of Saturday — and a section that empties itself on the one day
          * everybody is looking at it is worse than one showing last week's.
+         *
+         * 🚨 And not the moment the FIRST one lands, either. A Thursday night
+         * game finishing would otherwise flip the whole section to the new week
+         * and stand one team's leaders up as the players of the week, where the
+         * week has barely started — a worse answer than last week's finished
+         * one, and it would sit there until Saturday night.
+         *
+         * So: the latest week with a real slate of results behind it, falling
+         * back to the latest week with any at all, which is what carries a
+         * championship weekend or a bowl week of three games.
          */
-        $week = $this->db->table('picks_box_scores as b')
+        $counts = $this->db->table('picks_box_scores as b')
             ->join('picks_events as e', 'e.id', '=', 'b.event_id')
             ->whereNotNull('e.week_id')
-            ->orderByDesc('e.match_date')
-            ->value('e.week_id');
+            ->groupBy('e.week_id')
+            ->orderByRaw('MAX(e.match_date) DESC')
+            ->get(['e.week_id', $this->db->raw('COUNT(*) as games')]);
+
+        $week = null;
+
+        foreach ($counts as $row) {
+            if ((int) $row->games >= self::WEEK_READY_GAMES) {
+                $week = $row->week_id;
+
+                break;
+            }
+        }
+
+        $week = $week ?: ($counts[0]->week_id ?? null);
 
         if (! $week) {
             return ['week' => null, 'groups' => []];
