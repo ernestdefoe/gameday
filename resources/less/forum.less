@@ -84,11 +84,24 @@
 .GamedayBoard-score {
   font-size: 2rem;
   font-weight: 800;
+  // Tabular figures, so 7 becoming 10 does not shove the name sideways.
   font-variant-numeric: tabular-nums;
   line-height: 1;
-  margin-inline-start: auto;
+
+  /*
+   * 🚨 Sits beside its own team, on both sides.
+   *
+   * This used to carry `margin-inline-start: auto`, which pushed the away score
+   * to the far end of its half — so it floated in the middle of the board next
+   * to "FINAL" while the home score, whose side is reversed, sat neatly beside
+   * its name. Two scores, two different distances from the team they belong to,
+   * and the away one closer to the other team's column than its own.
+   *
+   * With no auto margin each half packs toward its own outer edge and the two
+   * sides mirror: crest, name, score — score, name, crest.
+   */
+  margin-inline-start: 0;
 }
-.GamedayBoard-side:last-child .GamedayBoard-score { margin-inline: auto 0; }
 
 /*
  * Possession. A marker plus a title, never colour alone — this is the one thing
