@@ -52,6 +52,19 @@ app.initializers.add('ernestdefoe-gameday', () => {
      * loading spinner: the same silent shape as calling a translator method
      * that does not exist.
      */
-    return [hero, m(GamedayBoard, { discussion })];
+    /*
+     * 🚨 Inside a `.container`, not loose in the hero.
+     *
+     * `Page-hero` is full-bleed, so the board ran the whole width of the window
+     * while the posts under it sat in a column two hundred and ninety pixels
+     * narrower — a scoreboard that lined up with nothing on the page.
+     *
+     * Core's own container class rather than a width written here: it is the
+     * one thing on the page that already knows how wide this theme's content
+     * is, and Bespoke moves it (1500px on fbsfb.com, 1140 by default). A number
+     * copied into this stylesheet would be right on one site and wrong on the
+     * next, and silently.
+     */
+    return [hero, m('.container', m(GamedayBoard, { discussion }))];
   });
 });
