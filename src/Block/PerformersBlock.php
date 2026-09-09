@@ -516,6 +516,44 @@ class PerformersBlock extends AbstractBlock
         return $out;
     }
 
+    /**
+     * Club colours, where the Roster extension happens to hold them.
+     *
+     * 🚨 Matched on the ABBREVIATION, not the name. Picks calls a club "Georgia
+     * Tech" and Roster calls it "Georgia Tech Yellow Jackets" — the same club,
+     * two feeds, two conventions — and the short code is the one thing both
+     * write identically.
+     *
+     * 🚨 Reached by class name, so a board without Roster gets cards in the
+     * theme's own colours rather than a fatal.
+     *
+     * @return array<string, string>
+     */
+    protected function colours(array $abbrs): array
+    {
+        $model = '\\ErnestDefoe\\Roster\\Team';
+
+        $abbrs = array_values(array_filter(array_unique($abbrs)));
+
+        if ($abbrs === [] || ! class_exists($model)) {
+            return [];
+        }
+
+        $out = [];
+
+        foreach ($model::query()->whereIn('abbreviation', $abbrs)->get() as $team) {
+            $colour = ltrim(trim((string) $team->color), '#');
+
+            // Six hex digits or nothing: a half-written colour in a gradient is
+            // a card that renders black.
+            if (preg_match('/^[0-9a-f]{6}$/i', $colour)) {
+                $out[mb_strtoupper((string) $team->abbreviation)] = '#' . $colour;
+            }
+        }
+
+        return $out;
+    }
+
     /** A name reduced to what two feeds can be expected to agree on. */
     protected function key(string $name): string
     {
