@@ -241,8 +241,8 @@ class PerformersBlock extends AbstractBlock
             'receiving' => trim(sprintf('%s rec, %s yds%s', $get('REC'), $get('YDS'), $this->tds($get('TD')))),
             // TOT is total tackles; SACKS and INT are the ones worth naming.
             'defensive' => trim(implode(', ', array_filter([
-                $get('TOT') !== '' ? $get('TOT') . ' tackles' : '',
-                (float) $get('SACKS') > 0 ? $get('SACKS') . ' sacks' : '',
+                $get('TOT') !== '' ? $get('TOT') . ((int) $get('TOT') === 1 ? ' tackle' : ' tackles') : '',
+                (float) $get('SACKS') > 0 ? $get('SACKS') . ((float) $get('SACKS') === 1.0 ? ' sack' : ' sacks') : '',
                 (int) $get('INT') > 0 ? $get('INT') . ' INT' : '',
             ]))),
             default => '',
