@@ -53,9 +53,27 @@ class CurrentGame
     }
 
     /**
-     * @return array<string, mixed>|null
+     * How many games a wide placement can hold.
+     *
+     * 🚨 A cap on the QUERY, not on the strip. A Saturday in September has
+     * sixty fixtures and nobody scrolls sixty cards — but more to the point,
+     * every one of them is a row serialised, a crest fetched and a thread
+     * looked up for a reader who will see the first four.
      */
-    public function board(User $actor): ?array
+    public const MOST = 10;
+
+    /**
+     * The games worth showing, most relevant first.
+     *
+     * 🚨 A LIST, because the widget's shape is decided by where somebody put
+     * it and not by this. In a sidebar it draws the first of these; given the
+     * width of a page it draws a scrolling strip of them. Answering with one
+     * game would make that a second request at a different URL, and the two
+     * would drift.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function boards(User $actor, int $limit = self::MOST): array
     {
         /*
          * 🚨 Checked before anything queries `picks_events`. This extension is
@@ -65,34 +83,64 @@ class CurrentGame
          * was placed on.
          */
         if (! class_exists(self::EVENT)) {
-            return null;
+            return [];
         }
 
-        $eventId = $this->cache->remember(
-            'gameday.current-game',
+        $limit = max(1, min($limit, self::MOST));
+
+        $ids = $this->cache->remember(
+            'gameday.current-games.' . $limit,
             self::PICK_FOR,
-            // 0 rather than null: a cached null is not a cache hit, so an
-            // out-of-season forum would run all three lookups on every request
-            // precisely because there was nothing to find.
-            fn () => $this->choose() ?? 0
+            // An empty array caches perfectly well; it is a null that does not,
+            // which would run all three lookups per request out of season.
+            fn () => $this->choose($limit)
         );
 
-        if (! $eventId) {
-            return null;
+        if ($ids === []) {
+            return [];
         }
 
-        $event = $this->event($eventId);
+        $model = self::EVENT;
+        $events = $model::query()->with(['homeTeam', 'awayTeam'])->whereIn('id', $ids)->get()->keyBy('id');
 
-        if ($event === null) {
-            return null;
+        $threads = GamedayThread::query()->whereIn('event_id', $ids)->get()->keyBy('event_id');
+
+        // 🚨 One visibility query for the whole strip. Resolved per thread this
+        // was a `whereVisibleTo` per card — ten of them, each dragging the tag
+        // scopes behind it, to draw one row of scores.
+        $links = $this->links($threads->pluck('discussion_id')->all(), $actor);
+
+        $out = [];
+
+        // In the order chosen, not the order the database returned them.
+        foreach ($ids as $id) {
+            $event = $events[$id] ?? null;
+
+            if ($event === null) {
+                continue;
+            }
+
+            $thread = $threads[$id] ?? null;
+
+            $board = $this->scoreboard->shape($event, $thread);
+            $board['discussion'] = $thread === null
+                ? null
+                : ($links[(int) $thread->discussion_id] ?? null);
+
+            $out[] = $board;
         }
 
-        $thread = GamedayThread::query()->where('event_id', $eventId)->first();
+        return $out;
+    }
 
-        $board = $this->scoreboard->shape($event, $thread);
-        $board['discussion'] = $thread === null ? null : $this->link($thread, $actor);
-
-        return $board;
+    /**
+     * The single most relevant game, for a caller that only wants one.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function board(User $actor): ?array
+    {
+        return $this->boards($actor, 1)[0] ?? null;
     }
 
     /**
@@ -111,7 +159,7 @@ class CurrentGame
      * talk about it, which is a link this may or may not have — and `link()`
      * already withholds it from a reader who could not open it anyway.
      */
-    protected function choose(): ?int
+    protected function choose(int $limit): array
     {
         $now = date('Y-m-d H:i:s');
 
@@ -122,7 +170,8 @@ class CurrentGame
          * being wrong is a board that is a few minutes early rather than one
          * that misses the game.
          */
-        $live = $this->first(
+        $ids = $this->take(
+            $limit,
             fn ($q) => $q
                 ->where(function ($w) {
                     $w->where('picks_events.status', 'in_progress')
@@ -131,46 +180,77 @@ class CurrentGame
                 ->orderBy('picks_events.match_date')
         );
 
-        if ($live !== null) {
-            return $live;
+        /*
+         * 🚨 Topped up rather than replaced. Three games being played and seven
+         * about to start is a scoreboard; an either/or would drop the seven the
+         * moment one game kicked off, so a strip would shrink to a single card
+         * on the busiest afternoon of the week.
+         */
+        if (count($ids) < $limit) {
+            $ids = array_merge($ids, $this->take(
+                $limit - count($ids),
+                fn ($q) => $q
+                    ->where('picks_events.match_date', '>', $now)
+                    ->where('picks_events.status', '!=', 'finished')
+                    ->orderBy('picks_events.match_date'),
+                $ids
+            ));
         }
 
-        $next = $this->first(
-            fn ($q) => $q
-                ->where('picks_events.match_date', '>', $now)
-                ->where('picks_events.status', '!=', 'finished')
-                ->orderBy('picks_events.match_date')
-        );
-
-        if ($next !== null) {
-            return $next;
+        /*
+         * Finals last, and only recent ones. They are the least interesting
+         * thing a scoreboard can say — but on a quiet Sunday morning they are
+         * the only thing it has, and a blank panel is worse.
+         */
+        if (count($ids) < $limit) {
+            $ids = array_merge($ids, $this->take(
+                $limit - count($ids),
+                fn ($q) => $q
+                    ->where('picks_events.status', 'finished')
+                    ->where('picks_events.match_date', '>', date('Y-m-d H:i:s', time() - self::KEEP_FINAL_FOR))
+                    ->orderByDesc('picks_events.match_date'),
+                $ids
+            ));
         }
 
-        return $this->first(
-            fn ($q) => $q
-                ->where('picks_events.status', 'finished')
-                ->where('picks_events.match_date', '>', date('Y-m-d H:i:s', time() - self::KEEP_FINAL_FOR))
-                ->orderByDesc('picks_events.match_date')
-        );
+        return $ids;
     }
 
     /**
-     * One fixture id, or null.
+     * Fixture ids, in the order asked for.
      *
      * 🚨 Aliased to a bare `id` in the select. Both joined tables have an `id`
      * column, so an unqualified select hands back the thread's id for the
      * fixture's — a wrong row that looks entirely plausible right up until the
      * widget shows the wrong game.
+     *
+     * @param  list<int> $exclude ids an earlier pass already took
+     * @return list<int>
      */
-    protected function first(callable $narrow): ?int
+    protected function take(int $limit, callable $narrow, array $exclude = []): array
     {
-        $query = $this->candidates()->select('picks_events.id as id');
+        if ($limit < 1) {
+            return [];
+        }
+
+        $query = $this->candidates()->select('picks_events.id as id')->limit($limit);
+
+        if ($exclude !== []) {
+            $query->whereNotIn('picks_events.id', $exclude);
+        }
 
         $narrow($query);
 
-        $row = $query->first();
-
-        return $row === null ? null : (int) $row->id;
+        /*
+         * 🚨 Distinct on the ID. The thread join is a LEFT join and a fixture
+         * with two thread rows — which the unique index makes unlikely rather
+         * than impossible — would otherwise take two of the slots in the strip
+         * and draw the same game twice.
+         */
+        return array_values(array_unique(array_map(
+            fn ($row) => (int) $row->id,
+            $query->get()->all()
+        )));
     }
 
     /**
@@ -195,7 +275,7 @@ class CurrentGame
     }
 
     /**
-     * Where to send a reader who wants the thread — or nothing.
+     * Where to send a reader who wants each thread — or nothing.
      *
      * 🚨 The SCORE is public and the LINK is not. A game thread can sit in a
      * tag not everybody may read, and a widget that linked into it anyway would
@@ -206,35 +286,36 @@ class CurrentGame
      * reader's visibility cached and served to the next is the whole failure
      * mode this comment exists to prevent.
      *
-     * @return array<string, mixed>|null
+     * @param  list<int|string> $discussionIds
+     * @return array<int, array<string, mixed>>
      */
-    protected function link(GamedayThread $thread, User $actor): ?array
+    protected function links(array $discussionIds, User $actor): array
     {
-        $discussion = Discussion::query()
-            ->whereVisibleTo($actor)
-            ->find($thread->discussion_id);
+        $discussionIds = array_values(array_unique(array_filter(array_map('intval', $discussionIds))));
 
-        if ($discussion === null) {
-            return null;
+        if ($discussionIds === []) {
+            return [];
         }
 
-        return [
-            'id' => (int) $discussion->id,
-            'slug' => $discussion->slug,
-            'title' => $discussion->title,
-            'commentCount' => (int) $discussion->comment_count,
-        ];
-    }
+        $out = [];
 
-    /** See DiscussionBoardField for why Picks is reached by name. */
-    protected function event(int $id): ?object
-    {
-        $model = self::EVENT;
-
-        if (! class_exists($model)) {
-            return null;
+        foreach (
+            Discussion::query()
+                ->whereVisibleTo($actor)
+                ->whereIn('id', $discussionIds)
+                ->get(['id', 'slug', 'title', 'comment_count'])
+            as $discussion
+        ) {
+            $out[(int) $discussion->id] = [
+                'id' => (int) $discussion->id,
+                'slug' => $discussion->slug,
+                'title' => $discussion->title,
+                'commentCount' => (int) $discussion->comment_count,
+            ];
         }
 
-        return $model::query()->with(['homeTeam', 'awayTeam'])->find($id);
+        // A discussion this reader cannot see is simply absent from the map,
+        // which is what makes its card render with no link at all.
+        return $out;
     }
 }

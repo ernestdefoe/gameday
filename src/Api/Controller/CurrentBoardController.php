@@ -28,8 +28,18 @@ class CurrentBoardController implements RequestHandlerInterface
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        $limit = (int) (\Illuminate\Support\Arr::get($request->getQueryParams(), 'limit', CurrentGame::MOST));
+
+        $boards = $this->current->boards(RequestUtil::getActor($request), $limit);
+
         return new JsonResponse([
-            'board' => $this->current->board(RequestUtil::getActor($request)),
+            'boards' => $boards,
+            /*
+             * The first one again under its old name. A widget narrow enough to
+             * draw a single card reads this and does not have to know it was
+             * sent nine others — and nothing that already reads `board` breaks.
+             */
+            'board' => $boards[0] ?? null,
         ]);
     }
 }

@@ -73,15 +73,15 @@ function pageBuilder(): void {
 
       /*
        * 🚨 The KEY decides, not the value. ScoreboardBlock always answers with
-       * a `board` key and `null` in it means "nothing is on" — a real answer,
-       * to be shown. An ABSENT key means the resolve never reached us, and the
-       * two must not look alike: read as a value, a block whose data went
-       * missing would state on the page that no game was on while one was
+       * a `boards` key and an empty array in it means "nothing is on" — a real
+       * answer, to be shown. An ABSENT key means the resolve never reached us,
+       * and the two must not look alike: read as a value, a block whose data
+       * went missing would state on the page that no game was on while one was
        * being played. Absent, we fall through to asking.
        */
       return m(ScoreboardWidget, {
         settings: v.attrs.settings || {},
-        board: 'board' in data ? data.board : undefined,
+        boards: 'boards' in data ? data.boards : undefined,
       });
     },
   };

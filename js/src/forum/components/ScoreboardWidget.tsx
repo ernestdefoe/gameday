@@ -2,155 +2,71 @@ import app from 'flarum/forum/app';
 import Component from 'flarum/common/Component';
 import extractText from 'flarum/common/utils/extractText';
 import type Mithril from 'mithril';
+import {
+  attach,
+  currentBoards,
+  detach,
+  isLoading,
+  seed,
+  type Side,
+  type WidgetBoard,
+} from '../boardStore';
 
 declare const m: any;
 
-interface Side {
-  name: string;
-  abbr: string;
-  logo: string;
-  score: number | null;
-  hasBall: boolean;
-}
-
-interface Link {
-  id: number;
-  slug: string;
-  title: string;
-  commentCount: number;
-}
-
-export interface WidgetBoard {
-  id: number;
-  state: 'scheduled' | 'live' | 'final';
-  periodLine: string;
-  clock: string | null;
-  possession: 'home' | 'away' | null;
-  down: string | null;
-  redZone: boolean;
-  clockStale: boolean;
-  kickoff: string | null;
-  home: Side;
-  away: Side;
-  discussion: Link | null;
-}
+export type { WidgetBoard };
 
 interface Attrs {
   settings?: Record<string, any>;
   /**
-   * A board the host already has.
+   * Games the host already resolved server-side (Page Builder), so the block is
+   * drawn with the page rather than a request later.
    *
-   * 🚨 Page Builder resolves this server-side and hands it over, so the block
-   * is drawn with the page. Bespoke's widget tray has no server half, so it
-   * arrives without one and fetches. The two paths differ ONLY here — the poll,
-   * the markup and the states below are shared, which is what stops the same
-   * scoreboard drifting into two scoreboards.
+   * 🚨 Handed to the store, not held here. This component is re-created from
+   * scratch on every redraw — see boardStore — so anything it kept for itself
+   * would be thrown away and asked for again a few milliseconds later.
    */
-  board?: WidgetBoard | null;
+  boards?: WidgetBoard[];
 }
 
 /**
- * The scoreboard as a widget: whatever game is on, wherever it is placed.
+ * The scoreboard as a widget: whatever games are on, wherever it is placed.
  *
  * 🚨 Not the same question as the board at the head of a game thread. That one
  * is about the thread it sits on; this one is about the site — live first, then
- * the next kickoff, then the last final for a few hours so the panel is not
- * blank for six days of the week.
+ * the next kickoffs, then recent finals so the panel is not blank for the six
+ * days of the week nobody is playing.
  *
- * 🚨 Dark in both themes, like the thread's board and for the same reason: a
- * scoreboard is a thing you look at in a stadium, and one that turns white in
- * light mode reads as a table of numbers.
+ * 🚨 A READER, holding no state of its own. Every field it might have kept
+ * lives in boardStore, because Bespoke rebuilds its zone hosts on every redraw
+ * and this component does not survive one.
  */
 export default class ScoreboardWidget extends Component<Attrs> {
-  board: WidgetBoard | null = null;
-  loading = false;
-  timer: any = null;
-
   oninit(vnode: Mithril.Vnode<Attrs>) {
     super.oninit(vnode);
 
-    this.board = this.attrs.board ?? null;
-
-    if (this.attrs.board === undefined) {
-      this.loading = true;
-      this.refresh();
-    } else {
-      this.schedule();
+    if (this.attrs.boards !== undefined) {
+      seed(this.attrs.boards);
     }
+
+    attach();
   }
 
   onremove() {
-    if (this.timer) clearTimeout(this.timer);
-  }
-
-  /**
-   * How often to ask again.
-   *
-   * 🚨 Every fifteen seconds while a game is being PLAYED, and almost never
-   * otherwise. A widget can sit on a home page every visitor loads, so a poll
-   * that ran regardless would be a request per reader per interval, all year,
-   * to be told the same thing.
-   *
-   * 🚨 A scheduled game still needs one — otherwise the widget shows "Kickoff
-   * 7:30pm" for the whole first quarter to anybody who left the tab open. Once
-   * a minute, and only inside the half hour before kickoff, which is the only
-   * window in which the answer can change.
-   */
-  schedule() {
-    if (this.timer) clearTimeout(this.timer);
-    if (!this.board) return;
-
-    if (this.board.state === 'live') {
-      this.timer = setTimeout(() => this.refresh(), 15000);
-      return;
-    }
-
-    if (this.board.state === 'scheduled' && this.nearKickoff()) {
-      this.timer = setTimeout(() => this.refresh(), 60000);
-    }
-  }
-
-  nearKickoff(): boolean {
-    if (!this.board?.kickoff) return false;
-
-    const away = new Date(this.board.kickoff).getTime() - Date.now();
-
-    // Already past kickoff counts: the feed can be a minute or two behind the
-    // whistle, and that is exactly when somebody is watching this.
-    return away < 1800000;
-  }
-
-  refresh() {
-    app
-      .request<{ board: WidgetBoard | null }>({
-        method: 'GET',
-        url: `${app.forum.attribute('apiUrl')}/gameday/board`,
-      })
-      .then((res) => {
-        this.board = (res && res.board) || null;
-        this.loading = false;
-        m.redraw();
-      })
-      .catch(() => {
-        // A missed poll is a stale board, not a broken page. The FIRST fetch
-        // failing is different — it leaves nothing to draw, and the empty state
-        // below is what says so.
-        this.loading = false;
-        m.redraw();
-      })
-      .then(() => this.schedule());
+    detach();
   }
 
   view() {
     const s = this.attrs.settings || {};
-    const b = this.board;
     const t = (k: string, p?: any) => app.translator.trans(`ernestdefoe-gameday.forum.widget_${k}`, p);
 
-    if (!b) {
+    const boards = currentBoards();
+
+    if (boards.length === 0) {
       // 🚨 Nothing at all, by default. Off-season this panel would otherwise
       // say "no games" every day for months, which is a worse answer than the
       // space it takes up.
-      if (this.loading || s.hideWhenEmpty !== false) return null;
+      if (isLoading() || s.hideWhenEmpty !== false) return null;
 
       return (
         <div className="GamedayWidget GamedayWidget--empty">
@@ -160,13 +76,46 @@ export default class ScoreboardWidget extends Component<Attrs> {
       );
     }
 
+    /*
+     * 🚨 Every game is rendered, and the CONTAINER decides how many are seen.
+     *
+     * Where a widget goes is the operator's choice — a sidebar, a full-width
+     * row, a hero — and the component is not told which. A container query is,
+     * so the stylesheet shows one stacked card in a narrow column and a
+     * scrolling strip of them given the width of a page. Measuring the element
+     * in JavaScript would be the same answer arrived at a frame later, after a
+     * layout the reader can see.
+     *
+     * It also means the strip is real markup rather than a JS-built list: it
+     * scrolls, it keyboard-scrolls, and it is all there for a reader whose
+     * browser never runs the query.
+     */
+    return (
+      <div className="GamedayWidget">
+        {s.title ? <h4 className="GamedayWidget-title">{s.title}</h4> : null}
+
+        <div
+          className="GamedayWidget-strip"
+          aria-live="polite"
+          // A named role only where it is actually a scrolling region, which
+          // is what the class does; the label says what is scrolling.
+          aria-label={extractText(t('scoreboard'))}
+        >
+          {boards.map((b) => this.game(b, s, t))}
+        </div>
+      </div>
+    );
+  }
+
+  game(b: WidgetBoard, s: Record<string, any>, t: (k: string, p?: any) => any) {
     const link = s.showLink === false ? null : b.discussion;
 
     return (
-      <div className={`GamedayWidget GamedayWidget--${b.state}${b.redZone ? ' GamedayWidget--redzone' : ''}`}>
-        {s.title ? <h4 className="GamedayWidget-title">{s.title}</h4> : null}
-
-        <div className="GamedayWidget-board" aria-live="polite">
+      <div
+        key={b.id}
+        className={`GamedayWidget-game GamedayWidget-game--${b.state}${b.redZone ? ' GamedayWidget-game--redzone' : ''}`}
+      >
+        <div className="GamedayWidget-board">
           <div className="GamedayWidget-status">
             {b.state === 'live' ? (
               <span className="GamedayWidget-live">
@@ -240,8 +189,35 @@ export default class ScoreboardWidget extends Component<Attrs> {
   side(s: Side) {
     return (
       <div className={`GamedayWidget-side${s.hasBall ? ' GamedayWidget-side--ball' : ''}`}>
+        {/*
+          🚨 Both crests in the markup, one shown by CSS.
+          A widget follows the page theme, and a mark drawn for a dark ground
+          is white-on-transparent for plenty of teams — invisible on the light
+          panel, and an empty box reads as a broken image rather than as a
+          styling choice. Swapping the `src` in JavaScript would work too and
+          would do it a frame after the theme changed, in front of the reader.
+        */}
         <span className="GamedayWidget-crest">
-          {s.logo ? <img src={s.logo} alt="" aria-hidden="true" loading="lazy" referrerpolicy="no-referrer" /> : null}
+          {s.logoLight ? (
+            <img
+              className="GamedayWidget-crest--light"
+              src={s.logoLight}
+              alt=""
+              aria-hidden="true"
+              loading="lazy"
+              referrerpolicy="no-referrer"
+            />
+          ) : null}
+          {s.logo ? (
+            <img
+              className="GamedayWidget-crest--dark"
+              src={s.logo}
+              alt=""
+              aria-hidden="true"
+              loading="lazy"
+              referrerpolicy="no-referrer"
+            />
+          ) : null}
         </span>
 
         {/* 🚨 The abbreviation only where it says something the name did not.

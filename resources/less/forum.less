@@ -108,7 +108,7 @@
   justify-content: center;
   gap: 10px;
   padding: 8px 18px 12px;
-  border-top: 1px solid rgba(255, 255, 255, .08);
+  border-top: 1px solid var(--gdw-rule);
   font-size: .82rem;
   font-weight: 700;
   letter-spacing: .4px;
@@ -279,10 +279,83 @@
  * 🚨 Dark in both themes, like the thread's board and for the same reason.
  */
 .GamedayWidget {
-  --gdw-ink: #f4f7fb;
-  --gdw-dim: #93a1b4;
+  /*
+   * 🚨 The widget follows the THEME; the thread's hero board does not.
+   *
+   * They are different things in the same house. The hero is the reason
+   * somebody opened a game thread and it is meant to read like a stadium
+   * board, so it stays dark in both themes on purpose. A widget sits in a
+   * sidebar between a tag list and a member list, and a panel that stays black
+   * on a light forum is not a scoreboard there — it is a hole in the page.
+   *
+   * These are the LIGHT values; the dark set is below. Every one of them is
+   * defined here on the bare selector, so a token can never exist only inside
+   * a media query — which is how a widget ends up drawing light text on a
+   * light ground for the readers whose browser did not match either branch.
+   */
+  --gdw-ground: linear-gradient(150deg, #ffffff, #f4f6fa 60%, #eef1f6);
+  --gdw-ink: #10161e;
+  --gdw-dim: #5a6879;
+  --gdw-edge: rgba(16, 22, 30, .10);
+  --gdw-shadow: 0 8px 22px -14px rgba(16, 22, 30, .35);
+  --gdw-rule: rgba(16, 22, 30, .10);
+  --gdw-ball: #b8860b;
+  --gdw-live: #d5341f;
+  --gdw-stale: #8a6d1f;
+  --gdw-rz: #c2410c;
+  --gdw-rzedge: rgba(194, 65, 12, .45);
 
   margin-bottom: 18px;
+
+  /*
+   * 🚨 A CONTAINER, so the layout follows where the widget was PUT rather than
+   * how big the window is. A sidebar on a 27in monitor is still a sidebar, and
+   * a viewport media query would lay a ten-card strip into a 240px column and
+   * call it wide.
+   */
+  container-type: inline-size;
+  container-name: gdw;
+}
+
+/*
+ * The dark set, defined ONCE and applied from both branches below.
+ *
+ * 🚨 Flarum 2 carries the choice on `<html data-theme>` with three values —
+ * light, dark, and auto. Auto stamps no preference of its own, so it needs
+ * `prefers-color-scheme` to decide, and a rule written only for
+ * `[data-theme="dark"]` leaves every reader on the default setting looking at
+ * the light palette on a dark forum.
+ */
+.gdw-dark() {
+  --gdw-ground: linear-gradient(150deg, #1b2532, #10161e 60%, #0b1015);
+  --gdw-ink: #f4f7fb;
+  --gdw-dim: #93a1b4;
+  --gdw-edge: rgba(255, 255, 255, .07);
+  --gdw-shadow: 0 8px 22px -12px rgba(0, 0, 0, .7);
+  --gdw-rule: rgba(255, 255, 255, .08);
+  --gdw-ball: #ffce4d;
+  --gdw-live: #ff5a4d;
+  --gdw-stale: #c9a227;
+  --gdw-rz: #ff7a55;
+  --gdw-rzedge: rgba(255, 122, 85, .38);
+}
+
+html[data-theme='dark'] .GamedayWidget { .gdw-dark(); }
+
+@media (prefers-color-scheme: dark) {
+  // Only where the reader has NOT chosen light explicitly.
+  html:not([data-theme='light']) .GamedayWidget { .gdw-dark(); }
+}
+
+// The glow belongs on a dark ground and nowhere else.
+html[data-theme='dark'] .GamedayWidget-ball {
+  text-shadow: 0 0 8px rgba(255, 206, 77, .8);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme='light']) .GamedayWidget-ball {
+    text-shadow: 0 0 8px rgba(255, 206, 77, .8);
+  }
 }
 
 .GamedayWidget-title {
@@ -291,20 +364,29 @@
   font-weight: 700;
 }
 
+/*
+ * Narrow by default: one card, stacked, the shape a sidebar wants.
+ *
+ * 🚨 The other games are hidden rather than never sent. Which of them fits is a
+ * question about a box this component is not told the width of, and the answer
+ * changes when somebody drags the widget somewhere else — so the markup carries
+ * all of them and the container query below decides. It also means the strip is
+ * real content: it scrolls without script, and every game is there for a reader
+ * whose browser never runs the query.
+ *
+ * This replaced a flat `max-width: 420px` on the board, which kept a scoreboard
+ * readable in a full-width row by refusing to use the row.
+ */
+.GamedayWidget-game + .GamedayWidget-game {
+  display: none;
+}
+
 .GamedayWidget-board {
-  /*
-   * 🚨 Capped, because a widget does not choose its column. In a sidebar this
-   * does nothing; dropped into a full-width Page Builder row it is the
-   * difference between a scoreboard and a team name at one end of the screen
-   * with its score at the other — technically the same information, and not
-   * readable as a score.
-   */
-  max-width: 420px;
   border-radius: 12px;
   overflow: hidden;
   padding: 12px 13px 11px;
-  background: linear-gradient(150deg, #1b2532, #10161e 60%, #0b1015);
-  box-shadow: 0 8px 22px -12px rgba(0, 0, 0, .7), inset 0 0 0 1px rgba(255, 255, 255, .07);
+  background: var(--gdw-ground);
+  box-shadow: var(--gdw-shadow), inset 0 0 0 1px var(--gdw-edge);
   color: var(--gdw-ink);
 }
 
@@ -324,7 +406,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  color: #ff5a4d;
+  color: var(--gdw-live);
 }
 
 .GamedayWidget-pip {
@@ -359,7 +441,7 @@
   font-weight: 600;
   letter-spacing: .4px;
   text-transform: uppercase;
-  color: #c9a227;
+  color: var(--gdw-stale);
 }
 
 .GamedayWidget-side {
@@ -378,6 +460,22 @@
   justify-content: center;
 
   img { width: 100%; height: 100%; object-fit: contain; }
+
+  // Light ground by default; the dark branch below swaps them. Only one is
+  // ever laid out, so the box never holds two crests side by side.
+  .GamedayWidget-crest--dark { display: none; }
+}
+
+html[data-theme='dark'] .GamedayWidget-crest {
+  .GamedayWidget-crest--light { display: none; }
+  .GamedayWidget-crest--dark { display: block; }
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme='light']) .GamedayWidget-crest {
+    .GamedayWidget-crest--light { display: none; }
+    .GamedayWidget-crest--dark { display: block; }
+  }
 }
 
 .GamedayWidget-team {
@@ -393,11 +491,13 @@
   flex: 0 0 auto;
   font-size: .55rem;
   line-height: 1;
-  color: #ffce4d;
-  text-shadow: 0 0 8px rgba(255, 206, 77, .8);
+  color: var(--gdw-ball);
+  // No glow on a light ground — it reads as a printing smudge rather than as
+  // emphasis. The dark block below puts it back.
+  text-shadow: none;
 }
 
-.GamedayWidget-side--ball .GamedayWidget-team { color: #ffce4d; }
+.GamedayWidget-side--ball .GamedayWidget-team { color: var(--gdw-ball); }
 
 .GamedayWidget-score {
   margin-left: auto;
@@ -423,13 +523,16 @@
 }
 
 .GamedayWidget-rz {
-  color: #ff7a55;
+  color: var(--gdw-rz);
 }
 
 // The whole panel takes a warmer edge in the red zone — the situation line
 // already says it in words, and this is the part somebody catches sideways on.
-.GamedayWidget--redzone .GamedayWidget-board {
-  box-shadow: 0 8px 22px -12px rgba(0, 0, 0, .7), inset 0 0 0 1px rgba(255, 122, 85, .38);
+// The class moved onto the card when the strip arrived; both are matched so a
+// board rendered by an older bundle is not left without its edge.
+.GamedayWidget--redzone .GamedayWidget-board,
+.GamedayWidget-game--redzone .GamedayWidget-board {
+  box-shadow: var(--gdw-shadow), inset 0 0 0 1px var(--gdw-rzedge);
 }
 
 .GamedayWidget-link {
@@ -464,4 +567,66 @@
   background: var(--control-bg);
   color: var(--muted-color);
   font-size: .85rem;
+}
+
+/*
+ * Wide: a scrolling strip of games, the way a scoreboard is actually read.
+ *
+ * 🚨 The threshold is the CONTAINER's width, not the window's. 520px is about
+ * where a second card stops crowding the first — below it the single stacked
+ * card is the better answer however wide the screen behind it happens to be.
+ */
+@container gdw (min-width: 520px) {
+  .GamedayWidget-strip {
+    display: flex;
+    gap: 12px;
+
+    /*
+     * 🚨 The scroll lives HERE, never on the page. A strip of ten games is
+     * wider than most columns by design, and an overflow that escaped this box
+     * would put a horizontal scrollbar under the whole forum.
+     */
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    // Room for the cards' own shadow, which a tight clip would shave off.
+    padding-bottom: 6px;
+    scrollbar-width: thin;
+  }
+
+  .GamedayWidget-game {
+    // Wide enough for two names and two scores, narrow enough that the next
+    // card is always partly visible — which is what says the strip scrolls.
+    flex: 0 0 clamp(230px, 32%, 300px);
+    scroll-snap-align: start;
+  }
+
+  // Every card, not only the first.
+  .GamedayWidget-game + .GamedayWidget-game {
+    display: block;
+  }
+}
+
+/*
+ * 🚨 A viewport fallback ONLY where container queries are missing. It is wrong
+ * in a sidebar — the viewport knows nothing about the column — but it is right
+ * far more often than drawing one card on a full-width row forever, and
+ * `@supports not` keeps it away from every browser that has the real thing.
+ */
+@supports not (container-type: inline-size) {
+  @media (min-width: 1100px) {
+    .GamedayWidget-strip {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+
+    .GamedayWidget-game {
+      flex: 0 0 clamp(230px, 32%, 300px);
+    }
+
+    .GamedayWidget-game + .GamedayWidget-game {
+      display: block;
+    }
+  }
 }

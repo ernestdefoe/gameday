@@ -82,6 +82,8 @@ class ScoreboardBlock extends AbstractBlock
      */
     public function resolve(array $settings, User $actor): array
     {
-        return ['board' => $this->current->board($actor)];
+        $boards = $this->current->boards($actor);
+
+        return ['boards' => $boards, 'board' => $boards[0] ?? null];
     }
 }

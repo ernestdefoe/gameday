@@ -179,20 +179,22 @@ class Scoreboard
             'name' => (string) ($team->name ?? ''),
             'abbr' => (string) ($team->abbreviation ?? ''),
             /*
-             * 🚨 The DARK-ground crest where there is one. This strip is dark in
-             * both themes — it is built from chrome colours rather than the page
-             * ground, which is what a real scoreboard looks like — and laying a
-             * light-ground mark on it is how a navy crest becomes a navy smudge.
+             * 🚨 BOTH crests, because the two things that draw them no longer
+             * agree about their ground.
              *
-             * 🚨 `logo_dark_url`, which this said it used and did not. Picks has
-             * carried both variants all along and this read the light one, so
-             * every comment above was describing an intention rather than the
-             * code under it — and a dark-crested team was a dark smudge on a
-             * dark panel, which reads as a missing image rather than as a bug.
-             * The accessor falls back to the standard logo on its own, so a
-             * team with no dark variant is unaffected.
+             * The board at the head of a game thread is dark in either theme —
+             * it is built from chrome colours, which is what a real scoreboard
+             * looks like — and takes `logo`, the dark-ground mark. The widget
+             * follows the page theme, so it ships both and lets CSS choose;
+             * laying a white-on-transparent crest on a light panel is how a
+             * team's mark becomes an empty box.
+             *
+             * `logo` stays the dark-ground one so the hero's contract does not
+             * move. Picks' own accessors fall back to the standard logo, so a
+             * team with only one variant is unaffected either way.
              */
             'logo' => (string) ($team->logo_dark_url ?? $team->logo_url ?? ''),
+            'logoLight' => (string) ($team->logo_url ?? $team->logo_dark_url ?? ''),
             'score' => $score === null ? null : (int) $score,
         ];
     }
