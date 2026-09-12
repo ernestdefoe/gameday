@@ -246,7 +246,153 @@ class Threads
         return $rewritten;
     }
 
+    /**
+     * Rewrites opening posts written before the fixture carried a lead-in.
+     *
+     * 🚨 Lives here rather than in the command, alongside the code that WROTE
+     * those posts. What counts as an opener this extension generated, and what
+     * it should say now, are the same question `openOne()` answers — and a copy
+     * of that judgement in a console command is a copy that drifts the first
+     * time the preview changes.
+     *
+     * 🚨 THREE conditions before anything is touched, and they are the reason
+     * this is safe on a live board: the post must be the discussion's first, it
+     * must have been posted by the account Game Day posts as, and its text must
+     * still be a shape this extension generated. A post somebody has edited is
+     * somebody's writing.
+     *
+     * @param  callable(string, string): void|null $report
+     * @return array{rewritten: int, skipped: int, retitled: int}
+     */
+    public function rewriteOpeners(
+        int $limit = 200,
+        bool $withTitles = false,
+        bool $includeCurrent = false,
+        bool $dryRun = false,
+        ?callable $report = null
+    ): array {
+        $author = $this->author();
+
+        $rewritten = 0;
+        $skipped = 0;
+        $retitled = 0;
+
+        if ($author === null) {
+            return compact('rewritten', 'skipped', 'retitled');
+        }
+
+        $rows = GamedayThread::query()->orderByDesc('id')->get();
+
+        foreach ($rows as $row) {
+            if ($rewritten >= $limit) {
+                break;
+            }
+
+            $game = PickEvent::with(['homeTeam', 'awayTeam', 'week.season'])->find($row->event_id);
+            $discussion = Discussion::find($row->discussion_id);
+
+            if ($game === null || $discussion === null || $discussion->first_post_id === null) {
+                $skipped++;
+
+                continue;
+            }
+
+            $post = CommentPost::find($discussion->first_post_id);
+
+            if ($post === null || (int) $post->user_id !== (int) $author->id) {
+                $skipped++;
+
+                continue;
+            }
+
+            $content = (string) $post->content;
+
+            if (! $this->isGeneratedOpener($content, $includeCurrent)) {
+                $skipped++;
+
+                continue;
+            }
+
+            $text = $this->preview($game)->text($this->previewOf($game));
+
+            $title = $withTitles ? $this->title($game) : $discussion->title;
+            $titleChanges = $withTitles && $title !== $discussion->title && $this->isGeneratedTitle($discussion->title, $game);
+
+            // Nothing new to say is not a rewrite. A rerun over a season should
+            // cost nothing and change nothing.
+            if ($text === $content && ! $titleChanges) {
+                $skipped++;
+
+                continue;
+            }
+
+            if ($report !== null) {
+                $report($titleChanges ? $discussion->title . '  ->  ' . $title : $discussion->title, $text);
+            }
+
+            if (! $dryRun) {
+                $post->setContentAttribute($text, $author);
+                $post->save();
+
+                if ($titleChanges) {
+                    /*
+                     * 🚨 Written straight onto the model, NOT through the rename
+                     * command. Flarum's rename posts an event into the
+                     * discussion — "X changed the title" — and a backfill that
+                     * did that would push sixty of them into sixty threads and
+                     * bump every one of them to the top of the board.
+                     */
+                    $discussion->title = $title;
+                    $discussion->save();
+                }
+            }
+
+            if ($titleChanges) {
+                $retitled++;
+            }
+
+            $rewritten++;
+        }
+
+        return compact('rewritten', 'skipped', 'retitled');
+    }
+
     /* -------------------------------------------------------------- private */
+
+    /**
+     * Whether this post is still one this extension wrote.
+     *
+     * 🚨 Matched on the CLOSING line, not on "kicks off". A member opening
+     * their own thread may well write "kicks off in an hour"; nobody writes
+     * these sentences. Each has been the last line of every generated opener of
+     * its era, which makes it a signature rather than a guess about wording.
+     */
+    protected function isGeneratedOpener(string $content, bool $includeCurrent): bool
+    {
+        if (str_contains($content, 'This thread opens before the game and stays here afterwards.')) {
+            return true;
+        }
+
+        return $includeCurrent
+            && str_contains($content, 'Thread is open — predictions, complaints and everything in between.');
+    }
+
+    /**
+     * Whether the thread still has the title this extension gave it.
+     *
+     * 🚨 Compared against the UNRANKED form, because that is what the title was
+     * before there were ranks — and a title that no longer matches is a title
+     * somebody renamed. Renaming it back would undo a moderator's decision,
+     * silently, across a whole season.
+     */
+    protected function isGeneratedTitle(string $title, PickEvent $game): bool
+    {
+        $joiner = $game->neutral_site ? ' vs ' : ' at ';
+        $plain = trim(($game->awayTeam->name ?? 'Away') . $joiner . ($game->homeTeam->name ?? 'Home'));
+
+        return $title === $plain;
+    }
+
 
     protected function openOne(PickEvent $game, User $author): bool
     {

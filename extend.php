@@ -8,6 +8,7 @@ use ErnestDefoe\Gameday\Api\Controller\ReactionsController;
 use ErnestDefoe\Gameday\Api\Controller\TeamTagsController;
 use ErnestDefoe\Gameday\Api\Resource\DiscussionBoardField;
 use ErnestDefoe\Gameday\Console\EnrichCommand;
+use ErnestDefoe\Gameday\Console\RewriteOpenersCommand;
 use ErnestDefoe\Gameday\Console\TickCommand;
 use ErnestDefoe\Gameday\Service\Settings;
 use ErnestDefoe\Gameday\Service\Sports\Sports;
@@ -84,6 +85,13 @@ $extenders = [
     (new Extend\Console())
         ->command(TickCommand::class)
         ->command(EnrichCommand::class)
+        /*
+         * 🚨 Not scheduled. Every other pass in this extension is idempotent
+         * and runs on a timer; this one reaches back over threads that are
+         * already published and rewrites them, which is a thing somebody should
+         * decide to do rather than something that happens hourly.
+         */
+        ->command(RewriteOpenersCommand::class)
         /*
          * Every minute for the threads themselves: a thread that opens three
          * minutes late is a thread people were already waiting for.
