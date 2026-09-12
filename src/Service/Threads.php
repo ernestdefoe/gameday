@@ -28,6 +28,26 @@ use Resofire\Picks\PickEvent;
  */
 class Threads
 {
+    /**
+     * The closing lines of every opening post this extension has generated.
+     *
+     * 🚨 Matched on the CLOSING line rather than on "kicks off". A member
+     * opening their own thread may well write "kicks off in an hour"; nobody
+     * writes these sentences. Each has been the last line of every generated
+     * opener of its era, which makes it a signature rather than a guess about
+     * wording — and it is the only thing standing between a backfill and
+     * somebody else's writing.
+     */
+    private const OPENER_SIGNATURES = [
+        'This thread opens before the game and stays here afterwards.',
+        // The wording before that one. 51 of the 87 threads on the first board
+        // this ran against were opened by that version.
+        'This thread goes live at kickoff and stays here afterwards.',
+    ];
+
+    /** What the current preview ends with, so a rerun is a no-op. */
+    private const CURRENT_SIGNATURE = 'Thread is open — predictions, complaints and everything in between.';
+
     /** How long after a game a recap is still worth rewriting. */
     private const STATS_WINDOW_HOURS = 48;
 
@@ -369,12 +389,25 @@ class Threads
      */
     protected function isGeneratedOpener(string $content, bool $includeCurrent): bool
     {
-        if (str_contains($content, 'This thread opens before the game and stays here afterwards.')) {
-            return true;
+        /*
+         * 🚨 EVERY closing line this extension has ever written, not just the
+         * last one. Found the hard way on a board with 87 game threads on it:
+         * matching only the most recent wording rewrote 35 of them and silently
+         * declined the other 51, which were opened by an earlier version whose
+         * sentence was "goes live at kickoff" rather than "opens before the
+         * game". They looked, to the command, exactly like posts a person had
+         * written.
+         *
+         * So this list only ever grows. A line retired here is a set of threads
+         * that quietly stops being maintained.
+         */
+        foreach (self::OPENER_SIGNATURES as $signature) {
+            if (str_contains($content, $signature)) {
+                return true;
+            }
         }
 
-        return $includeCurrent
-            && str_contains($content, 'Thread is open — predictions, complaints and everything in between.');
+        return $includeCurrent && str_contains($content, self::CURRENT_SIGNATURE);
     }
 
     /**

@@ -28,19 +28,12 @@ use Symfony\Component\Console\Input\InputOption;
  */
 class RewriteOpenersCommand extends AbstractCommand
 {
-    /**
-     * Text only this extension writes.
-     *
-     * 🚨 Matched on the CLOSING line rather than on "kicks off". A member
-     * opening their own thread may well write "kicks off in an hour"; nobody
-     * writes this sentence. It is also the line every generated opener has had
-     * since the first version, which is what makes it a reliable signature
-     * rather than a guess about wording.
+    /*
+     * 🚨 The signatures themselves live on `Service\Threads`, beside the code
+     * that WROTE them. A copy here would be a copy that goes stale the first
+     * time the preview's closing line changes — and the failure mode of a stale
+     * copy is a command that silently declines to touch half a board.
      */
-    private const OLD_SIGNATURE = 'This thread opens before the game and stays here afterwards.';
-
-    /** The sign-off the current preview ends with, so a rerun is a no-op. */
-    private const NEW_SIGNATURE = 'Thread is open — predictions, complaints and everything in between.';
 
     public function __construct(protected Threads $threads)
     {
