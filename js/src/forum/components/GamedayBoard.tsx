@@ -14,6 +14,7 @@ interface Board {
   clock: string | null;
   possession: 'home' | 'away' | null;
   down: string | null;
+  ballOn: string | null;
   redZone: boolean;
   clockStale: boolean;
   kickoff: string | null;
@@ -111,9 +112,11 @@ export default class GamedayBoard extends Component<{ discussion: any }> {
             nothing at all. */}
         {b.state === 'live' ? m(LiveReactions, { discussion: this.attrs.discussion }) : null}
 
-        {b.down || b.redZone ? (
+        {b.down || b.ballOn || b.redZone ? (
           <div className="GamedayBoard-situation">
             {b.down ? <span className="GamedayBoard-down">{b.down}</span> : null}
+            {/* Said after the down, the way it is said out loud. */}
+            {b.ballOn ? <span className="GamedayBoard-ballOn">{b.ballOn}</span> : null}
             {b.redZone ? <span className="GamedayBoard-redzone">{t('red_zone')}</span> : null}
           </div>
         ) : null}

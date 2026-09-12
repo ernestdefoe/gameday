@@ -31,13 +31,16 @@ class LiveRefresh
     /**
      * How long a set of numbers is considered fresh.
      *
-     * With the browser asking every ~4.5s, this puts the worst case a viewer
-     * can see at roughly TTL + one poll. Twelve seconds is chosen to be
-     * comfortably inside "the clock on my screen matches the clock on the TV"
-     * while still being six times cheaper than the every-second fetch that
-     * would actually be needed to keep a running clock exact.
+     * The worst case a viewer can see is this window plus one browser poll —
+     * 8 + 6 = ~14s, against ~65s from the scheduler alone.
+     *
+     * 🚨 There is little point going lower. ESPN publishes per PLAY, not per
+     * second: sampled every 5s through a live drive it reads 7:17, 7:17, 7:17,
+     * 7:10, 7:10 ... 6:22. Once this window is inside their publish interval
+     * the remaining lag is theirs, and a shorter one just re-fetches the same
+     * numbers.
      */
-    public const TTL = 12;
+    public const TTL = 8;
 
     private const KEY = 'gameday.live-refresh';
 

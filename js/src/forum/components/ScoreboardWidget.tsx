@@ -149,9 +149,11 @@ export default class ScoreboardWidget extends Component<Attrs> {
           {this.side(b.away)}
           {this.side(b.home)}
 
-          {b.down || b.redZone ? (
+          {b.down || b.ballOn || b.redZone ? (
             <div className="GamedayWidget-situation">
               {b.down ? <span className="GamedayWidget-down">{b.down}</span> : null}
+            {/* Said after the down, the way it is said out loud. */}
+            {b.ballOn ? <span className="GamedayWidget-ballOn">{b.ballOn}</span> : null}
               {b.redZone ? <span className="GamedayWidget-rz">{t('red_zone')}</span> : null}
             </div>
           ) : null}

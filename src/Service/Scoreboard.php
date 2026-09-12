@@ -109,6 +109,16 @@ class Scoreboard
                 ? (trim((string) ($event->down_distance ?? '')) ?: null)
                 : null,
 
+            /*
+             * Where the ball is, on the same terms as the down above and for
+             * the same reason: a yard line is a claim about right now. The feed
+             * keeps sending the last one through a stoppage, and "BC 49" beside
+             * "Halftime" is a sentence about a play nobody is running.
+             */
+            'ballOn' => $possession !== null && $fresh
+                ? (trim((string) ($event->ball_on ?? '')) ?: null)
+                : null,
+
             'redZone' => $state === 'live' && $fresh && ! empty($event->red_zone),
 
             /*

@@ -160,7 +160,24 @@ function reschedule(): void {
   if (!lead) return;
 
   if (lead.state === 'live') {
-    timer = setTimeout(fetchBoards, 15000);
+    /*
+     * Six seconds while a game is on.
+     *
+     * The arithmetic that matters is the WORST CASE a viewer can see, which is
+     * the server's refresh window plus one poll. At 15s against a 12s window
+     * that was ~27s; at 6s against an 8s window it is ~14s.
+     *
+     * 🚨 Polling faster than this buys very little, because the feed itself is
+     * not continuous. Sampling ESPN every 5s during a live drive: 7:17, 7:17,
+     * 7:17, 7:10, 7:10 ... 6:22 — it publishes per PLAY, in chunks of tens of
+     * seconds, not per second. Once the poll is comfortably inside their
+     * publish interval the remaining lag is theirs, and more requests only
+     * fetch the same numbers again.
+     *
+     * Most of these polls cost nothing outbound: the server answers from its
+     * shared window and only one request in each window reaches ESPN.
+     */
+    timer = setTimeout(fetchBoards, 6000);
 
     return;
   }

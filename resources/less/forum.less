@@ -156,6 +156,19 @@
   letter-spacing: .4px;
 }
 .GamedayBoard-down { color: var(--gd-ink); }
+
+/*
+ * The yard line sits a step back from the down.
+ *
+ * "2nd & 8" is the thing being read; "BC 49" is what qualifies it. Given equal
+ * weight the strip turns into two competing facts, and the down — the one that
+ * tells you what happens next — stops leading. Dim keeps the order of
+ * importance the same as the order it is spoken in.
+ */
+.GamedayBoard-ballOn {
+  color: var(--gd-dim);
+  font-weight: 600;
+}
 .GamedayBoard-redzone {
   padding: 2px 9px;
   border-radius: 999px;
@@ -548,6 +561,12 @@ html[data-theme='dark'] .GamedayWidget-crest {
   // Tabular figures, so a 7 becoming a 10 does not shift the row it is in.
   font-variant-numeric: tabular-nums;
   line-height: 1;
+}
+
+/* Same relationship as on the board: the down leads, the yard line qualifies. */
+.GamedayWidget-ballOn {
+  color: var(--gdw-dim);
+  font-weight: 600;
 }
 
 .GamedayWidget-situation {
