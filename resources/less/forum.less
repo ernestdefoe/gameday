@@ -252,10 +252,19 @@
 .GamedayBoard-name { display: inline; }
 .GamedayBoard-abbr { display: none; }
 
-// The home side reads outward from the middle, so its name block mirrors too —
-// otherwise the rank ends up against the crest instead of against the name.
+/*
+ * The home side's block aligns to its own outer edge — but the LINE inside it
+ * does not mirror.
+ *
+ * 🚨 The rank comes before the name on both sides, which is the one place the
+ * board deliberately stops mirroring. Everything else here reverses because a
+ * scoreboard is laid out outward from the clock; a rank does not, because it is
+ * part of what the team is CALLED. Reversed, the home side reads "Ohio State
+ * #1", which looks like a figure appended to a name — a seed, a jersey, another
+ * score — rather than the rank it is. Every broadcast in the sport writes "#1
+ * Ohio State" on both sides of the graphic.
+ */
 .GamedayBoard-side:last-child .GamedayBoard-team { align-items: flex-end; }
-.GamedayBoard-side:last-child .GamedayBoard-line { flex-direction: row-reverse; }
 
 /*
  * The poll ranking, set the way a broadcast sets it: smaller than the name and
