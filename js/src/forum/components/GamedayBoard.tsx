@@ -5,7 +5,16 @@ import LiveReactions from './LiveReactions';
 
 declare const m: any;
 
-interface Side { name: string; abbr: string; logo: string; score: number | null; hasBall: boolean }
+interface Side {
+  name: string;
+  abbr: string;
+  rank: number | null;
+  /** What they brought into this game — "2-0". Frozen at kickoff. */
+  record: string;
+  logo: string;
+  score: number | null;
+  hasBall: boolean;
+}
 
 interface Board {
   id: number;
@@ -18,6 +27,9 @@ interface Board {
   redZone: boolean;
   clockStale: boolean;
   kickoff: string | null;
+  venue: string;
+  venueCity: string;
+  broadcast: string;
   home: Side;
   away: Side;
 }
@@ -120,6 +132,40 @@ export default class GamedayBoard extends Component<{ discussion: any }> {
             {b.redZone ? <span className="GamedayBoard-redzone">{t('red_zone')}</span> : null}
           </div>
         ) : null}
+
+        {/* 🚨 Gated on the STATE, not simply on the situation row being absent.
+            The feed drops the down between plays, so "whenever there is no
+            down" would swap the venue in and out every few seconds while a game
+            was on — a board that changes height under somebody watching it. */}
+        {b.state === 'live' ? null : this.meta(b)}
+      </div>
+    );
+  }
+
+  /**
+   * Where it is being played and who is showing it.
+   *
+   * 🚨 Never while the game is being played, which is where the situation row
+   * lives. That is the right trade on its own terms — what down it is beats
+   * what stadium it is in, for the ninety minutes anybody cares — and it is
+   * also what keeps the board from changing height between plays.
+   *
+   * Before kickoff it is the opposite: the board is two crests, two dashes and
+   * a time, most of the people who will ever see it are seeing it now, and the
+   * stadium and the channel are the whole of what is left to ask.
+   */
+  meta(b: Board) {
+    const where = [b.venue, b.venueCity].filter(Boolean).join(', ');
+    const parts = [where, b.broadcast].filter(Boolean);
+
+    // Nothing known is no row. An empty rule across the bottom of the board
+    // reads as something that failed to load.
+    if (parts.length === 0) return null;
+
+    return (
+      <div className="GamedayBoard-meta">
+        {where ? <span className="GamedayBoard-venue">{where}</span> : null}
+        {b.broadcast ? <span className="GamedayBoard-tv">{b.broadcast}</span> : null}
       </div>
     );
   }
@@ -131,10 +177,39 @@ export default class GamedayBoard extends Component<{ discussion: any }> {
           {s.logo ? <img src={s.logo} alt="" aria-hidden="true" loading="lazy" referrerpolicy="no-referrer" /> : null}
         </span>
         <span className="GamedayBoard-team">
-          {/* The abbreviation on a narrow screen, the name where there is room —
-              one element, so the two never disagree about which is showing. */}
-          <span className="GamedayBoard-name">{s.name}</span>
-          <span className="GamedayBoard-abbr">{s.abbr || s.name}</span>
+          {/*
+            🚨 The rank and the name share an element of their own, rather than
+            being two children of the block with the record.
+
+            Wrapping was tried and is wrong: on a phone the name column is
+            narrow enough that "#12" breaks onto a line of its own, so the away
+            side becomes three lines against the home side's two and the strip
+            stops being symmetrical. A rank is part of how the team is named
+            here — it should break with the name or not at all.
+          */}
+          <span className="GamedayBoard-line">
+            {/* Before the name, which is the only place it can go: "#12 Alabama"
+                is what the team is called on a Saturday, and a rank trailing
+                after the name reads as a score. */}
+            {s.rank ? (
+              <span
+                className="GamedayBoard-rank"
+                title={extractText(app.translator.trans('ernestdefoe-gameday.forum.board_rank', { rank: s.rank }))}
+              >
+                #{s.rank}
+              </span>
+            ) : null}
+            {/* The abbreviation on a narrow screen, the name where there is room
+                — one element, so the two never disagree about which is showing. */}
+            <span className="GamedayBoard-name">{s.name}</span>
+            <span className="GamedayBoard-abbr">{s.abbr || s.name}</span>
+          </span>
+
+          {/* 🚨 Under the name, in the small dim type — which is what stops it
+              competing with the score. A record is context for the name above
+              it, never a number to be read across the board, and set anywhere
+              near the score's weight it would be mistaken for one. */}
+          {s.record ? <span className="GamedayBoard-record">{s.record}</span> : null}
         </span>
         {/* 🚨 A marker with a label behind it, not a coloured dot. Possession is
             the one thing on this board somebody reads at a glance, and colour

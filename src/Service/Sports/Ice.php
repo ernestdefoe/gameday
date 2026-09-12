@@ -23,6 +23,11 @@ class Ice extends Sport
         return 'ice';
     }
 
+    public function kickoff(): string
+    {
+        return 'Puck drop';
+    }
+
     public function name(): string
     {
         return 'Ice hockey';

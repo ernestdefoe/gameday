@@ -31,6 +31,13 @@ ernestdefoe-gameday:
         yards, turnovers and a quarterback's line; a soccer one talks about
         shots, possession and a draw. The fixtures themselves are Picks'
         business — this only decides how the game is described.
+      timezone_label: Time zone for kickoff times
+      timezone_help: >-
+        The opening post says when the game starts, and a post is never
+        rewritten — so it is printed in this zone, with the abbreviation beside
+        it. Flarum stores every date in UTC and has no board-wide zone of its
+        own, which is why this is asked for here.
+      timezone_here: (this server)
       recaps_label: Post a recap when the game finishes
       recaps_help: >-
         The score first, filled out with the box score when it arrives — the
@@ -61,6 +68,8 @@ ernestdefoe-gameday:
     board_stale: Waiting for the feed
     board_red_zone: Red zone
     board_possession: "{team} have the ball"
+    # The rank a team carried INTO this game, which is why it never moves again.
+    board_rank: "Ranked #{rank}"
 
     # The scoreboard as a widget — see ScoreboardWidget.
     widget_scoreboard: Scoreboard
@@ -68,6 +77,7 @@ ernestdefoe-gameday:
     widget_scheduled: Kickoff
     widget_stale: Waiting for the feed
     widget_red_zone: Red zone
+    widget_rank: "Ranked #{rank}"
     widget_to_the_thread: Go to the game thread
     widget_no_game: No game on right now.
     widget_field_title: Title

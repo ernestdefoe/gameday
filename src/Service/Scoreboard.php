@@ -130,6 +130,21 @@ class Scoreboard
             'clockStale' => $state === 'live' && $clockAt > 0 && ! $fresh,
 
             'kickoff' => $event->match_date?->toIso8601String(),
+
+            /*
+             * Where it is being played and who is showing it.
+             *
+             * 🚨 These are what a SCHEDULED board has instead of a score. A
+             * fixture that has not kicked off is two crests, two dashes and a
+             * time — a panel with nothing in it, in the hours when the most
+             * people are looking at it — and these are the two facts everybody
+             * wants in exactly that window. They cost nothing: Picks takes them
+             * from the same payload it already fetches for the score.
+             */
+            'venue' => trim((string) ($event->venue ?? '')),
+            'venueCity' => trim((string) ($event->venue_city ?? '')),
+            'broadcast' => trim((string) ($event->broadcast ?? '')),
+
             'home' => $home,
             'away' => $away,
         ];
@@ -185,9 +200,36 @@ class Scoreboard
         $team = $event->{$which.'Team'} ?? null;
         $score = $event->{$which.'_score'};
 
+        /*
+         * 🚨 Read off the GAME, never off the team, and that is not an
+         * implementation detail — it is what keeps an old board honest. A rank
+         * belongs to the week it was published in, so a rank kept on the club
+         * would rewrite every game thread on the site each time the poll moved:
+         * September's final score would sit under November's number, and the
+         * caption would be about a game nobody played. Picks freezes it onto
+         * the fixture; see that migration.
+         *
+         * 🚨 Null rather than 0 when unranked, because the view's question is
+         * "is there a rank" and `0` answers it falsely in JavaScript twice over
+         * — it is falsy, and it is also a number, so a template that prints
+         * whatever it is given prints "#0".
+         */
+        $rank = (int) ($event->{$which.'_rank'} ?? 0);
+
         return [
             'name' => (string) ($team->name ?? ''),
             'abbr' => (string) ($team->abbreviation ?? ''),
+            'rank' => $rank > 0 ? $rank : null,
+
+            /*
+             * 🚨 Their record GOING IN, which is the only reading of it that is
+             * safe on a board that outlives the game. Picks writes it from the
+             * fixture feed and stops writing once the game finishes, so a final
+             * score keeps the records the two sides carried into it — which is
+             * what a boxed final on a broadcast shows, and what makes an old
+             * thread still readable.
+             */
+            'record' => trim((string) ($event->{$which.'_record'} ?? '')),
             /*
              * 🚨 BOTH crests, because the two things that draw them no longer
              * agree about their ground.

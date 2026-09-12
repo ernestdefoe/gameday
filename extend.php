@@ -56,6 +56,7 @@ $extenders = [
         ->default(Settings::PREFIX . 'lead_minutes', 180)
         ->default(Settings::PREFIX . 'fallback_tag_id', 0)
         ->default(Settings::PREFIX . 'sport', Sports::DEFAULT)
+        ->default(Settings::PREFIX . 'timezone', 'UTC')
         ->default(Settings::PREFIX . 'recaps', true)
         ->default(Settings::PREFIX . 'sticky_while_live', true)
         ->serializeToForum('gamedayEnabled', Settings::PREFIX . 'enabled', 'boolval'),

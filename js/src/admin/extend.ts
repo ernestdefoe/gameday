@@ -1,5 +1,6 @@
 import Extend from 'flarum/common/extenders';
 import app from 'flarum/admin/app';
+import extractText from 'flarum/common/utils/extractText';
 import TeamTagMapper from './components/TeamTagMapper';
 
 declare const m: any;
@@ -69,6 +70,23 @@ export default [
       options: sportOptions(),
       default: 'gridiron',
     }))
+    /*
+     * 🚨 A select of real zone names, not a text box.
+     *
+     * This value ends up printed into a post that is never rewritten, so a
+     * typo — "America/New York", "EST" — is a wrong kickoff time on every
+     * thread from then until somebody notices. The server refuses anything it
+     * does not recognise and falls back to UTC, which keeps the job running;
+     * the list is what stops it happening in the first place.
+     */
+    .setting(() => ({
+      setting: 'ernestdefoe-gameday.timezone',
+      type: 'select',
+      label: t('timezone_label'),
+      help: t('timezone_help'),
+      options: timezoneOptions(),
+      default: 'UTC',
+    }))
     .setting(() => ({
       setting: 'ernestdefoe-gameday.recaps',
       type: 'boolean',
@@ -95,6 +113,57 @@ export default [
      */
     .customSetting(() => m(TeamTagMapper), -10),
 ];
+
+/**
+ * Every timezone the browser knows, with UTC first.
+ *
+ * 🚨 Asked of `Intl` rather than typed out here. A hand-written list is a list
+ * that is missing whichever zone this particular board keeps — and IANA adds,
+ * renames and retires them, so the copy would be wrong eventually even if it
+ * started complete.
+ *
+ * 🚨 The browser's own zone is offered at the top under a label saying so,
+ * because it is the right answer for almost every operator and is otherwise
+ * four hundred entries down an alphabetical list.
+ */
+function timezoneOptions(): Record<string, string> {
+  let zones: string[] = [];
+
+  try {
+    zones = ((Intl as any).supportedValuesOf?.('timeZone') as string[]) ?? [];
+  } catch {
+    // An engine too old to answer. The fallback below is not a substitute for
+    // the list — it is enough to keep the setting usable.
+    zones = [];
+  }
+
+  let here = '';
+
+  try {
+    here = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+  } catch {
+    here = '';
+  }
+
+  if (zones.length === 0) {
+    zones = [here, 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'Europe/London'];
+  }
+
+  const out: Record<string, string> = { UTC: 'UTC' };
+
+  if (here && here !== 'UTC') {
+    out[here] = `${here} ${extractText(t('timezone_here'))}`;
+  }
+
+  for (const zone of zones) {
+    // 🚨 Never overwrite an entry already placed. The two above are the same
+    // strings that appear in the full list, and re-adding them would drop the
+    // "this server" label off the one that has it.
+    if (zone && !out[zone]) out[zone] = zone;
+  }
+
+  return out;
+}
 
 /**
  * Whether an extension is switched on.

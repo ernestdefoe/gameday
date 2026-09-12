@@ -25,6 +25,11 @@ class Hardwood extends Sport
         return 'hardwood';
     }
 
+    public function kickoff(): string
+    {
+        return 'Tip-off';
+    }
+
     public function name(): string
     {
         return 'Basketball';

@@ -120,6 +120,23 @@ abstract class Sport
         return 'It finished level.';
     }
 
+    /**
+     * What the start of play is CALLED.
+     *
+     * 🚨 A sport's vocabulary starts at the first whistle, not at the final
+     * one. "Kickoff is at 7:30" is right for two of these and wrong for the
+     * rest — a basketball game tips off, a baseball game has a first pitch,
+     * and calling either a kickoff in a preview post is the same class of
+     * mistake as describing a 2-2 draw in yards.
+     *
+     * The default is the one phrase that is true everywhere, so a sport added
+     * later is understated rather than wrong.
+     */
+    public function kickoff(): string
+    {
+        return 'First whistle';
+    }
+
     /* --------------------------------------------------------- shared words */
 
     /** A figure the feed wrote as a string, when it really is a number. */

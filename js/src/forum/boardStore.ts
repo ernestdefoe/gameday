@@ -23,6 +23,14 @@ declare const m: any;
 export interface Side {
   name: string;
   abbr: string;
+  /**
+   * Where they were ranked GOING INTO THIS GAME, or null for unranked.
+   *
+   * 🚨 Null, never 0. The server sends null on purpose — see Scoreboard::side —
+   * because 0 is both falsy and a number here, so half the ways of asking
+   * "is there a rank" answer no and the other half print "#0".
+   */
+  rank: number | null;
   /** The dark-ground crest. */
   logo: string;
   /** The light-ground crest. See Scoreboard::side for why both travel. */
@@ -45,6 +53,9 @@ export interface WidgetBoard {
   clock: string | null;
   possession: 'home' | 'away' | null;
   down: string | null;
+  // The feed's own text for the yard line — "BC 49", "50". The widget has drawn
+  // this since it was added; the interface had simply never been told.
+  ballOn: string | null;
   redZone: boolean;
   clockStale: boolean;
   kickoff: string | null;

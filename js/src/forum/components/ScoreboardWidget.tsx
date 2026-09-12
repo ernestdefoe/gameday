@@ -233,6 +233,19 @@ export default class ScoreboardWidget extends Component<Attrs> {
           ) : null}
         </span>
 
+        {/* 🚨 The rank rides with the name rather than in a column of its own.
+            Most teams are unranked, so a column would be empty space held open
+            on every card for the one line in four that has something to put in
+            it — and in a sidebar that space is the team name's. */}
+        {s.rank ? (
+          <span
+            className="GamedayWidget-rank"
+            title={extractText(app.translator.trans('ernestdefoe-gameday.forum.widget_rank', { rank: s.rank }))}
+          >
+            #{s.rank}
+          </span>
+        ) : null}
+
         {/* 🚨 The abbreviation only where it says something the name did not.
             Plenty of teams ARE their abbreviation — TCU, UCLA, SMU — and a
             widget this narrow shows one of the two, never both. */}

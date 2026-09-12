@@ -27,9 +27,12 @@ require __DIR__ . '/../src/Service/Sports/Diamond.php';
 require __DIR__ . '/../src/Service/Sports/Ice.php';
 require __DIR__ . '/../src/Service/Sports/Sports.php';
 require __DIR__ . '/../src/Service/Recap.php';
+require __DIR__ . '/../src/Service/Preview.php';
 
+use ErnestDefoe\Gameday\Service\Preview;
 use ErnestDefoe\Gameday\Service\Recap;
 use ErnestDefoe\Gameday\Service\Sports\Diamond;
+use ErnestDefoe\Gameday\Service\Sports\Gridiron;
 use ErnestDefoe\Gameday\Service\Sports\Hardwood;
 use ErnestDefoe\Gameday\Service\Sports\Ice;
 use ErnestDefoe\Gameday\Service\Sports\Soccer;
@@ -474,6 +477,160 @@ $tests['a box score with nothing in it is treated as no box score'] = function (
         'home' => ['stats' => ['totalYards' => '350']],
         'away' => ['stats' => ['totalYards' => '284']],
     ]), 'a real box score was rejected');
+};
+
+/* ------------------------------------------------------------- the preview */
+
+/*
+ * 🚨 The opening post, asserted on the WORDS, exactly as the recap is.
+ *
+ * This is the post that used to be one sentence of relative time, and the thing
+ * that made it bad was not that it was short — it was that it said things which
+ * stopped being true. So what is asserted here is mostly what the preview
+ * LEAVES OUT when the feed did not supply it, because that is the failure the
+ * old one could not have and this one can: a paragraph of dashes and commas
+ * with no facts between them.
+ */
+
+/** A game the feed covered fully. */
+function fixture(array $overrides = []): array
+{
+    return $overrides + [
+        'home_name' => 'Kentucky',
+        'away_name' => 'Alabama',
+        'home_rank' => 0,
+        'away_rank' => 12,
+        'home_record' => '1-0',
+        'away_record' => '1-0',
+        'home_conference' => 'SEC',
+        'away_conference' => 'SEC',
+        'neutral_site' => false,
+        'kickoff' => new DateTimeImmutable('2026-09-12T19:30:00+00:00'),
+        'venue' => 'Kroger Field',
+        'venue_city' => 'Lexington, KY',
+        'broadcast' => 'ABC',
+        'week' => 'Week 2',
+    ];
+}
+
+$tests['a full fixture is previewed with everything it was given'] = function () {
+    $text = (new Preview(Recap::EMPHASIS_MARKDOWN))->text(fixture());
+
+    ok(str_contains($text, '**#12 Alabama at Kentucky** — Week 2'), 'the headline lost the rank or the week', $text);
+    ok(str_contains($text, 'Kickoff is 7:30pm UTC on Saturday 12 September'), 'the kickoff was not spelled out', $text);
+    ok(str_contains($text, ', at Kroger Field, Lexington, KY.'), 'the venue went missing', $text);
+    ok(str_contains($text, 'On ABC.'), 'the channel went missing', $text);
+    ok(str_contains($text, 'Both come in unbeaten'), 'two unbeaten sides were not noticed', $text);
+    ok(str_contains($text, 'It is an SEC game.'), 'the conference game was not spotted, or took the wrong article', $text);
+
+    /*
+     * 🚨 The headline already carries "#12". A second paragraph saying which
+     * side is ranked is the preview reading itself back, which is exactly how
+     * an automated post starts sounding like one.
+     */
+    ok(!str_contains($text, 'are ranked'), 'the preview restated its own headline', $text);
+};
+
+$tests['a fixture the feed barely covered says only what it knows'] = function () {
+    $text = (new Preview())->text([
+        'home_name' => 'Kentucky',
+        'away_name' => 'Alabama',
+        'kickoff' => new DateTimeImmutable('2026-09-12T19:30:00+00:00'),
+    ]);
+
+    ok(str_contains($text, 'Alabama at Kentucky'), 'the headline is the one thing that must always be there', $text);
+    ok(!str_contains($text, '#'), 'an unranked fixture printed a rank anyway', $text);
+    ok(!str_contains($text, ' at Kroger'), 'a venue appeared from nowhere', $text);
+    ok(!str_contains($text, 'On .'), 'an absent channel was announced as a channel', $text);
+    ok(!str_contains($text, ' are , '), 'an absent record was printed as an empty one', $text);
+    ok(!str_contains($text, ' game.'), 'a conference was invented', $text);
+    /*
+     * Three blocks and no more: the headline, when it starts, and the sign-off.
+     * Every other paragraph in this preview is earned by something the feed
+     * sent, and a fourth here would mean one of them had been printed empty.
+     */
+    same(3, substr_count($text, "
+
+") + 1, 'a bare fixture produced a block it had nothing to put in');
+};
+
+$tests['a relative time never reaches the post'] = function () {
+    $text = (new Preview())->text(fixture());
+
+    foreach (['from now', 'ago', 'in 2 hours', 'hours from now'] as $phrase) {
+        ok(!str_contains($text, $phrase), 'the preview said "' . $phrase . '", which stops being true', $text);
+    }
+};
+
+$tests['the time is printed in the zone it was asked for, and says which'] = function () {
+    $text = (new Preview(Recap::EMPHASIS_NONE, new Gridiron(), 'America/New_York'))->text(fixture());
+
+    ok(str_contains($text, 'Kickoff is 3:30pm EDT on Saturday 12 September'), 'the kickoff was not converted, or the zone was not named', $text);
+
+    /*
+     * 🚨 An unusable zone must not take the thread-opening job down with it —
+     * but that guard is Settings', not this class's. What is asserted here is
+     * only that a good one is honoured, which is what makes the fallback safe
+     * to be silent about.
+     */
+    $utc = (new Preview())->text(fixture());
+    ok(str_contains($utc, '7:30pm UTC'), 'the default zone was not UTC', $utc);
+};
+
+$tests['a conference takes the article it is spoken with'] = function () {
+    $cases = [
+        'SEC' => 'an SEC game',
+        'ACC' => 'an ACC game',
+        'Big Ten' => 'a Big Ten game',
+        'American Athletic' => 'an American Athletic game',
+        'Mountain West' => 'a Mountain West game',
+        'C-USA' => 'a C-USA game',
+    ];
+
+    foreach ($cases as $conference => $expected) {
+        $text = (new Preview())->text(fixture([
+            'home_conference' => $conference,
+            'away_conference' => $conference,
+        ]));
+
+        ok(str_contains($text, $expected), $conference . ' did not read as "' . $expected . '"', $text);
+    }
+};
+
+$tests['each sport calls the start of play by its own name'] = function () {
+    $expected = [
+        'gridiron' => 'Kickoff is',
+        'soccer' => 'Kick-off is',
+        'hardwood' => 'Tip-off is',
+        'diamond' => 'First pitch is',
+        'ice' => 'Puck drop is',
+    ];
+
+    $sports = new Sports();
+
+    foreach ($expected as $key => $phrase) {
+        $text = (new Preview(Recap::EMPHASIS_NONE, $sports->get($key)))->text(fixture());
+
+        ok(str_contains($text, $phrase), $key . ' did not say "' . $phrase . '"', $text);
+    }
+};
+
+$tests['an unbeaten record is read from the losses, not guessed'] = function () {
+    $both = (new Preview())->text(fixture(['home_record' => '3-0-1', 'away_record' => '2-0']));
+    ok(str_contains($both, 'Both come in unbeaten'), 'a draw was counted as a defeat', $both);
+
+    $one = (new Preview())->text(fixture(['home_record' => '1-1']));
+    ok(!str_contains($one, 'unbeaten'), 'a side with a loss was called unbeaten', $one);
+    ok(str_contains($one, 'Alabama are 1-0, Kentucky 1-1.'), 'the plain form line was not written', $one);
+
+    $none = (new Preview())->text(fixture(['home_record' => '0-0', 'away_record' => '0-0']));
+    ok(!str_contains($none, 'unbeaten'), 'two teams who have not played were called unbeaten', $none);
+};
+
+$tests['a neutral site is vs, not at'] = function () {
+    $text = (new Preview())->text(fixture(['neutral_site' => true]));
+
+    ok(str_contains($text, '#12 Alabama vs Kentucky'), 'a neutral-site game was described as a home game', $text);
 };
 
 /* ------------------------------------------------------------------ the runner */

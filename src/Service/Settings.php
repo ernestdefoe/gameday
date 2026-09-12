@@ -71,6 +71,34 @@ class Settings
     }
 
     /**
+     * The timezone a kickoff time is PRINTED in.
+     *
+     * 🚨 This exists because a post is permanent and a rendered date is not
+     * negotiable afterwards. Everything Flarum stores is UTC and there is no
+     * forum-wide timezone to consult, so the opening post has to be told which
+     * clock the board keeps — otherwise "Kickoff is at 7:30pm" is a wrong
+     * number for every reader who is not sitting next to the server.
+     *
+     * 🚨 UTC is the default rather than the server's own zone, and that is
+     * deliberate: a shared host's `date.timezone` is somebody else's decision
+     * and changes under you. UTC is at least the same answer everywhere, and
+     * the abbreviation is always printed beside the time, so an unconfigured
+     * board says something true and slightly inconvenient rather than something
+     * confident and wrong.
+     *
+     * 🚨 An unknown zone falls back rather than throwing. A settings row naming
+     * a zone that has been retired is somebody's install, not a programming
+     * error, and it must not take the scheduled job that opens threads down
+     * with it.
+     */
+    public function timezone(): string
+    {
+        $zone = (string) $this->get('timezone', 'UTC');
+
+        return in_array($zone, timezone_identifiers_list(), true) ? $zone : 'UTC';
+    }
+
+    /**
      * Whether a thread is stuck to the top while the game is on.
      *
      * 🚨 Flarum has no "live" state to put a discussion into — that is a

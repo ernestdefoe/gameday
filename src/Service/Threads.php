@@ -65,7 +65,13 @@ class Threads
         $opened = 0;
 
         $games = PickEvent::query()
-            ->with(['homeTeam', 'awayTeam'])
+            /*
+             * 🚨 `week.season` as well as the teams: the preview names the
+             * week, and the SPORT it is written in is read off the season. Both
+             * would otherwise be a lazy load per fixture — which on a Saturday
+             * morning is two queries for every game about to kick off.
+             */
+            ->with(['homeTeam', 'awayTeam', 'week.season'])
             ->whereIn('status', [PickEvent::STATUS_SCHEDULED, PickEvent::STATUS_CLOSED])
             ->where('match_date', '<=', $now->copy()->addMinutes($this->settings->leadMinutes()))
             ->where('match_date', '>', $now->copy()->subHours(self::OPEN_WINDOW_HOURS))
@@ -250,7 +256,7 @@ class Threads
             $discussion = Discussion::start($title, $author);
             $discussion->save();
 
-            $post = $this->post($discussion->id, $author, $this->kickoffLine($game), $discussion);
+            $post = $this->post($discussion->id, $author, $this->preview($game)->text($this->previewOf($game)), $discussion);
 
             if ($post === null) {
                 return false;
@@ -426,15 +432,82 @@ class Threads
         // Away team first: "Alabama at Auburn" is how anybody would say it.
         $joiner = $game->neutral_site ? ' vs ' : ' at ';
 
-        return trim(($game->awayTeam->name ?? 'Away') . $joiner . ($game->homeTeam->name ?? 'Home'));
+        /*
+         * 🚨 The rank goes in the TITLE, which is the one place it cannot be
+         * corrected later — and that is exactly why it is safe to put there.
+         * Picks freezes the rank onto the fixture, so "#4 Alabama at Wisconsin"
+         * is still what that game was a year afterwards, however far the poll
+         * has moved since. A title built from a rank kept on the CLUB would
+         * have to be rewritten every Sunday, or lie.
+         *
+         * An unranked team is named plainly, so a board whose feed carries no
+         * ranks at all gets exactly the titles it got before.
+         */
+        return trim(
+            $this->ranked($game->awayTeam->name ?? 'Away', (int) $game->away_rank)
+            . $joiner
+            . $this->ranked($game->homeTeam->name ?? 'Home', (int) $game->home_rank)
+        );
     }
 
-    protected function kickoffLine(PickEvent $game): string
+    /** "#12 Alabama", or just "Alabama". */
+    protected function ranked(string $name, int $rank): string
     {
-        return sprintf(
-            "%s kicks off %s.\n\nThis thread opens before the game and stays here afterwards.",
-            $this->title($game),
-            $game->match_date->diffForHumans(),
+        return $rank > 0 ? '#' . $rank . ' ' . $name : $name;
+    }
+
+    /**
+     * The preview for one game, in that game's own sport.
+     *
+     * 🚨 Built exactly like `recap()` and for the same reason — the vocabulary
+     * follows the FIXTURE'S league rather than one setting, so a board carrying
+     * the NFL and the Premier League on the same Sunday does not tell half of
+     * them that kick-off is a kickoff.
+     */
+    protected function preview(?PickEvent $game = null): Preview
+    {
+        return new Preview(
+            $this->settings->emphasis(
+                fn (string $extension): bool => $this->extensions->isEnabled($extension)
+            ),
+            $this->sports->get($this->sportFor($game)),
+            $this->settings->timezone(),
         );
+    }
+
+    /**
+     * Everything the preview is allowed to know about a game.
+     *
+     * 🚨 Assembled here rather than handing `Preview` the model, so the thing
+     * that writes the post cannot reach for a relation and fire a query per
+     * fixture — and so what it says can be asserted in a test with no database
+     * anywhere near it. Same contract as `game()` above, for the same reasons.
+     *
+     * @return array<string, mixed>
+     */
+    protected function previewOf(PickEvent $game): array
+    {
+        return [
+            'home_name' => (string) ($game->homeTeam->name ?? 'Home'),
+            'away_name' => (string) ($game->awayTeam->name ?? 'Away'),
+            'home_rank' => (int) $game->home_rank,
+            'away_rank' => (int) $game->away_rank,
+            'home_record' => (string) $game->home_record,
+            'away_record' => (string) $game->away_record,
+            /*
+             * 🚨 The conference comes off the TEAMS, which is where Picks
+             * already keeps it. A conference game is then two strings being
+             * equal, and there is no third copy of the fact to drift out of
+             * step with them.
+             */
+            'home_conference' => (string) ($game->homeTeam->conference ?? ''),
+            'away_conference' => (string) ($game->awayTeam->conference ?? ''),
+            'neutral_site' => (bool) $game->neutral_site,
+            'kickoff' => $game->match_date,
+            'venue' => (string) $game->venue,
+            'venue_city' => (string) $game->venue_city,
+            'broadcast' => (string) $game->broadcast,
+            'week' => (string) ($game->week->name ?? ''),
+        ];
     }
 }

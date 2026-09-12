@@ -9,6 +9,14 @@
 .GamedayBoard {
   --gd-ink: #f4f7fb;
   --gd-dim: #93a1b4;
+  /*
+   * 🚨 The board's OWN hairline. The situation row asked for `--gdw-rule`,
+   * which is declared on `.GamedayWidget` and therefore does not exist here —
+   * and an undefined `var()` inside a `border-top` shorthand does not fall back
+   * to anything, it throws the whole declaration away. So the rule above "2nd &
+   * 8" has never actually been drawn on this board.
+   */
+  --gd-rule: rgba(255, 255, 255, .08);
 
   position: relative;
   margin: 0 0 18px;
@@ -18,6 +26,51 @@
   box-shadow: 0 10px 28px -12px rgba(0, 0, 0, .7), inset 0 0 0 1px rgba(255, 255, 255, .07);
   color: var(--gd-ink);
 }
+
+/*
+ * The turf under the numbers.
+ *
+ * 🚨 A pair of soft washes rather than a picture of a field. The board is read
+ * at a glance for two numbers, and anything with a shape to it behind them —
+ * yard lines, a logo, a photograph — competes with the thing it is decorating.
+ * These only give the panel a light source, so it reads as an object with a top
+ * and a bottom instead of a flat rectangle.
+ *
+ * 🚨 `pointer-events: none` and `aria-hidden` by construction: it is a
+ * pseudo-element, so it is invisible to assistive technology and cannot
+ * intercept a press on the board.
+ */
+.GamedayBoard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 50% -30%, rgba(120, 160, 220, .16), transparent 62%),
+    radial-gradient(80% 120% at 50% 130%, rgba(0, 0, 0, .35), transparent 60%);
+}
+
+/*
+ * A stripe of the live colour along the top edge, and only while it IS live.
+ *
+ * 🚨 Earned by the state, not worn permanently. A scheduled board with a red
+ * bar across it is a board claiming something is happening; the same bar on
+ * every board is a decoration nobody reads after the first day. Live is the one
+ * state on this thing worth announcing from across a room.
+ */
+.GamedayBoard--live::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, #ff5a4d 22%, #ffce4d 50%, #ff5a4d 78%, transparent);
+}
+
+// Everything on the board draws above the wash.
+.GamedayBoard-strip,
+.GamedayBoard-situation,
+.GamedayBoard-meta { position: relative; }
 
 /*
  * The hero board lines up with the POSTS, not with the window.
@@ -34,6 +87,43 @@
  * simply inherited here. A width copied out of the stylesheet would be right at
  * one breakpoint, on one theme, until either moved.
  */
+/*
+ * The board sits ON the thread's colour band, not under it.
+ *
+ * 🚨 This is the whole of the visual fix, and it is one idea: a coloured bar
+ * with a dark box floating below it is two objects that happen to be near each
+ * other, and a card mounted on the band is a masthead. Which is also what it
+ * is — the hero says which game this is, the board says where the game is up
+ * to, and they were never two headings.
+ *
+ * 🚨 Both halves live inside `:has()`, deliberately. The lift only works if the
+ * band has been given the height to be lifted into, so a browser that cannot
+ * match the selector must get NEITHER — otherwise it lifts the board into a
+ * band that never grew and lands it on the title. With no `:has()` the pair
+ * simply renders as it did before, which is the layout this replaces.
+ *
+ * 🚨 Scoped to `.Page-hero`, so the widget placements are untouched. A
+ * scoreboard in a sidebar has no band to sit on.
+ */
+.Page-hero:has(> .container > .GamedayBoard) {
+  > .Hero {
+    // Room under the title for the card to overlap into.
+    padding-bottom: 30px;
+  }
+
+  > .container > .GamedayBoard {
+    // 18px of theme margin, then far enough up to read as mounted rather than
+    // as nudged. Anything shallower looks like a rendering accident.
+    margin-top: -44px;
+    // A card lying ON something needs its own shadow to say so; the flat one it
+    // had was drawn for a box sitting on the page background.
+    box-shadow:
+      0 18px 34px -16px rgba(0, 0, 0, .85),
+      0 2px 0 0 rgba(255, 255, 255, .04),
+      inset 0 0 0 1px rgba(255, 255, 255, .09);
+  }
+}
+
 @media (min-width: 992px) {
   .Page-hero > .container > .GamedayBoard {
     // The sidebar is after the content in source order, so leaving its column
@@ -77,9 +167,83 @@
   img { width: 100%; height: 100%; object-fit: contain; }
 }
 
-.GamedayBoard-team { min-width: 0; font-weight: 700; letter-spacing: .2px; }
+/*
+ * Rank and name on one line, record under it.
+ *
+ * 🚨 Two nested rows, NOT one wrapping row. Wrapping was the obvious way to do
+ * this and it breaks on a phone: the name column is narrow enough there that
+ * "#12" wraps to a line of its own, giving one side three lines against the
+ * other's two and tipping the strip out of symmetry. The rank belongs to the
+ * name, so it has to break with it.
+ */
+.GamedayBoard-team {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+.GamedayBoard-line {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+}
 .GamedayBoard-name { display: inline; }
 .GamedayBoard-abbr { display: none; }
+
+// The home side reads outward from the middle, so its name block mirrors too —
+// otherwise the rank ends up against the crest instead of against the name.
+.GamedayBoard-side:last-child .GamedayBoard-team { align-items: flex-end; }
+.GamedayBoard-side:last-child .GamedayBoard-line { flex-direction: row-reverse; }
+
+/*
+ * The poll ranking, set the way a broadcast sets it: smaller than the name and
+ * a step back from it.
+ *
+ * 🚨 Dim, and NOT the gold beside it. Gold on this board already means one
+ * thing — that side has the ball — and a rank wearing the same colour would
+ * hand a live signal to a fact that has not changed since Sunday. Same reason
+ * the yard line is dim: the order of the colours is the order of importance.
+ */
+.GamedayBoard-rank {
+  font-size: .72em;
+  font-weight: 800;
+  letter-spacing: 0;
+  color: var(--gd-dim);
+  // Tabular, so #4 and #24 hold the same width and a column of cards lines up.
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * What they brought into the game.
+ *
+ * 🚨 Small, dim, and on its own line — the three things that stop it being read
+ * as a score. "2-0" set anywhere near the score's weight is a second number on
+ * a board whose whole job is one number per side.
+ */
+.GamedayBoard-record {
+  margin-top: 2px;
+  font-size: .68rem;
+  font-weight: 600;
+  /*
+   * 🚨 No tracking. Everything else on this board is spaced out because it is
+   * set in capitals, and the same treatment on "1-0" pushes the hyphen away
+   * from both figures until it reads as "1 - 0" — a minus sign between two
+   * numbers rather than a record.
+   */
+  letter-spacing: normal;
+  color: var(--gd-dim);
+  /*
+   * 🚨 And PROPORTIONAL figures, unlike everything else here. Tabular exists so
+   * a column of numbers lines up; these two are on opposite sides of the board
+   * and never line up with anything. What it does instead is set a 1 in a slot
+   * as wide as an 8, which strands the hyphen between two gaps — "1 - 0", read
+   * as a subtraction rather than a record.
+   */
+  font-variant-numeric: normal;
+}
+
 
 .GamedayBoard-score {
   font-size: 2rem;
@@ -101,6 +265,20 @@
    * sides mirror: crest, name, score — score, name, crest.
    */
   margin-inline-start: 0;
+}
+
+/*
+ * 🚨 The placeholder recedes; a real score never does.
+ *
+ * A scheduled board draws an en dash where each score will be, at the score's
+ * own size and weight — two big bright dashes, which is the loudest thing on
+ * the panel saying the least. Dimming them puts the kickoff time back at the
+ * centre of a board that has not started, which is the only thing on it anybody
+ * is reading.
+ */
+.GamedayBoard--scheduled .GamedayBoard-score {
+  color: var(--gd-dim);
+  opacity: .55;
 }
 
 /*
@@ -150,12 +328,52 @@
   justify-content: center;
   gap: 10px;
   padding: 8px 18px 12px;
-  border-top: 1px solid var(--gdw-rule);
+  border-top: 1px solid var(--gd-rule);
   font-size: .82rem;
   font-weight: 700;
   letter-spacing: .4px;
 }
 .GamedayBoard-down { color: var(--gd-ink); }
+
+/*
+ * Where it is being played and who is showing it — the row a SCHEDULED board
+ * has where a live one has the down.
+ *
+ * 🚨 Separated by a middle dot drawn in CSS rather than by a character in the
+ * markup. Either half can be absent, and a separator that is part of the text
+ * is a dot hanging off the end of a stadium name on every fixture the feed did
+ * not list a channel for.
+ */
+.GamedayBoard-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0 10px;
+  padding: 8px 18px 11px;
+  border-top: 1px solid var(--gd-rule);
+  font-size: .76rem;
+  color: var(--gd-dim);
+  text-align: center;
+}
+
+.GamedayBoard-venue + .GamedayBoard-tv::before {
+  content: '·';
+  margin-inline-end: 10px;
+  // The dot belongs to neither word, so it is dimmer than both.
+  opacity: .55;
+}
+
+/*
+ * The channel, set as a broadcast sets it: small caps, spaced, and brighter
+ * than the stadium beside it. "ABC" is the actionable half of this row — it is
+ * what somebody does something with in the next ten minutes.
+ */
+.GamedayBoard-tv {
+  font-weight: 700;
+  letter-spacing: .8px;
+  color: var(--gd-ink);
+}
 
 /*
  * The yard line sits a step back from the down.
@@ -531,6 +749,23 @@ html[data-theme='dark'] .GamedayWidget-crest {
     .GamedayWidget-crest--light { display: none; }
     .GamedayWidget-crest--dark { display: block; }
   }
+}
+
+/*
+ * 🚨 `flex: 0 0 auto`, so it is the NAME that gives way when a card is narrow.
+ * Everything on this row competes for a sidebar's width, and a rank that could
+ * shrink would be the first thing ellipsised — which is to say the whole of it,
+ * since it is three characters long.
+ */
+.GamedayWidget-rank {
+  flex: 0 0 auto;
+  margin-inline-end: -3px;
+  font-size: .74rem;
+  font-weight: 800;
+  // Dim, not the ball colour — see GamedayBoard-rank for why the gold is spoken
+  // for. Defined in both palettes, so this is readable either way up.
+  color: var(--gdw-dim);
+  font-variant-numeric: tabular-nums;
 }
 
 .GamedayWidget-team {

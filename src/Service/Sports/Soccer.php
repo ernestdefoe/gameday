@@ -25,6 +25,12 @@ final class Soccer extends Sport
         return 'soccer';
     }
 
+    // Hyphenated, which is how it is written everywhere the sport is called football.
+    public function kickoff(): string
+    {
+        return 'Kick-off';
+    }
+
     public function name(): string
     {
         return 'Football (soccer)';

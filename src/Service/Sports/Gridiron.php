@@ -20,6 +20,11 @@ final class Gridiron extends Sport
         return 'gridiron';
     }
 
+    public function kickoff(): string
+    {
+        return 'Kickoff';
+    }
+
     public function name(): string
     {
         return 'American football';

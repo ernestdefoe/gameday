@@ -26,6 +26,11 @@ class Diamond extends Sport
         return 'diamond';
     }
 
+    public function kickoff(): string
+    {
+        return 'First pitch';
+    }
+
     public function name(): string
     {
         return 'Baseball';
