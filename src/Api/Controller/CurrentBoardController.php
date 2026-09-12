@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ErnestDefoe\Gameday\Api\Controller;
 
 use ErnestDefoe\Gameday\Service\CurrentGame;
+use ErnestDefoe\Gameday\Service\LiveRefresh;
 use Flarum\Http\RequestUtil;
 use Laminas\Diactoros\Response\JsonResponse;
 use Psr\Http\Message\ResponseInterface;
@@ -22,13 +23,15 @@ use Psr\Http\Server\RequestHandlerInterface;
  */
 class CurrentBoardController implements RequestHandlerInterface
 {
-    public function __construct(protected CurrentGame $current)
+    public function __construct(protected CurrentGame $current, protected LiveRefresh $live)
     {
     }
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $limit = (int) (\Illuminate\Support\Arr::get($request->getQueryParams(), 'limit', CurrentGame::MOST));
+
+        $this->live->nudge();
 
         $boards = $this->current->boards(RequestUtil::getActor($request), $limit);
 

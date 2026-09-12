@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ErnestDefoe\Gameday\Api\Controller;
 
 use ErnestDefoe\Gameday\GamedayThread;
+use ErnestDefoe\Gameday\Service\LiveRefresh;
 use ErnestDefoe\Gameday\Service\Scoreboard;
 use Flarum\Http\RequestUtil;
 use Illuminate\Support\Arr;
@@ -23,7 +24,7 @@ use Psr\Http\Server\RequestHandlerInterface;
  */
 class BoardController implements RequestHandlerInterface
 {
-    public function __construct(protected Scoreboard $scoreboard)
+    public function __construct(protected Scoreboard $scoreboard, protected LiveRefresh $live)
     {
     }
 
@@ -45,6 +46,10 @@ class BoardController implements RequestHandlerInterface
         if ($discussion === null) {
             return new JsonResponse(['board' => null], 404);
         }
+
+        // Before reading the row, give the feed a chance to have moved on.
+        // Shared and rate-limited inside; see LiveRefresh.
+        $this->live->nudge();
 
         $thread = GamedayThread::query()->where('discussion_id', $discussion->id)->first();
         $event = $thread === null ? null : $this->event($thread->event_id);
