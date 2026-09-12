@@ -36,14 +36,19 @@ class Preview
         protected Sport $sport = new Gridiron(),
         /**
          * 🚨 The zone the TIME IS PRINTED IN, and the reason the abbreviation
-         * is printed beside it. Flarum keeps every date in UTC and has no
-         * forum-wide timezone to consult, so an operator who has not set one
-         * gets "7:30pm UTC" — which is inconvenient and true. What must never
-         * happen is "7:30pm" with no zone on it, because that is a wrong number
-         * printed in a confident font to everybody east or west of wherever the
-         * server happens to be.
+         * is always printed beside it.
+         *
+         * Flarum keeps every date in UTC and has no forum-wide timezone to
+         * consult, so this has to be told which clock the board keeps. The
+         * default is EASTERN rather than UTC because UTC is true and useless —
+         * "kickoff is 11:15pm UTC" is a number every reader has to convert,
+         * which is barely an improvement on the relative time this replaced.
+         *
+         * What must never happen is "7:30pm" with no zone on it: that is a
+         * wrong number printed in a confident font to everybody who does not
+         * happen to live beside the server.
          */
-        protected string $timezone = 'UTC',
+        protected string $timezone = 'America/New_York',
     ) {
     }
 

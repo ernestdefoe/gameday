@@ -17,6 +17,9 @@ class Settings
 {
     public const PREFIX = 'ernestdefoe-gameday.';
 
+    /** See `timezone()` for why this is Eastern rather than UTC. */
+    public const DEFAULT_TIMEZONE = 'America/New_York';
+
     /** Off until somebody says otherwise: installing an extension is not consent to post. */
     public function enabled(): bool
     {
@@ -79,12 +82,18 @@ class Settings
      * clock the board keeps — otherwise "Kickoff is at 7:30pm" is a wrong
      * number for every reader who is not sitting next to the server.
      *
-     * 🚨 UTC is the default rather than the server's own zone, and that is
-     * deliberate: a shared host's `date.timezone` is somebody else's decision
-     * and changes under you. UTC is at least the same answer everywhere, and
-     * the abbreviation is always printed beside the time, so an unconfigured
-     * board says something true and slightly inconvenient rather than something
-     * confident and wrong.
+     * 🚨 EASTERN is the default, not UTC and not the server's own zone.
+     *
+     * UTC was the first answer and it is the wrong one. It is true, and it is
+     * useless: "kickoff is 11:15pm UTC" on a college football board is a number
+     * every single reader has to convert, which is barely better than the
+     * relative time it replaced. The default sport here is American football
+     * and the default league is US college football, so the worst this should
+     * ever read is Eastern — the zone every schedule in the sport is published
+     * in.
+     *
+     * Not the server's `date.timezone` either: on a shared host that is
+     * somebody else's decision and it changes under you.
      *
      * 🚨 An unknown zone falls back rather than throwing. A settings row naming
      * a zone that has been retired is somebody's install, not a programming
@@ -93,9 +102,9 @@ class Settings
      */
     public function timezone(): string
     {
-        $zone = (string) $this->get('timezone', 'UTC');
+        $zone = (string) $this->get('timezone', self::DEFAULT_TIMEZONE);
 
-        return in_array($zone, timezone_identifiers_list(), true) ? $zone : 'UTC';
+        return in_array($zone, timezone_identifiers_list(), true) ? $zone : self::DEFAULT_TIMEZONE;
     }
 
     /**

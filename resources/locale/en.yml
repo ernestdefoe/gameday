@@ -36,7 +36,8 @@ ernestdefoe-gameday:
         The opening post says when the game starts, and a post is never
         rewritten — so it is printed in this zone, with the abbreviation beside
         it. Flarum stores every date in UTC and has no board-wide zone of its
-        own, which is why this is asked for here.
+        own, which is why this is asked for here. Eastern by default, because
+        that is the zone this sport's schedules are published in.
       timezone_here: (this server)
       recaps_label: Post a recap when the game finishes
       recaps_help: >-

@@ -517,7 +517,7 @@ $tests['a full fixture is previewed with everything it was given'] = function ()
     $text = (new Preview(Recap::EMPHASIS_MARKDOWN))->text(fixture());
 
     ok(str_contains($text, '**#12 Alabama at Kentucky** — Week 2'), 'the headline lost the rank or the week', $text);
-    ok(str_contains($text, 'Kickoff is 7:30pm UTC on Saturday 12 September'), 'the kickoff was not spelled out', $text);
+    ok(str_contains($text, 'Kickoff is 3:30pm EDT on Saturday 12 September'), 'the kickoff was not spelled out', $text);
     ok(str_contains($text, ', at Kroger Field, Lexington, KY.'), 'the venue went missing', $text);
     ok(str_contains($text, 'On ABC.'), 'the channel went missing', $text);
     ok(str_contains($text, 'Both come in unbeaten'), 'two unbeaten sides were not noticed', $text);
@@ -563,18 +563,31 @@ $tests['a relative time never reaches the post'] = function () {
 };
 
 $tests['the time is printed in the zone it was asked for, and says which'] = function () {
-    $text = (new Preview(Recap::EMPHASIS_NONE, new Gridiron(), 'America/New_York'))->text(fixture());
+    /*
+     * 🚨 The default is EASTERN, not UTC, and that is the assertion worth
+     * having. UTC was the first answer and it is true and useless — "kickoff is
+     * 11:15pm UTC" on a college football board is a number every reader has to
+     * convert, which is barely an improvement on the relative time this whole
+     * class replaced. The board's own sport decides the floor.
+     */
+    $default = (new Preview())->text(fixture());
+    ok(str_contains($default, 'Kickoff is 3:30pm EDT on'), 'the default zone was not Eastern', $default);
 
-    ok(str_contains($text, 'Kickoff is 3:30pm EDT on Saturday 12 September'), 'the kickoff was not converted, or the zone was not named', $text);
+    // And an operator elsewhere is honoured, zone name and all.
+    $utc = (new Preview(Recap::EMPHASIS_NONE, new Gridiron(), 'UTC'))->text(fixture());
+    ok(str_contains($utc, 'Kickoff is 7:30pm UTC on'), 'an explicit zone was ignored', $utc);
+
+    $london = (new Preview(Recap::EMPHASIS_NONE, new Gridiron(), 'Europe/London'))->text(fixture());
+    ok(str_contains($london, '8:30pm BST'), 'a third zone was not converted', $london);
 
     /*
-     * 🚨 An unusable zone must not take the thread-opening job down with it —
-     * but that guard is Settings', not this class's. What is asserted here is
-     * only that a good one is honoured, which is what makes the fallback safe
-     * to be silent about.
+     * 🚨 The time NEVER appears without a zone on it. That is the one thing a
+     * post nobody rewrites cannot get away with: a bare "7:30pm" is a wrong
+     * number for everybody who does not live beside the server.
      */
-    $utc = (new Preview())->text(fixture());
-    ok(str_contains($utc, '7:30pm UTC'), 'the default zone was not UTC', $utc);
+    foreach ([$default, $utc, $london] as $text) {
+        ok(preg_match('/\d:\d\d[ap]m [A-Z]{2,5}/', $text) === 1, 'a kickoff time was printed with no zone', $text);
+    }
 };
 
 $tests['a conference takes the article it is spoken with'] = function () {

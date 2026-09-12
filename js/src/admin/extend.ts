@@ -76,8 +76,8 @@ export default [
      * This value ends up printed into a post that is never rewritten, so a
      * typo — "America/New York", "EST" — is a wrong kickoff time on every
      * thread from then until somebody notices. The server refuses anything it
-     * does not recognise and falls back to UTC, which keeps the job running;
-     * the list is what stops it happening in the first place.
+     * does not recognise and falls back to its own default, which keeps the job
+     * running; the list is what stops it happening in the first place.
      */
     .setting(() => ({
       setting: 'ernestdefoe-gameday.timezone',
@@ -85,7 +85,8 @@ export default [
       label: t('timezone_label'),
       help: t('timezone_help'),
       options: timezoneOptions(),
-      default: 'UTC',
+      // Eastern, matching the server's own default — see Service\Settings.
+      default: 'America/New_York',
     }))
     .setting(() => ({
       setting: 'ernestdefoe-gameday.recaps',
