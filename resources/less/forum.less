@@ -87,43 +87,6 @@
  * simply inherited here. A width copied out of the stylesheet would be right at
  * one breakpoint, on one theme, until either moved.
  */
-/*
- * The board sits ON the thread's colour band, not under it.
- *
- * 🚨 This is the whole of the visual fix, and it is one idea: a coloured bar
- * with a dark box floating below it is two objects that happen to be near each
- * other, and a card mounted on the band is a masthead. Which is also what it
- * is — the hero says which game this is, the board says where the game is up
- * to, and they were never two headings.
- *
- * 🚨 Both halves live inside `:has()`, deliberately. The lift only works if the
- * band has been given the height to be lifted into, so a browser that cannot
- * match the selector must get NEITHER — otherwise it lifts the board into a
- * band that never grew and lands it on the title. With no `:has()` the pair
- * simply renders as it did before, which is the layout this replaces.
- *
- * 🚨 Scoped to `.Page-hero`, so the widget placements are untouched. A
- * scoreboard in a sidebar has no band to sit on.
- */
-.Page-hero:has(> .container > .GamedayBoard) {
-  > .Hero {
-    // Room under the title for the card to overlap into.
-    padding-bottom: 30px;
-  }
-
-  > .container > .GamedayBoard {
-    // 18px of theme margin, then far enough up to read as mounted rather than
-    // as nudged. Anything shallower looks like a rendering accident.
-    margin-top: -44px;
-    // A card lying ON something needs its own shadow to say so; the flat one it
-    // had was drawn for a box sitting on the page background.
-    box-shadow:
-      0 18px 34px -16px rgba(0, 0, 0, .85),
-      0 2px 0 0 rgba(255, 255, 255, .04),
-      inset 0 0 0 1px rgba(255, 255, 255, .09);
-  }
-}
-
 @media (min-width: 992px) {
   .Page-hero > .container > .GamedayBoard {
     // The sidebar is after the content in source order, so leaving its column
@@ -136,6 +99,103 @@
   html[data-bespoke-side='left'] .Page-hero > .container > .GamedayBoard {
     margin-inline-start: calc(var(--sidebar-width, 190px) + var(--gap, 50px));
   }
+}
+
+/*
+ * The thread's colour band, made to look like a masthead.
+ *
+ * 🚨 Scoped to a hero that actually HAS a board, so this is a game thread's
+ * heading and not every heading on the forum. A browser without `:has()` gets
+ * the theme's own band, unchanged, which is a perfectly good fallback.
+ *
+ * 🚨 The board is NOT lifted onto the band, and that was tried. A card mounted
+ * on the colour looks right in the abstract and wrong on the page: the band is
+ * full width and centred, the board is content width with the sidebar's column
+ * left free, so the card sits visibly left of the title above it. It is
+ * centred in its own container and reads as a mistake, which is the only
+ * measurement that counts.
+ */
+.Page-hero:has(> .container > .GamedayBoard) {
+  > .Hero {
+    position: relative;
+    // A little more room under the title than the theme gives it, now that the
+    // title is bigger. Not enough to leave the band looking empty.
+    padding-bottom: 22px;
+    overflow: hidden;
+
+    /*
+     * 🚨 The team colour is kept and DARKENED, never replaced.
+     *
+     * The band is the tag's colour, which is the one thing on this page that
+     * says whose thread it is — a header that painted over it would look
+     * identical on all 138 programmes. So this is a wash laid on top: a light
+     * source at the upper left, and the colour deepening toward the bottom
+     * edge — which is what gives the band an edge instead of just stopping.
+     */
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(90% 140% at 12% -20%, rgba(255, 255, 255, .17), transparent 55%),
+        linear-gradient(180deg, transparent 45%, rgba(0, 0, 0, .38) 100%);
+    }
+
+    // The title and the tag sit above the wash.
+    > .container { position: relative; z-index: 1; }
+  }
+
+  /*
+   * The tag, as a stamp rather than a chip.
+   *
+   * 🚨 The solid white pill is most of what made this header look unfinished.
+   * It is the brightest thing in the band — brighter than the title it sits
+   * above — so the eye lands on the word "Ohio" and then has to go looking for
+   * the game. Glass instead: the band's own colour showing through, a hairline
+   * to hold its edge, and the type doing the work.
+   */
+  .DiscussionHero-items .TagLabel {
+    background: rgba(255, 255, 255, .13);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3);
+    border-radius: 999px;
+    padding: 3px 12px;
+    color: #fff;
+    // A tag that has been given its own colour would otherwise paint itself
+    // back in over the glass.
+    --tag-bg: transparent;
+  }
+
+  .DiscussionHero-items .TagLabel .TagLabel-text,
+  .DiscussionHero-items .TagLabel .TagLabel-name {
+    color: #fff;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+  }
+
+  /*
+   * The title, given the room it was always asking for.
+   *
+   * 🚨 The shadow is not decoration — it is contrast. This sits directly on a
+   * team colour, and 138 of those run from near-white to near-black; a title
+   * relying on the band being dark is a title that disappears on the light
+   * ones. A soft shadow under it holds the letterforms whatever is behind them.
+   */
+  .DiscussionHero-title {
+    font-size: 2.1rem;
+    line-height: 1.12;
+    letter-spacing: -.01em;
+    color: #fff;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, .45), 0 1px 2px rgba(0, 0, 0, .35);
+    text-wrap: balance;
+  }
+
+  @media (max-width: 767px) {
+    .DiscussionHero-title { font-size: 1.5rem; }
+  }
+
 }
 
 .GamedayBoard-strip {
