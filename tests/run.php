@@ -516,7 +516,7 @@ function fixture(array $overrides = []): array
 $tests['a full fixture is previewed with everything it was given'] = function () {
     $text = (new Preview(Recap::EMPHASIS_MARKDOWN))->text(fixture());
 
-    ok(str_contains($text, '**#12 Alabama at Kentucky** — Week 2'), 'the headline lost the rank or the week', $text);
+    ok(str_contains($text, '**No. 12 Alabama at Kentucky** — Week 2'), 'the headline lost the rank or the week', $text);
     ok(str_contains($text, 'Kickoff is 3:30pm EDT on Saturday 12 September'), 'the kickoff was not spelled out', $text);
     ok(str_contains($text, ', at Kroger Field, Lexington, KY.'), 'the venue went missing', $text);
     ok(str_contains($text, 'On ABC.'), 'the channel went missing', $text);
@@ -539,7 +539,7 @@ $tests['a fixture the feed barely covered says only what it knows'] = function (
     ]);
 
     ok(str_contains($text, 'Alabama at Kentucky'), 'the headline is the one thing that must always be there', $text);
-    ok(!str_contains($text, '#'), 'an unranked fixture printed a rank anyway', $text);
+    ok(!str_contains($text, 'No. '), 'an unranked fixture printed a rank anyway', $text);
     ok(!str_contains($text, ' at Kroger'), 'a venue appeared from nowhere', $text);
     ok(!str_contains($text, 'On .'), 'an absent channel was announced as a channel', $text);
     ok(!str_contains($text, ' are , '), 'an absent record was printed as an empty one', $text);
@@ -640,10 +640,30 @@ $tests['an unbeaten record is read from the losses, not guessed'] = function () 
     ok(!str_contains($none, 'unbeaten'), 'two teams who have not played were called unbeaten', $none);
 };
 
+$tests['a rank in prose is never written with a hash'] = function () {
+    /*
+     * 🚨 A post goes through the board's FORMATTER, and "#12" is a token there.
+     * Cross-references and Flarum's own Mentions both read `#id` as a link to
+     * the discussion with that id — so "Louisiana Tech at #8 LSU" rendered as
+     * "Louisiana Tech at Down goes #5 Ole Miss LSU", another thread's title
+     * sitting inside the team's name. It shipped to eighty-six posts on a live
+     * board before anybody read one closely.
+     *
+     * "No. 12" is inert whatever is parsing it, and it is what AP style writes
+     * in prose. The scoreboard keeps the short form; nothing parses that.
+     */
+    foreach ([fixture(), fixture(['home_rank' => 3, 'away_rank' => 1]), fixture(['neutral_site' => true])] as $game) {
+        $text = (new Preview(Recap::EMPHASIS_MARKDOWN))->text($game);
+
+        ok(! str_contains($text, '#'), 'a hash reached the post text, where a formatter will eat it', $text);
+        ok(str_contains($text, 'No. '), 'the rank went missing entirely', $text);
+    }
+};
+
 $tests['a neutral site is vs, not at'] = function () {
     $text = (new Preview())->text(fixture(['neutral_site' => true]));
 
-    ok(str_contains($text, '#12 Alabama vs Kentucky'), 'a neutral-site game was described as a home game', $text);
+    ok(str_contains($text, 'No. 12 Alabama vs Kentucky'), 'a neutral-site game was described as a home game', $text);
 };
 
 /* ------------------------------------------------------------------ the runner */

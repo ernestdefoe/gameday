@@ -274,10 +274,30 @@ class Preview
 
     /* ------------------------------------------------------------- plumbing */
 
-    /** "#12 Alabama", or just "Alabama". */
+    /**
+     * "No. 12 Alabama", or just "Alabama".
+     *
+     * 🚨 "No. 12", NOT "#12", and this is a correctness fix rather than a
+     * style preference.
+     *
+     * A post is run through the board's formatter, and `#12` is a token there.
+     * On the first board this shipped to, the cross-references extension turned
+     * every rank into a link to the discussion with that id — "Louisiana Tech
+     * at #8 LSU" rendered as "Louisiana Tech at Down goes #5 Ole Miss LSU",
+     * with the wrong thread's title sitting inside the team's name. Flarum's
+     * own Mentions does the same thing with `#id`. Eighty-six posts, all
+     * plausible-looking until you read one.
+     *
+     * 🚨 A backslash escape would depend on which formatter is installed, which
+     * is the same mistake as assuming Markdown — see `bold()`. "No. 12" is
+     * inert whatever is parsing it, and it is what AP style writes in prose
+     * anyway. The scoreboard keeps "#12": that is HTML this extension renders
+     * itself, nothing parses it, and a scoreboard is where the short form
+     * belongs.
+     */
     protected function ranked(string $name, int $rank): string
     {
-        return $rank > 0 ? '#' . $rank . ' ' . $name : $name;
+        return $rank > 0 ? 'No. ' . $rank . ' ' . $name : $name;
     }
 
     /**
