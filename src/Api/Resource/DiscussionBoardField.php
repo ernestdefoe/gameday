@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace ErnestDefoe\Gameday\Api\Resource;
 
-use ErnestDefoe\Gameday\GamedayThread;
-use ErnestDefoe\Gameday\Service\Scoreboard;
+use ErnestDefoe\Gameday\Service\ScoreboardForDiscussion;
 use Flarum\Api\Schema;
 
 /**
@@ -24,7 +23,7 @@ use Flarum\Api\Schema;
  */
 class DiscussionBoardField
 {
-    public function __construct(protected Scoreboard $scoreboard)
+    public function __construct(protected ScoreboardForDiscussion $boards)
     {
     }
 
@@ -34,38 +33,7 @@ class DiscussionBoardField
             Schema\Arr::make('gamedayBoard')
                 ->nullable()
                 ->visible(fn ($discussion, $context) => $context->showing())
-                ->get(function ($discussion) {
-                    $thread = GamedayThread::query()
-                        ->where('discussion_id', $discussion->id)
-                        ->first();
-
-                    if ($thread === null) {
-                        return null;
-                    }
-
-                    $event = $this->event($thread->event_id);
-
-                    return $event === null ? null : $this->scoreboard->shape($event, $thread);
-                }),
+                ->get(fn ($discussion) => $this->boards->forDiscussion((int) $discussion->id)),
         ];
-    }
-
-    /**
-     * The fixture, with both clubs.
-     *
-     * 🚨 Reached through the class name rather than a `use` at the top: this
-     * extension is useless without Picks but must not be the thing that fatals
-     * when somebody disables it. An absent class is a null board and a thread
-     * that renders perfectly well without a scoreboard on it.
-     */
-    protected function event(int $id): ?object
-    {
-        $model = '\\Resofire\\Picks\\PickEvent';
-
-        if (! class_exists($model)) {
-            return null;
-        }
-
-        return $model::query()->with(['homeTeam', 'awayTeam'])->find($id);
     }
 }

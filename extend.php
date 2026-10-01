@@ -131,4 +131,19 @@ if (class_exists(\Ernestdefoe\PageBuilder\Extend\PageBuilderBlock::class)) {
     );
 }
 
+/*
+ * What a shared game thread looks like outside the site — a scoreboard instead
+ * of the site's own logo, which was identical for all 717 fixtures.
+ *
+ * 🚨 Guarded on the EXTENDER's class, and the driver is named only inside the
+ * branch: it implements an interface that belongs to fof/seo, and naming it on
+ * a site without that extension is a fatal at load time rather than a missing
+ * share image.
+ */
+if (class_exists(\FoF\Seo\Extend\SEO::class)) {
+    $extenders[] = (new \FoF\Seo\Extend\SEO())
+        ->addExtender('ernestdefoe-gameday-thread', \ErnestDefoe\Gameday\Seo\GameThreadPage::class);
+}
+
 return $extenders;
+
