@@ -666,6 +666,88 @@ $tests['a neutral site is vs, not at'] = function () {
     ok(str_contains($text, 'No. 12 Alabama vs Kentucky'), 'a neutral-site game was described as a home game', $text);
 };
 
+/* ------------------------------------------------- the detail the recap adds */
+
+/** A finished game with the fuller box score the ESPN summary now yields. */
+function detailedBox(array $overrides = []): array
+{
+    return array_replace([
+        'home' => ['team' => 'Coastal Carolina', 'points' => 17, 'stats' => ['totalYards' => '288'], 'leaders' => []],
+        'away' => ['team' => 'Liberty', 'points' => 34, 'stats' => ['totalYards' => '402'], 'leaders' => []],
+        'linescores' => ['home' => [3, 14, 0, 0], 'away' => [10, 0, 10, 14]],
+        'scoring' => [
+            ['period' => 1, 'clock' => '9:43', 'team' => 'LIB', 'type' => 'Field Goal Good',
+             'text' => 'Chase Reeves 29 Yd Field Goal', 'home' => 0, 'away' => 3],
+        ],
+        'market' => ['provider' => 'DraftKings', 'line' => 'LIB -2.5', 'total' => 50.5],
+        'swing' => ['text' => 'A 39 yard touchdown pass', 'toward' => 'home', 'points' => 20, 'after' => 69],
+    ], $overrides);
+}
+
+function detailedRecap(array $box, array $game = []): string
+{
+    return (new Recap(Recap::EMPHASIS_MARKDOWN))->text(array_replace([
+        'home_name' => 'Coastal Carolina', 'away_name' => 'Liberty',
+        'home_score' => 17, 'away_score' => 34,
+    ], $game), $box);
+}
+
+$tests['the line score names as many periods as were played'] = function () {
+    $text = detailedRecap(detailedBox([
+        // An overtime game: five periods, not four.
+        'linescores' => ['home' => [7, 7, 0, 7, 3], 'away' => [7, 7, 0, 7, 6]],
+    ]));
+
+    ok(str_contains($text, 'OT 3'), 'the overtime period was dropped from the line score', $text);
+};
+
+$tests['the line score is read from the feed, not added up'] = function () {
+    $text = detailedRecap(detailedBox());
+
+    ok(str_contains($text, 'Q1 10 · Q2 0 · Q3 10 · Q4 14 — final 34'), "Liberty's quarters were wrong", $text);
+};
+
+$tests['the biggest swing is only called the turning point when it won the game'] = function () {
+    // The swing went the home side's way; the away side won.
+    $loserSwing = detailedRecap(detailedBox());
+
+    ok(str_contains($loserSwing, 'The biggest swing'), 'a swing toward the loser was called the turning point', $loserSwing);
+    ok(! str_contains($loserSwing, 'The turning point'), 'a swing toward the loser was called the turning point', $loserSwing);
+
+    $winnerSwing = detailedRecap(detailedBox(['swing' => ['text' => 'A 58 yard touchdown pass', 'toward' => 'away', 'points' => 22, 'after' => 20]]));
+
+    ok(str_contains($winnerSwing, 'The turning point'), 'a swing toward the winner was not called the turning point', $winnerSwing);
+};
+
+$tests['a swing too small to matter is not reported at all'] = function () {
+    $text = detailedRecap(detailedBox(['swing' => ['text' => 'A short run', 'toward' => 'home', 'points' => 2, 'after' => 51]]));
+
+    ok(! str_contains($text, 'A short run'), 'a game decided gradually was given a turning point anyway', $text);
+};
+
+$tests['the cover is read from the favourite, not from who was at home'] = function () {
+    // Liberty are the road favourite and won by 17, comfortably covering 2.5.
+    $text = detailedRecap(detailedBox());
+
+    ok(str_contains($text, 'Liberty (LIB -2.5) covered.'), 'the road favourite was read as the home side', $text);
+    ok(str_contains($text, 'over the total of 50.5'), 'the total was read wrong', $text);
+};
+
+$tests['a box score without the new detail reads exactly as it used to'] = function () {
+    $plain = [
+        'home' => ['team' => 'Coastal Carolina', 'points' => 17, 'stats' => ['totalYards' => '288'], 'leaders' => []],
+        'away' => ['team' => 'Liberty', 'points' => 34, 'stats' => ['totalYards' => '402'], 'leaders' => []],
+    ];
+
+    $text = detailedRecap($plain);
+
+    foreach (['By the quarter', 'Scoring', 'Against the line', 'biggest swing'] as $heading) {
+        ok(! str_contains($text, $heading), "a game with no $heading data claimed to have some", $text);
+    }
+
+    ok(str_contains($text, 'Final: Coastal Carolina 17, Liberty 34.'), 'the plain recap lost its score line', $text);
+};
+
 /* ------------------------------------------------------------------ the runner */
 
 foreach ($tests as $name => $test) {

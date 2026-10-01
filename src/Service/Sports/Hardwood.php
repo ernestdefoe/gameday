@@ -20,6 +20,16 @@ namespace ErnestDefoe\Gameday\Service\Sports;
  */
 class Hardwood extends Sport
 {
+    protected function periodAbbreviation(): string
+    {
+        return 'Q';
+    }
+
+    protected function periodsInRegulation(): int
+    {
+        return 4;
+    }
+
     public function key(): string
     {
         return 'hardwood';

@@ -21,6 +21,16 @@ namespace ErnestDefoe\Gameday\Service\Sports;
  */
 class Diamond extends Sport
 {
+    protected function periodAbbreviation(): string
+    {
+        return 'Inn ';
+    }
+
+    protected function periodsInRegulation(): int
+    {
+        return 9;
+    }
+
     public function key(): string
     {
         return 'diamond';

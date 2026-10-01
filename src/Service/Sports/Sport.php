@@ -132,6 +132,44 @@ abstract class Sport
      * The default is the one phrase that is true everywhere, so a sport added
      * later is understated rather than wrong.
      */
+    /**
+     * What a period is called on this sport's scoreboard: "Q1", "2nd Half".
+     *
+     * 🚨 Here rather than in the recap, for the same reason every other
+     * sentence is: a quarter in gridiron is a half in football and an innings
+     * in baseball, and a recap that spelled that out itself would need a branch
+     * per sport in the middle of its own formatting.
+     *
+     * 🚨 Anything past the regulation count is overtime. A fixed list of names
+     * silently mislabels the period a game was actually decided in.
+     */
+    public function periodName(int $number): string
+    {
+        if ($number < 1) {
+            return '';
+        }
+
+        if ($number > $this->periodsInRegulation()) {
+            $extra = $number - $this->periodsInRegulation();
+
+            return 'OT' . ($extra > 1 ? $extra : '');
+        }
+
+        return $this->periodAbbreviation() . $number;
+    }
+
+    /** The letter a period is written with: Q for a quarter, P for a period. */
+    protected function periodAbbreviation(): string
+    {
+        return 'P';
+    }
+
+    /** How many of them a game has before it goes to extra time. */
+    protected function periodsInRegulation(): int
+    {
+        return 4;
+    }
+
     public function kickoff(): string
     {
         return 'First whistle';

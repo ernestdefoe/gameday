@@ -89,6 +89,24 @@ class Recap
         }
 
         /*
+         * The detail the XenForo build carries, in the order a broadcast gives
+         * it: how the game went period by period, the play that decided it,
+         * every score, and what the market had made of it beforehand. Each is
+         * omitted entirely when the box score does not carry it, so a game
+         * stored before any of this was captured still reads exactly as it did.
+         */
+        foreach ([
+            $this->lineScore($box, $home, $away, $homeScore, $awayScore),
+            $this->turningPoint($box, $home, $away, $homeScore, $awayScore),
+            $this->scoringSummary($box, $home, $away),
+            $this->market($box, $home, $away, $homeScore, $awayScore),
+        ] as $block) {
+            if ($block !== '') {
+                $blocks[] = $block;
+            }
+        }
+
+        /*
          * 🚨 Last, and always. The sentence that tells somebody the thread is
          * not closed — the most common question under a finished game thread on
          * any forum that has ever had one.
@@ -96,6 +114,208 @@ class Recap
         $blocks[] = 'The thread is an ordinary topic again now — still here, still searchable.';
 
         return implode("\n\n", $blocks);
+    }
+
+    /**
+     * The quarter-by-quarter line, the way a stadium board shows it.
+     *
+     * 🚨 As many periods as were actually PLAYED, not a hardcoded four. An
+     * overtime game has five or more, and anything assuming four drops the
+     * period the game was decided in — the one worth reading.
+     *
+     * 🚨 One line per side rather than a table. A Markdown table needs an
+     * extension most boards do not have, and when it is missing the reader gets
+     * a screenful of pipes; this reads correctly whatever is installed, and
+     * better on a phone, which is where most of these are read.
+     *
+     * @param array<string, mixed>|null $box
+     */
+    protected function lineScore(?array $box, string $home, string $away, int $homeScore, int $awayScore): string
+    {
+        $lines = (array) ($box['linescores'] ?? []);
+        $h = array_values((array) ($lines['home'] ?? []));
+        $a = array_values((array) ($lines['away'] ?? []));
+
+        $periods = max(count($h), count($a));
+
+        if ($periods < 2) {
+            return '';
+        }
+
+        $heads = [];
+
+        for ($i = 0; $i < $periods; $i++) {
+            $heads[] = $i < 4 ? $this->sport->periodName($i + 1) : 'OT' . ($i - 3 > 1 ? $i - 3 : '');
+        }
+
+        $row = function (string $name, array $points, int $total) use ($periods, $heads): string {
+            $parts = [];
+
+            for ($i = 0; $i < $periods; $i++) {
+                $parts[] = $heads[$i] . ' ' . (int) ($points[$i] ?? 0);
+            }
+
+            return $this->bold($name) . ' — ' . implode(' · ', $parts) . ' — final ' . $total;
+        };
+
+        return implode("\n", [
+            $this->bold('By the quarter'),
+            $row($away, $a, $awayScore),
+            $row($home, $h, $homeScore),
+        ]);
+    }
+
+    /**
+     * The play that moved the game most.
+     *
+     * 🚨 Measured, not chosen. It is the largest change in win probability
+     * between two consecutive plays, which is what "the turning point" actually
+     * means — rather than the longest touchdown, which is merely the loudest.
+     *
+     * @param array<string, mixed>|null $box
+     */
+    protected function turningPoint(?array $box, string $home, string $away, int $homeScore, int $awayScore): string
+    {
+        $swing = (array) ($box['swing'] ?? []);
+        $text = trim((string) ($swing['text'] ?? ''));
+
+        if ($text === '') {
+            return '';
+        }
+
+        $gained = ($swing['toward'] ?? 'home') === 'home' ? $home : $away;
+        $points = (int) ($swing['points'] ?? 0);
+
+        if ($points < 5) {
+            // 🚨 Nothing swung it. A game decided gradually has no turning
+            // point, and naming one anyway would invent a story about it.
+            return '';
+        }
+
+        /*
+         * 🚨 "The turning point" only when the swing went the WINNER's way.
+         *
+         * The largest swing in a game is often a score by the side that went on
+         * to lose — here a Coastal Carolina touchdown in a game Liberty won by
+         * seventeen. Calling that the turning point tells the reader a story
+         * about the game that did not happen; it was the biggest swing, and
+         * saying so is both true and still worth reading.
+         */
+        $winner = $homeScore === $awayScore ? null : ($homeScore > $awayScore ? 'home' : 'away');
+        $decisive = $winner !== null && ($swing['toward'] ?? '') === $winner;
+
+        return implode("\n", [
+            $this->bold($decisive ? 'The turning point' : 'The biggest swing'),
+            $text,
+            sprintf("That swung it %d points %s's way.", $points, $gained),
+        ]);
+    }
+
+    /**
+     * Every score, in order, with the board after it.
+     *
+     * 🚨 The running score comes from the feed rather than being added up here.
+     * It states what the board read after each score; recomputing would
+     * disagree with it the first time a two-point conversion or a safety
+     * appeared, and disagree silently.
+     *
+     * @param array<string, mixed>|null $box
+     */
+    protected function scoringSummary(?array $box, string $home, string $away): string
+    {
+        $plays = (array) ($box['scoring'] ?? []);
+
+        if ($plays === []) {
+            return '';
+        }
+
+        $lines = [$this->bold('Scoring')];
+
+        foreach ($plays as $play) {
+            if (! is_array($play)) {
+                continue;
+            }
+
+            $when = trim($this->sport->periodName((int) ($play['period'] ?? 0)) . ' ' . (string) ($play['clock'] ?? ''));
+            $what = trim((string) ($play['text'] ?? '')) ?: trim((string) ($play['type'] ?? ''));
+
+            if ($what === '') {
+                continue;
+            }
+
+            $lines[] = sprintf(
+                '%s — %s (%s %d, %s %d)',
+                $when,
+                $what,
+                $away,
+                (int) ($play['away'] ?? 0),
+                $home,
+                (int) ($play['home'] ?? 0)
+            );
+        }
+
+        return count($lines) > 1 ? implode("\n", $lines) : '';
+    }
+
+    /**
+     * What the market had made of it, and how that turned out.
+     *
+     * 🚨 The spread is read from the FAVOURITE's side, and which side that is
+     * comes from the line itself rather than from who was at home. Assuming the
+     * home team was favoured gets the cover backwards in every road-favourite
+     * game, which is a third of the card on a given Saturday.
+     *
+     * @param array<string, mixed>|null $box
+     */
+    protected function market(?array $box, string $home, string $away, int $homeScore, int $awayScore): string
+    {
+        $market = (array) ($box['market'] ?? []);
+        $line = trim((string) ($market['line'] ?? ''));
+
+        if ($line === '') {
+            return '';
+        }
+
+        $lines = [$this->bold('Against the line')];
+
+        // "LIB -2.5" — the abbreviation names the favourite, the number the price.
+        if (preg_match('/^(\S+)\s*([+-]?\d+(?:\.\d+)?)$/', $line, $m)) {
+            $spread = abs((float) $m[2]);
+            $sides = $this->sides($box);
+            $homeAbbr = strtoupper((string) ($sides['home']['team'] ?? $home));
+            $homeIsFavourite = str_starts_with($homeAbbr, strtoupper($m[1]))
+                || str_starts_with(strtoupper($home), strtoupper($m[1]));
+
+            $favourite = $homeIsFavourite ? $home : $away;
+            $margin = $homeIsFavourite ? $homeScore - $awayScore : $awayScore - $homeScore;
+
+            $lines[] = match (true) {
+                $margin > $spread => sprintf('%s (%s) covered.', $favourite, $line),
+                $margin < $spread => sprintf('%s (%s) did not cover.', $favourite, $line),
+                default => sprintf('%s was a push.', $line),
+            };
+        } else {
+            $lines[] = 'The line was ' . $line . '.';
+        }
+
+        $total = $market['total'] ?? null;
+
+        if ($total !== null) {
+            $points = $homeScore + $awayScore;
+            $lines[] = match (true) {
+                $points > (float) $total => sprintf('%d points, over the total of %s.', $points, $total),
+                $points < (float) $total => sprintf('%d points, under the total of %s.', $points, $total),
+                default => sprintf('%d points, exactly the total.', $points),
+            };
+        }
+
+        if (($market['provider'] ?? '') !== '') {
+            // Named, because two books rarely agree and an unattributed number
+            // reads as a fact of the universe.
+            $lines[] = 'Line from ' . $market['provider'] . '.';
+        }
+
+        return implode("\n", $lines);
     }
 
     /** Whether a box score has enough in it to say anything with. */

@@ -20,6 +20,16 @@ namespace ErnestDefoe\Gameday\Service\Sports;
  */
 final class Soccer extends Sport
 {
+    protected function periodAbbreviation(): string
+    {
+        return 'H';
+    }
+
+    protected function periodsInRegulation(): int
+    {
+        return 2;
+    }
+
     public function key(): string
     {
         return 'soccer';

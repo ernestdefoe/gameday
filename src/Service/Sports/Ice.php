@@ -18,6 +18,16 @@ namespace ErnestDefoe\Gameday\Service\Sports;
  */
 class Ice extends Sport
 {
+    protected function periodAbbreviation(): string
+    {
+        return 'P';
+    }
+
+    protected function periodsInRegulation(): int
+    {
+        return 3;
+    }
+
     public function key(): string
     {
         return 'ice';

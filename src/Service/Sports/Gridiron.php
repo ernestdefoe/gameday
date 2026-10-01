@@ -15,6 +15,16 @@ namespace ErnestDefoe\Gameday\Service\Sports;
  */
 final class Gridiron extends Sport
 {
+    protected function periodAbbreviation(): string
+    {
+        return 'Q';
+    }
+
+    protected function periodsInRegulation(): int
+    {
+        return 4;
+    }
+
     public function key(): string
     {
         return 'gridiron';
