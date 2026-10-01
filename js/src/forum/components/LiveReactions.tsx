@@ -5,8 +5,6 @@ declare const m: any;
 
 const EMOJI = ['🔥', '😱', '🙌', '😤', '💀', '🎉'];
 
-interface Float { id: number; emoji: string; left: number; drift: number; dur: number; delay: number }
-
 /**
  * The roar: reactions that fly up the board while a game is being played.
  *
@@ -16,7 +14,6 @@ interface Float { id: number; emoji: string; left: number; drift: number; dur: n
  * worse reaction button sitting beside the real one.
  */
 export default class LiveReactions extends Component<{ discussion: any }> {
-  floats: Float[] = [];
   seq = 0;
   since = 0;
   timer: any = null;
@@ -41,8 +38,36 @@ export default class LiveReactions extends Component<{ discussion: any }> {
     this.poll();
   }
 
+  /** The viewport-wide sky, shared by every board on the page. */
+  sky: HTMLElement | null = null;
+
+  /**
+   * 🚨 The sky lives on the BODY and is fixed to the viewport.
+   *
+   * Reactions rise over the whole page, not over the board. The board is pinned
+   * at the top of a live thread and the reading happens at the bottom, so
+   * anything confined to it is invisible for most of the time somebody is
+   * actually watching the game.
+   *
+   * 🚨 On the body specifically. `position: fixed` is captured by any ancestor
+   * carrying a transform, filter or backdrop-filter — the board has a gradient
+   * stack today and could gain a transform tomorrow, at which point the sky
+   * would silently start positioning against the board again.
+   */
+  ensureSky() {
+    this.sky = document.querySelector('.GamedayReactions-sky--page');
+    if (this.sky) return;
+
+    const el = document.createElement('span');
+    el.className = 'GamedayReactions-sky GamedayReactions-sky--page';
+    el.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(el);
+    this.sky = el;
+  }
+
   oncreate(vnode: any) {
     super.oncreate(vnode);
+    this.ensureSky();
 
     const board = vnode.dom?.closest('.GamedayBoard');
     if (!board || typeof IntersectionObserver === 'undefined') return;
@@ -97,30 +122,44 @@ export default class LiveReactions extends Component<{ discussion: any }> {
 
   /** Put one emoji in the air. */
   launch(emoji: string) {
-    const id = ++this.seq;
+    /*
+     * 🚨 Appended straight to the body sky, NOT rendered through Mithril.
+     *
+     * The sky is outside this component's subtree, so a Mithril-managed child
+     * would be torn out on the next redraw. Appending the node and removing it
+     * on a timer is also how the XenForo build does it, and it keeps a hundred
+     * floats off the redraw path entirely.
+     */
+    this.ensureSky();
+    if (!this.sky) return;
 
-    this.floats.push({
-      id,
-      emoji,
-      // Spread across the board's width, avoiding the very edges.
-      left: 6 + Math.random() * 88,
-      // A sideways wander, so a hundred of them do not rise in columns.
-      drift: -40 + Math.random() * 80,
-      dur: 2600 + Math.random() * 1400,
-      delay: Math.random() * 500,
-    });
+    const float = document.createElement('span');
+    float.className = 'GamedayReactions-float';
+    float.textContent = emoji;
+
+    // Across the whole viewport now, not the board's width.
+    const left = 4 + Math.random() * 92;
+    const drift = -90 + Math.random() * 180;
+    // Further to travel than a board's height, so slower and more varied.
+    const rise = 62 + Math.random() * 30;
+    const dur = 4200 + Math.random() * 2600;
+    const delay = Math.random() * 600;
+
+    float.setAttribute(
+      'style',
+      `left:${left}%;--gd-drift:${drift}px;--gd-rise:${rise}vh;` +
+        `animation-duration:${dur}ms;animation-delay:${delay}ms`
+    );
+
+    this.sky.appendChild(float);
 
     /*
-     * 🚨 Removed on a timer rather than left for the animation's own end
-     * event. `animationend` never fires on a tab in the background, and a
-     * thread left open on a second monitor would accumulate every emoji of
-     * the whole second half and then try to render them all at once.
+     * 🚨 Removed on a timer rather than on the animation's own end event.
+     * `animationend` never fires on a tab in the background, and a thread left
+     * open on a second monitor would accumulate every emoji of the whole second
+     * half and then try to render them all at once.
      */
-    const life = 4600;
-    setTimeout(() => {
-      this.floats = this.floats.filter((f) => f.id !== id);
-      m.redraw();
-    }, life);
+    setTimeout(() => float.remove(), dur + delay + 400);
   }
 
   send(emoji: string) {
@@ -144,15 +183,6 @@ export default class LiveReactions extends Component<{ discussion: any }> {
   view() {
     return (
       <div className={`GamedayReactions${this.detached ? ' GamedayReactions--detached' : ''}`}>
-        <div className="GamedayReactions-sky" aria-hidden="true">
-          {this.floats.map((f) =>
-            m('span.GamedayReactions-float', {
-              key: f.id,
-              style: `left:${f.left}%;--gd-drift:${f.drift}px;animation-duration:${f.dur}ms;animation-delay:${f.delay}ms`,
-            }, f.emoji)
-          )}
-        </div>
-
         <div className="GamedayReactions-bar">
           {EMOJI.map((e) =>
             m('button.GamedayReactions-btn', {
