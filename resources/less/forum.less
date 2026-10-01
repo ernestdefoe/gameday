@@ -1391,3 +1391,49 @@ html[data-theme='dark'] .GdPerformers { .gdp-dark(); }
   .GdPerformers-starBig { font-size: 2.5rem; }
   .GdPerformers-star { min-height: 0; }
 }
+
+// ---------------------------------------------------------------------------
+// The club's crest on a game thread's hero
+// ---------------------------------------------------------------------------
+
+// 🚨 Positioned absolutely rather than by making the list a flex row. The hero's
+// item list is core's, shared with every other discussion on the site, and
+// changing how it lays out would move the title on all of them.
+.DiscussionHero-items {
+  position: relative;
+}
+
+.item-gamedayCrest {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.GamedayHero-crest {
+  display: block;
+  height: 72px;
+  width: auto;
+  max-width: 120px;
+  object-fit: contain;
+  // A crest drawn for a dark ground on a club colour that happens to be pale
+  // would otherwise disappear; the halo costs nothing on a dark one.
+  filter: drop-shadow(0 0 1px rgba(10, 12, 16, 0.55)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
+}
+
+// The title keeps clear of the crest rather than running under it.
+.DiscussionHero-items .item-title {
+  padding-right: 136px;
+}
+
+@media (max-width: 767px) {
+  .GamedayHero-crest {
+    height: 48px;
+    max-width: 72px;
+  }
+
+  .DiscussionHero-items .item-title {
+    padding-right: 84px;
+  }
+}

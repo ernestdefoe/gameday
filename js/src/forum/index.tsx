@@ -3,6 +3,7 @@ import { override } from 'flarum/common/extend';
 import DiscussionPage from 'flarum/forum/components/DiscussionPage';
 import GamedayBoard from './components/GamedayBoard';
 import registerWidgets from './widgets';
+import addHeroCrest from './heroCrest';
 
 declare const m: any;
 
@@ -27,6 +28,9 @@ app.initializers.add('ernestdefoe-gameday', () => {
    * to be present.
    */
   registerWidgets();
+
+  // The club's crest on the hero, instead of the tag chip above the title.
+  addHeroCrest();
 
   /*
    * 🚨 `override`, not `extend`. An extend callback's return value is thrown
