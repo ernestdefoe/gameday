@@ -666,6 +666,21 @@ $tests['a neutral site is vs, not at'] = function () {
     ok(str_contains($text, 'No. 12 Alabama vs Kentucky'), 'a neutral-site game was described as a home game', $text);
 };
 
+$tests['a preview invites a pick when there is somewhere to send them'] = function () {
+    $text = (new Preview())->text(fixture(['picks_url' => 'https://fbsfb.com/picks/week/5']));
+
+    ok(str_contains($text, 'Pick this game before kickoff: https://fbsfb.com/picks/week/5'),
+        'the preview did not invite a pick', $text);
+};
+
+$tests['a preview with nowhere to send them advertises nothing'] = function () {
+    $text = (new Preview())->text(fixture());
+
+    ok(! str_contains($text, 'Pick this game'),
+        'a board with no pick\'em was told to go and pick', $text);
+    ok(str_contains($text, 'Thread is open'), 'the closing line went missing', $text);
+};
+
 /* ------------------------------------------------- the detail the recap adds */
 
 /** A finished game with the fuller box score the ESPN summary now yields. */

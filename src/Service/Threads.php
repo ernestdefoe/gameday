@@ -8,6 +8,7 @@ use ErnestDefoe\Gameday\Service\Sports\Sports;
 use ErnestDefoe\Gameday\TeamTag;
 use Flarum\Discussion\Discussion;
 use Flarum\Extension\ExtensionManager;
+use Flarum\Foundation\Config;
 use Flarum\Post\CommentPost;
 use Flarum\User\User;
 use Illuminate\Database\ConnectionInterface;
@@ -68,6 +69,7 @@ class Threads
         protected Settings $settings,
         protected BoxScore $boxScore,
         protected ExtensionManager $extensions,
+        protected Config $config,
         protected Sports $sports = new Sports()
     ) {
     }
@@ -687,6 +689,15 @@ class Threads
             'venue_city' => (string) $game->venue_city,
             'broadcast' => (string) $game->broadcast,
             'week' => (string) ($game->week->name ?? ''),
+            /*
+             * 🚨 Built from the week's own id, so the link lands on the round
+             * this game belongs to rather than on whatever week is current when
+             * somebody reads it — which, for a preview written days ahead, is
+             * not the same thing.
+             */
+            'picks_url' => $game->week_id
+                ? rtrim((string) $this->config->url(), '/') . '/picks/week/' . (int) $game->week_id
+                : '',
         ];
     }
 }

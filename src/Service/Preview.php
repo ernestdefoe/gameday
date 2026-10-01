@@ -78,6 +78,22 @@ class Preview
         }
 
         /*
+         * 🚨 The invitation to pick, where there is one to link to.
+         *
+         * This post is the page somebody lands on from a search for the
+         * fixture, days before anybody who already uses the site would look at
+         * it. Telling that reader the one thing they can do here — pick the
+         * game — is the difference between a page that answers a question and
+         * a page that gains a member. Omitted entirely when no URL is supplied,
+         * so a board without the pick'em never advertises one.
+         */
+        $picks = trim((string) ($game['picks_url'] ?? ''));
+
+        if ($picks !== '') {
+            $blocks[] = 'Pick this game before kickoff: ' . $picks;
+        }
+
+        /*
          * 🚨 Last, and always — the counterpart of the recap's closing line.
          * The opening post of an automated thread has one job beyond saying
          * what the game is, which is to make clear that a person is expected to
