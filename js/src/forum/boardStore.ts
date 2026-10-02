@@ -59,6 +59,8 @@ export interface WidgetBoard {
   redZone: boolean;
   clockStale: boolean;
   kickoff: string | null;
+  /** The date is set, the time is not announced yet. */
+  kickoffTbd?: boolean;
   home: Side;
   away: Side;
   discussion: Link | null;

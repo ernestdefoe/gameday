@@ -1,6 +1,7 @@
 import app from 'flarum/forum/app';
 import Component from 'flarum/common/Component';
 import extractText from 'flarum/common/utils/extractText';
+import kickoffLabel from '../kickoffLabel';
 import LiveReactions from './LiveReactions';
 
 declare const m: any;
@@ -27,6 +28,8 @@ interface Board {
   redZone: boolean;
   clockStale: boolean;
   kickoff: string | null;
+  /** The date is set, the time is not announced yet. */
+  kickoffTbd?: boolean;
   venue: string;
   venueCity: string;
   broadcast: string;
@@ -110,9 +113,7 @@ export default class GamedayBoard extends Component<{ discussion: any }> {
                 broken in exactly the moment somebody is watching it. */}
             {b.clockStale ? <span className="GamedayBoard-stale">{t('stale')}</span> : null}
             {b.state === 'scheduled' && b.kickoff
-              ? <span className="GamedayBoard-kickoff">{new Date(b.kickoff).toLocaleString(undefined, {
-                  weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
-                })}</span>
+              ? <span className="GamedayBoard-kickoff">{kickoffLabel(b.kickoff, !!b.kickoffTbd, extractText(t('time_tba')))}</span>
               : null}
           </div>
 

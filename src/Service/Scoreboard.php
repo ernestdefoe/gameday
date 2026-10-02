@@ -130,6 +130,8 @@ class Scoreboard
             'clockStale' => $state === 'live' && $clockAt > 0 && ! $fresh,
 
             'kickoff' => $event->match_date?->toIso8601String(),
+            // The date is real, the time is a placeholder; see Picks' time_tbd.
+            'kickoffTbd' => (bool) $event->time_tbd,
 
             /*
              * Where it is being played and who is showing it.

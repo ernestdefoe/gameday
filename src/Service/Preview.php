@@ -156,6 +156,18 @@ class Preview
                 '%s is %s%s.',
                 $this->sport->kickoff(),
                 /*
+                 * 🚨 An unannounced time arrives as a placeholder of midnight
+                 * Eastern, and printed as a time it is a confident lie — "12:00am
+                 * on Saturday" for a mid-afternoon game. So it says the day and
+                 * that the time is still to come, with the day read in the zone
+                 * the placeholder was set in.
+                 */
+                ! empty($game['kickoff_tbd'])
+                    ? 'on ' . (new \DateTimeImmutable('@' . $kickoff->getTimestamp()))
+                        ->setTimezone(new \DateTimeZone('America/New_York'))
+                        ->format('l j F') . ', time to be announced'
+                    :
+                /*
                  * Time first, then the day: "3:30pm EDT on Saturday 12
                  * September". The other way round it runs into the venue that
                  * follows it and the sentence reads as a list of fields.

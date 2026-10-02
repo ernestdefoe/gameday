@@ -106,6 +106,18 @@ class Threads
             ->get();
 
         foreach ($games as $game) {
+            /*
+             * 🚨 An unannounced kickoff is a placeholder of midnight Eastern,
+             * and opening "three hours before" it posted every TBA game's
+             * thread at 9pm the night before, saying it kicked off at
+             * midnight. Until the time is known, the picks lock (8am Eastern on
+             * game day) stands in for it.
+             */
+            if ($game->time_tbd && $game->cutoff_date !== null
+                && $game->cutoff_date->gt($now->copy()->addMinutes($this->settings->leadMinutes()))) {
+                continue;
+            }
+
             if ($this->openOne($game, $author)) {
                 $opened++;
             }
@@ -127,6 +139,12 @@ class Threads
             $game = PickEvent::find($row->event_id);
 
             if ($game === null || Carbon::now()->lt($game->match_date)) {
+                continue;
+            }
+
+            // An unannounced kickoff's time is a placeholder, so it cannot say
+            // the game has started; the feed's own status does that instead.
+            if ($game->time_tbd && $game->status === PickEvent::STATUS_SCHEDULED) {
                 continue;
             }
 
@@ -291,7 +309,8 @@ class Threads
         bool $withTitles = false,
         bool $includeCurrent = false,
         bool $dryRun = false,
-        ?callable $report = null
+        ?callable $report = null,
+        ?string $state = null
     ): array {
         $author = $this->author();
 
@@ -303,7 +322,10 @@ class Threads
             return compact('rewritten', 'skipped', 'retitled');
         }
 
-        $rows = GamedayThread::query()->orderByDesc('id')->get();
+        $rows = GamedayThread::query()
+            ->when($state !== null, fn ($q) => $q->where('state', $state))
+            ->orderByDesc('id')
+            ->get();
 
         foreach ($rows as $row) {
             if ($rewritten >= $limit) {
@@ -685,6 +707,7 @@ class Threads
             'away_conference' => (string) ($game->awayTeam->conference ?? ''),
             'neutral_site' => (bool) $game->neutral_site,
             'kickoff' => $game->match_date,
+            'kickoff_tbd' => (bool) $game->time_tbd,
             'venue' => (string) $game->venue,
             'venue_city' => (string) $game->venue_city,
             'broadcast' => (string) $game->broadcast,

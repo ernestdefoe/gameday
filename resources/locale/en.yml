@@ -67,6 +67,7 @@ ernestdefoe-gameday:
   forum:
     board_scheduled: Kickoff
     board_stale: Waiting for the feed
+    board_time_tba: time TBA
     board_red_zone: Red zone
     board_possession: "{team} have the ball"
     # The rank a team carried INTO this game, which is why it never moves again.
@@ -77,6 +78,7 @@ ernestdefoe-gameday:
     widget_live: Live
     widget_scheduled: Kickoff
     widget_stale: Waiting for the feed
+    widget_time_tba: time TBA
     widget_red_zone: Red zone
     widget_rank: "Ranked #{rank}"
     widget_to_the_thread: Go to the game thread

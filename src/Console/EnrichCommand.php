@@ -29,6 +29,19 @@ class EnrichCommand extends Command
 
         $rewritten = $threads->enrich();
 
+        /*
+         * 🚨 And the openers of games not yet started. An opener is written
+         * once, from the fixture as it stood, so a kickoff that moves after the
+         * thread opens — or one first written from an unannounced placeholder —
+         * stayed wrong in the post for good. Unchanged text is not rewritten,
+         * so a quiet hour costs only the comparison.
+         */
+        $refreshed = $threads->rewriteOpeners(limit: 100, includeCurrent: true, state: \ErnestDefoe\Gameday\GamedayThread::OPEN)['rewritten'];
+
+        if ($refreshed > 0) {
+            $this->info("Brought {$refreshed} opening post(s) up to date.");
+        }
+
         if ($rewritten > 0) {
             $this->info("Filled out {$rewritten} recap(s).");
         }

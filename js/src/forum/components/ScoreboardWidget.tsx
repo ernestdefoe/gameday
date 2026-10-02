@@ -1,6 +1,7 @@
 import app from 'flarum/forum/app';
 import Component from 'flarum/common/Component';
 import extractText from 'flarum/common/utils/extractText';
+import kickoffLabel from '../kickoffLabel';
 import type Mithril from 'mithril';
 import { startTicker } from '../tickerScroll';
 import {
@@ -176,15 +177,7 @@ export default class ScoreboardWidget extends Component<Attrs> {
 
   statusLine(b: WidgetBoard, t: (k: string, p?: any) => any) {
     if (b.state === 'scheduled') {
-      return b.kickoff
-        ? new Date(b.kickoff).toLocaleString(undefined, {
-            weekday: 'short',
-            day: 'numeric',
-            month: 'short',
-            hour: 'numeric',
-            minute: '2-digit',
-          })
-        : t('scheduled');
+      return b.kickoff ? kickoffLabel(b.kickoff, !!b.kickoffTbd, extractText(t('time_tba'))) : t('scheduled');
     }
 
     // The clock beside the period where there is one worth printing — the shape
