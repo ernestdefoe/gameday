@@ -71,6 +71,7 @@ $extenders = [
         ->default(Settings::PREFIX . 'watch_enabled', true)
         // Empty = every league; see Settings::watchLeagues().
         ->default(Settings::PREFIX . 'watch_leagues', '')
+        ->default(Settings::PREFIX . 'highlights', true)
         ->serializeToForum('gamedayEnabled', Settings::PREFIX . 'enabled', 'boolval'),
 
     (new Extend\Routes('api'))

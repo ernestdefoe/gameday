@@ -123,6 +123,13 @@ export default [
     .customSetting(function (this: any) {
       return watchLeagues(this.setting('ernestdefoe-gameday.watch_leagues'));
     })
+    .setting(() => ({
+      setting: 'ernestdefoe-gameday.highlights',
+      type: 'boolean',
+      label: t('highlights_label'),
+      help: t('highlights_help'),
+      default: true,
+    }))
     /*
      * 🚨 `customSetting`, not `setting`. `setting()`'s callback is invoked
      * expecting a descriptor object, so a vnode-returning one crashes the page;

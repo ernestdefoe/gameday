@@ -60,6 +60,25 @@ ernestdefoe-gameday:
       watch_leagues_help: >-
         Tick none to show it for every league, including ones added later.
       watch_leagues_none: Picks has no leagues to list yet.
+      highlights_label: Show highlight clips on finished games
+      highlights_help: >-
+        Up to six clips from ESPN under the scoreboard of a finished game's
+        thread, collected for a day after the final as they are published. Each
+        plays in ESPN's own player, which loads only when somebody presses play.
+        The recap post itself is never changed for them.
+    tags:
+      title: Which tag each team's games go in
+      description: >-
+        The home team's tag is used first, then the away team's, then the
+        fallback above. A board with one football tag can map everybody to it.
+      team: Team
+      conference: Conference
+      tag: Tag
+      none: No tag of its own
+      save: Save mapping
+      saved: Mapping saved.
+      loading: Loading teams…
+      empty: No teams yet — sync them in Picks first.
   forum:
     board_scheduled: Kickoff
     board_stale: Waiting for the feed
@@ -80,6 +99,9 @@ ernestdefoe-gameday:
     watch_button: "Watch on {network}"
     watch_button_label: "Watch on {network} (opens in a new tab)"
 
+    # Highlight clips under a finished game's scoreboard.
+    highlights_title: Highlights
+    highlights_play: "Play: {title}"
 
     # The scoreboard as a widget — see ScoreboardWidget.
     widget_scoreboard: Scoreboard

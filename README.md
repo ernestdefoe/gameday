@@ -58,10 +58,26 @@ button takes its own line:
 The scoreboard widget shows the chips on each card, and the button only when it
 is showing a single game.
 
-It is on by default. **Admin → Game Day** turns it off, or limits it to
-particular leagues:
+## Highlights
 
-![The settings: show where to watch, and which leagues](screenshots/settings-watch.png)
+Once a game is final, the clips ESPN publishes for it appear under the
+scoreboard — the full-game package first, then the plays in order, up to six:
+
+![A final scoreboard with a strip of highlight clips under it](screenshots/highlights.png)
+
+Each clip is a thumbnail until somebody presses play, and only then becomes
+ESPN's own syndicated player, so a thread does not load six video players
+before anyone has chosen one. Clips arrive minutes to hours after the final, so
+the hourly pass keeps looking for a day after the game, at most every 45
+minutes per thread. They are drawn by the thread itself and never written into
+the recap post: post text is parsed, and a feed's markup does not belong in it.
+
+![The highlights strip on a phone, in dark mode](screenshots/highlights-phone.png)
+
+Both are on by default. **Admin → Game Day** turns either off, and limits where
+to watch to particular leagues:
+
+![The settings: show where to watch, which leagues, show highlight clips](screenshots/settings-watch.png)
 
 ## More than one sport
 
@@ -117,8 +133,9 @@ Two commands run on Flarum's scheduler and need nothing else:
 
 - Flarum 2
 - [`ernestdefoe/picks`](https://github.com/ernestdefoe/picks) for the fixtures
-  and box scores — a Picks with the `broadcasts` column for
-  the full channel listing; an older one still gives the national channel
+  and box scores — a Picks with the `broadcasts` and `highlights` columns for
+  the full channel listing and the clips; an older one still gives the national
+  channel, and no clips
 - `flarum/tags` (optional — threads are posted untagged without it)
 - `flarum/sticky` (optional — the game-is-on state does nothing without it)
 

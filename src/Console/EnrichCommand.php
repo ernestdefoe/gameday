@@ -21,7 +21,7 @@ class EnrichCommand extends Command
 
     protected $description = 'Rewrite recaps whose box score has since arrived.';
 
-    public function handle(Threads $threads, Settings $settings): int
+    public function handle(Threads $threads, Settings $settings, \ErnestDefoe\Gameday\Service\Highlights $highlights): int
     {
         if (!$settings->enabled()) {
             return self::SUCCESS;
@@ -44,6 +44,18 @@ class EnrichCommand extends Command
 
         if ($rewritten > 0) {
             $this->info("Filled out {$rewritten} recap(s).");
+        }
+
+        /*
+         * And the highlight clips, which arrive on their own timetable — the
+         * full-game package often an hour or two after the final. Stored on
+         * the fixture and drawn by the thread, never written into the recap;
+         * see Service\Highlights.
+         */
+        $clips = $highlights->collect();
+
+        if ($clips['updated'] > 0) {
+            $this->info("Found new highlights for {$clips['updated']} game(s).");
         }
 
         return self::SUCCESS;

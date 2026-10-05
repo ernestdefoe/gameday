@@ -3,6 +3,7 @@ import Component from 'flarum/common/Component';
 import extractText from 'flarum/common/utils/extractText';
 import kickoffLabel from '../kickoffLabel';
 import LiveReactions from './LiveReactions';
+import GamedayHighlights, { type Clip } from './GamedayHighlights';
 import { watchRow, type Watch } from '../whereToWatch';
 
 declare const m: any;
@@ -36,6 +37,8 @@ interface Board {
   broadcast: string;
   /** Where it is on — null when nothing is listed or the feature is off. */
   watch?: Watch | null;
+  /** A finished game's clips; empty otherwise. */
+  highlights?: Clip[];
   home: Side;
   away: Side;
 }
@@ -149,6 +152,8 @@ export default class GamedayBoard extends Component<{ discussion: any }> {
             it does not come and go with the venue line during play. */}
         {watchRow(b.watch, 'GamedayBoard-watch')}
       </div>,
+
+      b.state === 'final' && b.highlights && b.highlights.length ? m(GamedayHighlights, { clips: b.highlights }) : null,
     ];
   }
 

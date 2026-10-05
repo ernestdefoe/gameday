@@ -163,6 +163,12 @@ class Settings
         return is_array($decoded) && $decoded !== [] ? array_values(array_map('strval', $decoded)) : null;
     }
 
+    /** Whether a finished game's thread shows its highlight clips. On by default. */
+    public function highlightsEnabled(): bool
+    {
+        return (bool) $this->get('highlights', true);
+    }
+
     public function __construct(protected SettingsRepositoryInterface $settings)
     {
     }

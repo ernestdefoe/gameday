@@ -163,6 +163,13 @@ class Scoreboard
              */
             'watch' => $this->watch($event, $state, $home, $away),
 
+            /*
+             * The clips ESPN published for a finished game. Ids and captions
+             * only: the page builds the player from the id when somebody
+             * presses play, and nothing here is ever written into a post.
+             */
+            'highlights' => $state === 'final' ? $this->highlights($event) : [],
+
             'home' => $home,
             'away' => $away,
         ];
@@ -199,6 +206,36 @@ class Scoreboard
             (string) ($home['abbr'] ?: $home['name']),
             (string) ($away['abbr'] ?: $away['name'])
         );
+    }
+
+    /** @return list<array{id: string, title: string, duration: int, image: string}> */
+    protected function highlights(object $event): array
+    {
+        if (! $this->settings->highlightsEnabled()) {
+            return [];
+        }
+
+        $clips = [];
+
+        foreach ((array) ($event->highlights ?? []) as $clip) {
+            $id = (string) ($clip['id'] ?? '');
+
+            // 🚨 Digits only, checked again on the way out: the player URL is built from it.
+            if (! ctype_digit($id)) {
+                continue;
+            }
+
+            $image = (string) ($clip['image'] ?? '');
+
+            $clips[] = [
+                'id' => $id,
+                'title' => (string) ($clip['title'] ?? ''),
+                'duration' => (int) ($clip['duration'] ?? 0),
+                'image' => str_starts_with($image, 'https://') ? $image : '',
+            ];
+        }
+
+        return $clips;
     }
 
     /** The game's league key, from its season — `cfb` when it has none. */
