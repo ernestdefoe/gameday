@@ -1,4 +1,5 @@
 import { extend } from 'flarum/common/extend';
+import crestUrl from './crest';
 
 declare const m: any;
 
@@ -41,7 +42,7 @@ export default function addHeroCrest() {
     items.add(
       'gamedayCrest',
       m('img.GamedayHero-crest', {
-        src: logo,
+        src: crestUrl(logo, 72),
         alt: home.name || '',
         title: home.name || '',
         loading: 'lazy',

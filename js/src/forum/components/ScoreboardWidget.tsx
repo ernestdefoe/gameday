@@ -5,6 +5,7 @@ import kickoffLabel from '../kickoffLabel';
 import type Mithril from 'mithril';
 import { startTicker } from '../tickerScroll';
 import { watchRow } from '../whereToWatch';
+import crestUrl from '../crest';
 import {
   attach,
   currentBoards,
@@ -213,20 +214,22 @@ export default class ScoreboardWidget extends Component<Attrs> {
           {s.logoLight ? (
             <img
               className="GamedayWidget-crest--light"
-              src={s.logoLight}
+              src={crestUrl(s.logoLight, 26)}
               alt=""
               aria-hidden="true"
               loading="lazy"
+              decoding="async"
               referrerpolicy="no-referrer"
             />
           ) : null}
           {s.logo ? (
             <img
               className="GamedayWidget-crest--dark"
-              src={s.logo}
+              src={crestUrl(s.logo, 26)}
               alt=""
               aria-hidden="true"
               loading="lazy"
+              decoding="async"
               referrerpolicy="no-referrer"
             />
           ) : null}

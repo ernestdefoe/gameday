@@ -1,4 +1,5 @@
 import app from 'flarum/forum/app';
+import crestUrl from './crest';
 
 declare const m: any;
 
@@ -50,7 +51,7 @@ export default function registerPerformers(): void {
 
             star ? m('.GdPerformers-star', [
               m('.GdPerformers-starBg'),
-              star.crest ? m('img.GdPerformers-starCrest', { src: star.crest, alt: '', referrerpolicy: 'no-referrer' }) : null,
+              star.crest ? m('img.GdPerformers-starCrest', { src: crestUrl(star.crest, 168), alt: '', decoding: 'async', referrerpolicy: 'no-referrer' }) : null,
 
               m('.GdPerformers-starBody', [
                 m('.GdPerformers-starStat', [
@@ -82,7 +83,7 @@ export default function registerPerformers(): void {
                         : m('span.GdPerformers-photo.GdPerformers-photo--none',
                             String(p.name || '?').charAt(0).toUpperCase()),
                       p.crest
-                        ? m('img.GdPerformers-crest', { src: p.crest, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' })
+                        ? m('img.GdPerformers-crest', { src: crestUrl(p.crest, 20), alt: '', loading: 'lazy', decoding: 'async', referrerpolicy: 'no-referrer' })
                         : null,
                     ]),
 

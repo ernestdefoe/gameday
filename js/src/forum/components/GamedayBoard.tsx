@@ -6,6 +6,7 @@ import LiveReactions from './LiveReactions';
 import whenVisible from '../whenVisible';
 import GamedayHighlights, { type Clip } from './GamedayHighlights';
 import { watchRow, type Watch } from '../whereToWatch';
+import crestUrl from '../crest';
 
 declare const m: any;
 
@@ -197,7 +198,7 @@ export default class GamedayBoard extends Component<{ discussion: any }> {
     return (
       <div className={`GamedayBoard-side${s.hasBall ? ' GamedayBoard-side--ball' : ''}`}>
         <span className="GamedayBoard-crest">
-          {s.logo ? <img src={s.logo} alt="" aria-hidden="true" loading="lazy" referrerpolicy="no-referrer" /> : null}
+          {s.logo ? <img src={crestUrl(s.logo, 42)} alt="" aria-hidden="true" loading="lazy" decoding="async" referrerpolicy="no-referrer" /> : null}
         </span>
         <span className="GamedayBoard-team">
           {/*
