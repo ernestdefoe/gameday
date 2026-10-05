@@ -671,13 +671,13 @@
 }
 
 /*
- * The dark set, defined ONCE and applied from both branches below.
+ * The dark set, defined ONCE.
  *
- * 🚨 Flarum 2 carries the choice on `<html data-theme>` with three values —
- * light, dark, and auto. Auto stamps no preference of its own, so it needs
- * `prefers-color-scheme` to decide, and a rule written only for
- * `[data-theme="dark"]` leaves every reader on the default setting looking at
- * the light palette on a dark forum.
+ * 🚨 `^=`, so dark-hc counts as dark, and no `prefers-color-scheme` branch:
+ * core resolves "auto" to light or dark with an inline script in <head>,
+ * before this stylesheet loads, so <html> always says which it is. A media
+ * branch only doubled these rules — and painted the board dark on a
+ * light-hc page whenever the system was dark.
  */
 .gdw-dark() {
   --gdw-ground: linear-gradient(150deg, #1b2532, #10161e 60%, #0b1015);
@@ -693,22 +693,11 @@
   --gdw-rzedge: rgba(255, 122, 85, .38);
 }
 
-html[data-theme='dark'] .GamedayWidget { .gdw-dark(); }
-
-@media (prefers-color-scheme: dark) {
-  // Only where the reader has NOT chosen light explicitly.
-  html:not([data-theme='light']) .GamedayWidget { .gdw-dark(); }
-}
+html[data-theme^='dark'] .GamedayWidget { .gdw-dark(); }
 
 // The glow belongs on a dark ground and nowhere else.
-html[data-theme='dark'] .GamedayWidget-ball {
+html[data-theme^='dark'] .GamedayWidget-ball {
   text-shadow: 0 0 8px rgba(255, 206, 77, .8);
-}
-
-@media (prefers-color-scheme: dark) {
-  html:not([data-theme='light']) .GamedayWidget-ball {
-    text-shadow: 0 0 8px rgba(255, 206, 77, .8);
-  }
 }
 
 .GamedayWidget-title {
@@ -819,16 +808,9 @@ html[data-theme='dark'] .GamedayWidget-ball {
   .GamedayWidget-crest--dark { display: none; }
 }
 
-html[data-theme='dark'] .GamedayWidget-crest {
+html[data-theme^='dark'] .GamedayWidget-crest {
   .GamedayWidget-crest--light { display: none; }
   .GamedayWidget-crest--dark { display: block; }
-}
-
-@media (prefers-color-scheme: dark) {
-  html:not([data-theme='light']) .GamedayWidget-crest {
-    .GamedayWidget-crest--light { display: none; }
-    .GamedayWidget-crest--dark { display: block; }
-  }
 }
 
 /*
@@ -904,9 +886,6 @@ html[data-theme='dark'] .GamedayWidget-crest {
 
 // The whole panel takes a warmer edge in the red zone — the situation line
 // already says it in words, and this is the part somebody catches sideways on.
-// The class moved onto the card when the strip arrived; both are matched so a
-// board rendered by an older bundle is not left without its edge.
-.GamedayWidget--redzone .GamedayWidget-board,
 .GamedayWidget-game--redzone .GamedayWidget-board {
   box-shadow: var(--gdw-shadow), inset 0 0 0 1px var(--gdw-rzedge);
 }
@@ -1053,7 +1032,6 @@ html[data-theme='dark'] .GamedayWidget-crest {
   --gdp-photoShadow: 0 8px 18px rgba(0, 0, 0, .55);
   --gdp-faceRing: rgba(16, 22, 30, .12);
   --gdp-faceBg: #e6eaf0;
-  --gdp-top: #a8102a;
 }
 
 .gdp-dark() {
@@ -1066,15 +1044,9 @@ html[data-theme='dark'] .GamedayWidget-crest {
   --gdp-chip: rgba(255, 255, 255, .08);
   --gdp-faceRing: rgba(255, 255, 255, .18);
   --gdp-faceBg: #202a37;
-  --gdp-top: #ffce4d;
 }
 
-html[data-theme='dark'] .GdPerformers { .gdp-dark(); }
-
-@media (prefers-color-scheme: dark) {
-  // Only where the reader has not explicitly chosen light.
-  html:not([data-theme='light']) .GdPerformers { .gdp-dark(); }
-}
+html[data-theme^='dark'] .GdPerformers { .gdp-dark(); }
 
 .GdPerformers-head {
   display: flex;
@@ -1273,11 +1245,6 @@ html[data-theme='dark'] .GdPerformers { .gdp-dark(); }
 
   & + & { border-top: 1px solid var(--gdp-rule); }
 }
-
-/* First place gets the brand, and nothing else does — a list where every row
-   is highlighted has no first place. */
-.GdPerformers-row--top .GdPerformers-rank { color: var(--gdp-top); }
-.GdPerformers-row--top .GdPerformers-name { color: var(--gdp-top); }
 
 .GdPerformers-rank {
   font-size: .95rem;
