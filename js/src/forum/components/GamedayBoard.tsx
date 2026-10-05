@@ -3,6 +3,7 @@ import Component from 'flarum/common/Component';
 import extractText from 'flarum/common/utils/extractText';
 import kickoffLabel from '../kickoffLabel';
 import LiveReactions from './LiveReactions';
+import whenVisible from '../whenVisible';
 import GamedayHighlights, { type Clip } from './GamedayHighlights';
 import { watchRow, type Watch } from '../whereToWatch';
 
@@ -54,6 +55,7 @@ interface Board {
 export default class GamedayBoard extends Component<{ discussion: any }> {
   board: Board | null = null;
   timer: any = null;
+  cancelWait: (() => void) | null = null;
 
   oninit(vnode: any) {
     super.oninit(vnode);
@@ -67,6 +69,7 @@ export default class GamedayBoard extends Component<{ discussion: any }> {
 
   onremove() {
     if (this.timer) clearTimeout(this.timer);
+    if (this.cancelWait) this.cancelWait();
   }
 
   /**
@@ -85,7 +88,10 @@ export default class GamedayBoard extends Component<{ discussion: any }> {
     if (this.timer) clearTimeout(this.timer);
     if (!this.board || this.board.state !== 'live') return;
 
-    this.timer = setTimeout(() => this.refresh(), 15000);
+    // Held while the tab is hidden: see whenVisible.
+    this.timer = setTimeout(() => {
+      this.cancelWait = whenVisible(() => this.refresh());
+    }, 15000);
   }
 
   refresh() {

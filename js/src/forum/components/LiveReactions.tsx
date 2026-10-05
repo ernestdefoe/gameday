@@ -1,5 +1,6 @@
 import app from 'flarum/forum/app';
 import Component from 'flarum/common/Component';
+import whenVisible from '../whenVisible';
 
 declare const m: any;
 
@@ -17,6 +18,7 @@ export default class LiveReactions extends Component<{ discussion: any }> {
   seq = 0;
   since = 0;
   timer: any = null;
+  cancelWait: (() => void) | null = null;
   sending = false;
   /** How many the server had to drop from the last poll. */
   overflow = 0;
@@ -90,6 +92,7 @@ export default class LiveReactions extends Component<{ discussion: any }> {
 
   onremove() {
     if (this.timer) clearTimeout(this.timer);
+    if (this.cancelWait) this.cancelWait();
     if (this.observer) this.observer.disconnect();
   }
 
@@ -116,7 +119,11 @@ export default class LiveReactions extends Component<{ discussion: any }> {
       .then(() => {
         // Three seconds: fast enough that a roar still feels like a roar,
         // slow enough that a full stand is not a request per second each.
-        this.timer = setTimeout(() => this.poll(), 3000);
+        // Held while the tab is hidden: see whenVisible. Reactions only live
+        // for a few seconds server-side, so nothing is lost by waiting.
+        this.timer = setTimeout(() => {
+          this.cancelWait = whenVisible(() => this.poll());
+        }, 3000);
       });
   }
 

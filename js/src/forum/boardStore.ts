@@ -1,4 +1,5 @@
 import app from 'flarum/forum/app';
+import whenVisible from './whenVisible';
 
 declare const m: any;
 
@@ -76,6 +77,8 @@ let status: Status = 'idle';
 let timer: any = null;
 let readers = 0;
 let inFlight: Promise<void> | null = null;
+// A poll that came due while the tab was hidden, waiting for it to be seen.
+let cancelWait: (() => void) | null = null;
 
 export function currentBoards(): WidgetBoard[] {
   return boards;
@@ -144,6 +147,7 @@ export function detach(): void {
   if (readers === 0 && timer) {
     clearTimeout(timer);
     timer = null;
+    stopWaiting();
   }
 }
 
@@ -165,9 +169,24 @@ export function detach(): void {
  * inside the half hour before kickoff, which is the only window in which the
  * answer can change.
  */
+function stopWaiting(): void {
+  if (cancelWait) cancelWait();
+  cancelWait = null;
+}
+
+/** The timer's callback: fetch now, or as soon as the tab is visible again. */
+function due(): void {
+  stopWaiting();
+  cancelWait = whenVisible(() => {
+    cancelWait = null;
+    fetchBoards();
+  });
+}
+
 function reschedule(): void {
   if (timer) clearTimeout(timer);
   timer = null;
+  stopWaiting();
 
   if (readers === 0) return;
 
@@ -192,13 +211,13 @@ function reschedule(): void {
      * Most of these polls cost nothing outbound: the server answers from its
      * shared window and only one request in each window reaches ESPN.
      */
-    timer = setTimeout(fetchBoards, 6000);
+    timer = setTimeout(due, 6000);
 
     return;
   }
 
   if (lead.state === 'scheduled' && nearKickoff(lead)) {
-    timer = setTimeout(fetchBoards, 60000);
+    timer = setTimeout(due, 60000);
   }
 }
 
