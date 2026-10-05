@@ -29,10 +29,12 @@ require __DIR__ . '/../src/Service/Sports/Sports.php';
 require __DIR__ . '/../src/Service/Recap.php';
 require __DIR__ . '/../src/Service/Preview.php';
 require __DIR__ . '/../src/Service/WhereToWatch.php';
+require __DIR__ . '/../src/Service/ShareCard.php';
 
 use ErnestDefoe\Gameday\Service\Preview;
 use ErnestDefoe\Gameday\Service\WhereToWatch;
 use ErnestDefoe\Gameday\Service\Recap;
+use ErnestDefoe\Gameday\Service\ShareCard;
 use ErnestDefoe\Gameday\Service\Sports\Diamond;
 use ErnestDefoe\Gameday\Service\Sports\Gridiron;
 use ErnestDefoe\Gameday\Service\Sports\Hardwood;
@@ -847,6 +849,18 @@ $tests['where to watch: an older Picks still shows its national channel'] = func
 
     same(['ESPN', 'ESPN+'], array_column($w['channels'], 'label'), 'split into chips');
     same('streaming', $w['channels'][1]['kind'], 'ESPN+ is known to be a stream');
+};
+
+$tests['crest fetch: an IP host is taken only in its one canonical spelling, and only when public'] = function () {
+    // curl reads 0177.0.0.1 as octal 127.0.0.1; a lenient resolver read it as
+    // the public 177.0.0.1. Every non-canonical spelling is refused outright.
+    foreach (['0177.0.0.1', '012.0.0.1', '0x7f.0.0.1', '2130706433', '127.1', '127.0.0.1', '10.0.0.5',
+              '169.254.169.254', '100.64.1.1', '192.168.1.1', '[::1]', '[::ffff:127.0.0.1]', '[fe80::1]', '[fd00::1]'] as $host) {
+        same(null, ShareCard::publicIps($host), $host . ' is refused');
+    }
+
+    same(['8.8.8.8'], ShareCard::publicIps('8.8.8.8'), 'a public dotted quad passes');
+    same(['2606:4700::1111'], ShareCard::publicIps('[2606:4700::1111]'), 'a public IPv6 literal passes');
 };
 
 /* ------------------------------------------------------------------ the runner */

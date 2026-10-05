@@ -194,8 +194,16 @@ class ShareCard
      * A crest, fetched once and kept.
      *
      * 🚨 Cached per URL, so a season's worth of cards costs at most one request
-     * per club rather than two per card. The source is this site's own team
-     * table, not anything a visitor supplies.
+     * per club rather than two per card.
+     *
+     * 🚨 The URL comes from the team table, which anyone holding the Picks
+     * "manage" permission can edit, and the result is saved under public/. So
+     * the fetch is guarded like any user-supplied URL: https only, ports 443,
+     * the host must resolve to public addresses only (and curl is pinned to
+     * those, so DNS cannot change its mind), redirects are not followed, the
+     * body is cut off at 2 MB while it streams, and only something GD can
+     * decode as an image is kept, re-encoded as PNG. Nothing else ever lands
+     * in the public crest folder.
      */
     protected function crest(string $url)
     {
@@ -211,23 +219,147 @@ class ShareCard
                 return null;
             }
 
-            try {
-                $bytes = (string) (new Client())->get($url, ['timeout' => 8])->getBody();
-            } catch (\Throwable $e) {
+            $bytes = $this->fetchPublic($url, 2 * 1024 * 1024);
+            $im = $bytes !== null ? @imagecreatefromstring($bytes) : false;
+
+            if (! $im) {
                 return null;
             }
 
-            if ($bytes === '' || strlen($bytes) > 2 * 1024 * 1024) {
-                return null;
-            }
-
-            file_put_contents($file, $bytes);
+            imagesavealpha($im, true);
+            imagepng($im, $file);
             @chmod($file, 0664);
+
+            return $im;
         }
 
         $im = @imagecreatefromstring((string) file_get_contents($file));
 
         return $im ?: null;
+    }
+
+    /** The body of an https URL on a public host, or null. */
+    protected function fetchPublic(string $url, int $maxBytes): ?string
+    {
+        $parts = parse_url($url);
+        $host = strtolower(rtrim((string) ($parts['host'] ?? ''), '.'));
+        $port = (int) ($parts['port'] ?? 443);
+
+        if (($parts['scheme'] ?? '') !== 'https' || $host === '' || $port !== 443 || isset($parts['user'])) {
+            return null;
+        }
+
+        $ips = self::publicIps($host);
+        if ($ips === null) {
+            return null;
+        }
+
+        try {
+            $response = (new Client())->get($url, [
+                'timeout' => 8,
+                'connect_timeout' => 4,
+                'allow_redirects' => false,
+                'http_errors' => false,
+                'stream' => true,
+                'curl' => [
+                    CURLOPT_RESOLVE => [$host.':443:'.implode(',', $ips)],
+                    CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
+                ],
+            ]);
+
+            if ($response->getStatusCode() !== 200) {
+                return null;
+            }
+
+            $body = $response->getBody();
+            $bytes = '';
+            while (! $body->eof()) {
+                $bytes .= $body->read(65536);
+                if (strlen($bytes) > $maxBytes) {
+                    return null;
+                }
+            }
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        return $bytes === '' ? null : $bytes;
+    }
+
+    /**
+     * Every address $host resolves to, or null if any is not public.
+     *
+     * An IP written as the host is accepted only as a plain dotted quad or a
+     * bracketed IPv6 address: octal, hex and short forms are read differently
+     * by different resolvers, and curl dials what it reads.
+     *
+     * @return list<string>|null
+     */
+    public static function publicIps(string $host): ?array
+    {
+        $bare = trim($host, '[]');
+
+        if (filter_var($bare, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            $ips = [$bare];
+        } elseif (preg_match('/^(?:\d+|0x[0-9a-f]*)(?:\.(?:\d*|0x[0-9a-f]*))*$/i', $host)) {
+            if (! preg_match('/^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/', $host)) {
+                return null;
+            }
+            $ips = [$host];
+        } else {
+            $ips = [];
+            foreach ((array) @dns_get_record($host, DNS_A + DNS_AAAA) as $r) {
+                if (! empty($r['ip'])) {
+                    $ips[] = $r['ip'];
+                }
+                if (! empty($r['ipv6'])) {
+                    $ips[] = $r['ipv6'];
+                }
+            }
+        }
+
+        if ($ips === []) {
+            return null;
+        }
+
+        foreach ($ips as $ip) {
+            if (! self::isPublicIp($ip)) {
+                return null;
+            }
+        }
+
+        return array_values(array_unique($ips));
+    }
+
+    public static function isPublicIp(string $ip): bool
+    {
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            // 100.64.0.0/10 (carrier-grade NAT) is not covered by PHP's filters.
+            if ((ip2long($ip) & 0xFFC00000) === 0x64400000) {
+                return false;
+            }
+
+            return (bool) filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
+        }
+
+        $packed = @inet_pton($ip);
+        if ($packed === false || strlen($packed) !== 16) {
+            return false;
+        }
+
+        $hex = bin2hex($packed);
+        if (str_starts_with($hex, '00000000000000000000ffff')) {
+            return self::isPublicIp((string) long2ip((int) hexdec(substr($hex, 24, 8))));
+        }
+        if (preg_match('/^0{31}[01]$/', $hex)) {
+            return false; // :: and ::1
+        }
+        $first = hexdec(substr($hex, 0, 4));
+        if (($first & 0xfe00) === 0xfc00 || ($first & 0xff00) === 0xff00 || ($first & 0xffc0) === 0xfe80) {
+            return false; // ULA, multicast, link-local
+        }
+
+        return (bool) filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
     }
 
     /** Centred text, measured rather than guessed at. */
