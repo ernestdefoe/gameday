@@ -3,6 +3,7 @@ import Component from 'flarum/common/Component';
 import extractText from 'flarum/common/utils/extractText';
 import kickoffLabel from '../kickoffLabel';
 import LiveReactions from './LiveReactions';
+import { watchRow, type Watch } from '../whereToWatch';
 
 declare const m: any;
 
@@ -33,6 +34,8 @@ interface Board {
   venue: string;
   venueCity: string;
   broadcast: string;
+  /** Where it is on — null when nothing is listed or the feature is off. */
+  watch?: Watch | null;
   home: Side;
   away: Side;
 }
@@ -101,7 +104,7 @@ export default class GamedayBoard extends Component<{ discussion: any }> {
 
     const t = (k: string, p?: any) => app.translator.trans(`ernestdefoe-gameday.forum.board_${k}`, p);
 
-    return (
+    return [
       <div className={`GamedayBoard GamedayBoard--${b.state}${b.redZone ? ' GamedayBoard--redzone' : ''}`}>
         <div className="GamedayBoard-strip">
           {this.side(b.away)}
@@ -139,8 +142,14 @@ export default class GamedayBoard extends Component<{ discussion: any }> {
             down" would swap the venue in and out every few seconds while a game
             was on — a board that changes height under somebody watching it. */}
         {b.state === 'live' ? null : this.meta(b)}
-      </div>
-    );
+
+        {/* 🚨 Inside the card, and in every state. Before kickoff and while it
+            is on, this is the question the thread is asked first; after the
+            final it shrinks to a record of where it was shown. Its own row so
+            it does not come and go with the venue line during play. */}
+        {watchRow(b.watch, 'GamedayBoard-watch')}
+      </div>,
+    ];
   }
 
   /**
@@ -157,7 +166,9 @@ export default class GamedayBoard extends Component<{ discussion: any }> {
    */
   meta(b: Board) {
     const where = [b.venue, b.venueCity].filter(Boolean).join(', ');
-    const parts = [where, b.broadcast].filter(Boolean);
+    // The channel moves to the watch row when there is one; otherwise it stays here.
+    const tv = b.watch ? '' : b.broadcast;
+    const parts = [where, tv].filter(Boolean);
 
     // Nothing known is no row. An empty rule across the bottom of the board
     // reads as something that failed to load.
@@ -166,7 +177,7 @@ export default class GamedayBoard extends Component<{ discussion: any }> {
     return (
       <div className="GamedayBoard-meta">
         {where ? <span className="GamedayBoard-venue">{where}</span> : null}
-        {b.broadcast ? <span className="GamedayBoard-tv">{b.broadcast}</span> : null}
+        {tv ? <span className="GamedayBoard-tv">{tv}</span> : null}
       </div>
     );
   }

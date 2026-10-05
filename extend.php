@@ -27,6 +27,14 @@ $extenders = [
         ->css(__DIR__ . '/resources/less/admin.less')
         ->content(function (Document $document): void {
             $document->payload['gamedaySports'] = (new Sports())->choices();
+
+            /*
+             * The leagues Picks follows, for the "where to watch" league list.
+             * Picks' registry, not a copy: a league registered there appears
+             * here without this extension changing.
+             */
+            $leagues = '\\Resofire\\Picks\\Service\\Leagues\\Leagues';
+            $document->payload['gamedayLeagues'] = class_exists($leagues) ? (new $leagues())->choices() : [];
         }),
 
     /*
@@ -60,6 +68,9 @@ $extenders = [
         ->default(Settings::PREFIX . 'timezone', Settings::DEFAULT_TIMEZONE)
         ->default(Settings::PREFIX . 'recaps', true)
         ->default(Settings::PREFIX . 'sticky_while_live', true)
+        ->default(Settings::PREFIX . 'watch_enabled', true)
+        // Empty = every league; see Settings::watchLeagues().
+        ->default(Settings::PREFIX . 'watch_leagues', '')
         ->serializeToForum('gamedayEnabled', Settings::PREFIX . 'enabled', 'boolval'),
 
     (new Extend\Routes('api'))

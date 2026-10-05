@@ -101,7 +101,7 @@ class CurrentGame
         }
 
         $model = self::EVENT;
-        $events = $model::query()->with(['homeTeam', 'awayTeam'])->whereIn('id', $ids)->get()->keyBy('id');
+        $events = $model::query()->with(['homeTeam', 'awayTeam', 'week.season'])->whereIn('id', $ids)->get()->keyBy('id');
 
         $threads = GamedayThread::query()->whereIn('event_id', $ids)->get()->keyBy('event_id');
 

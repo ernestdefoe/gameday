@@ -4,6 +4,7 @@ import extractText from 'flarum/common/utils/extractText';
 import kickoffLabel from '../kickoffLabel';
 import type Mithril from 'mithril';
 import { startTicker } from '../tickerScroll';
+import { watchRow } from '../whereToWatch';
 import {
   attach,
   currentBoards,
@@ -113,13 +114,13 @@ export default class ScoreboardWidget extends Component<Attrs> {
             if (s.autoScroll !== false) startTicker(vnode.dom as HTMLElement);
           }}
         >
-          {boards.map((b) => this.game(b, s, t))}
+          {boards.map((b) => this.game(b, s, t, boards.length === 1))}
         </div>
       </div>
     );
   }
 
-  game(b: WidgetBoard, s: Record<string, any>, t: (k: string, p?: any) => any) {
+  game(b: WidgetBoard, s: Record<string, any>, t: (k: string, p?: any) => any, single = false) {
     const link = s.showLink === false ? null : b.discussion;
 
     return (
@@ -159,6 +160,11 @@ export default class ScoreboardWidget extends Component<Attrs> {
             </div>
           ) : null}
         </div>
+
+        {/* Where it is on, small. The Watch button only when this card is the
+            whole widget — a strip of cards each shouting "Watch" is a wall of
+            buttons, and each card already links to its thread, which has one. */}
+        {b.state === 'final' ? null : watchRow(b.watch, 'GamedayWidget-watch', single)}
 
         {/* 🚨 The link is absent, not disabled, when the reader cannot open the
             thread — the server never sent one. A greyed-out link would disclose

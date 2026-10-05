@@ -302,6 +302,8 @@
    * numbers rather than a record.
    */
   letter-spacing: normal;
+  // "1-4" is one figure; on a phone it was breaking at the hyphen into two lines.
+  white-space: nowrap;
   color: var(--gd-dim);
   /*
    * 🚨 And PROPORTIONAL figures, unlike everything else here. Tabular exists so
@@ -1437,3 +1439,197 @@ html[data-theme='dark'] .GdPerformers { .gdp-dark(); }
     padding-right: 84px;
   }
 }
+
+/* ------------------------------------------------------------ where to watch */
+
+/*
+ * Where the game is on, inside the scoreboard card.
+ *
+ * 🚨 On the BOARD it uses the board's own dark palette (--gd-*), because the
+ * board is dark in both themes and a chip in the page's light control colour
+ * would be a white tile stuck to a scoreboard. In the WIDGET it uses the
+ * widget's theme-following tokens and the forum's own control colours, the same
+ * as the "to the thread" link beside it.
+ *
+ * The Watch button is the forum's primary colour in both — it is the one thing
+ * on the card meant to be pressed, so it wears the colour every other primary
+ * action on the site does.
+ */
+.GamedayWatch {
+  --gdwatch-chip-bg: rgba(255, 255, 255, .07);
+  --gdwatch-chip-edge: rgba(255, 255, 255, .12);
+  --gdwatch-ink: var(--gd-ink, #f4f7fb);
+  --gdwatch-dim: var(--gd-dim, #93a1b4);
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin: 0;
+}
+
+.GamedayBoard-watch {
+  justify-content: center;
+  padding: 10px 18px 12px;
+  border-top: 1px solid var(--gd-rule);
+}
+
+.GamedayWatch-caption {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .9px;
+  text-transform: uppercase;
+  color: var(--gdwatch-dim);
+}
+
+.GamedayWatch-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.GamedayWatch-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--gdwatch-chip-bg);
+  box-shadow: inset 0 0 0 1px var(--gdwatch-chip-edge);
+  color: var(--gdwatch-ink);
+  font-size: .78rem;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.GamedayWatch-kind {
+  font-size: .68rem;
+  color: var(--gdwatch-dim);
+}
+
+.GamedayWatch-name {
+  font-weight: 700;
+  letter-spacing: .3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// "DET area", "Subscription" — qualifiers, a step back from the network name.
+.GamedayWatch-local,
+.GamedayWatch-sub {
+  font-size: .68rem;
+  font-weight: 600;
+  color: var(--gdwatch-dim);
+}
+
+.GamedayWatch-sub {
+  padding: 1px 6px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px var(--gdwatch-chip-edge);
+}
+
+.GamedayWatch-chip--local {
+  background: transparent;
+}
+
+/*
+ * 🚨 The text colour needs more weight than a single class. Bespoke paints every
+ * `a:not(.Button)` in light mode with its brand text colour at (0,3,1) — which
+ * on a brand-coloured button is red text on a red pill: a button that is there
+ * and says nothing. Matched at (0,3,2) here, rather than by joining `.Button`
+ * and inheriting core's whole button chrome.
+ */
+html .GamedayWatch a.GamedayWatch-button:not(.Button),
+.GamedayWatch-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--primary-color);
+  color: var(--button-primary-color, #fff);
+  font-size: .82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--button-primary-color, #fff);
+    text-decoration: none;
+    filter: brightness(1.08);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--gdwatch-ink);
+    outline-offset: 2px;
+  }
+}
+
+.GamedayWatch-buttonIcon { font-size: .7rem; }
+.GamedayWatch-external { font-size: .66rem; opacity: .75; }
+
+// After the final: a record of where it was shown, not a call to action.
+.GamedayWatch--compact {
+  .GamedayWatch-chip {
+    padding: 2px 8px;
+    font-size: .7rem;
+  }
+
+  .GamedayWatch-sub { display: none; }
+}
+
+.GamedayBoard-watch.GamedayWatch--compact {
+  padding-top: 7px;
+  padding-bottom: 9px;
+}
+
+// The widget follows the page theme, so its chips do too.
+.GamedayWidget-watch {
+  --gdwatch-chip-bg: var(--control-bg);
+  --gdwatch-chip-edge: transparent;
+  --gdwatch-ink: var(--control-color);
+  --gdwatch-dim: var(--muted-color);
+
+  margin-top: 8px;
+  gap: 6px;
+
+  .GamedayWatch-caption { display: none; }
+  .GamedayWatch-chip { padding: 3px 8px; font-size: .72rem; }
+  .GamedayWatch-button { min-height: 30px; padding: 5px 12px; font-size: .78rem; }
+}
+
+/*
+ * 🚨 On a phone the button takes its own full-width line under the chips. Left
+ * inline it either overflowed the card or squeezed "Watch on CBS Sports
+ * Network" into two lines beside one chip.
+ */
+@media (max-width: 640px) {
+  .GamedayBoard-watch {
+    padding: 9px 12px 11px;
+  }
+
+  .GamedayBoard-watch .GamedayWatch-caption {
+    flex-basis: 100%;
+    text-align: center;
+  }
+
+  .GamedayBoard-watch .GamedayWatch-chips {
+    justify-content: center;
+  }
+
+  .GamedayWatch-button {
+    flex: 1 1 100%;
+    justify-content: center;
+    white-space: normal;
+    text-align: center;
+  }
+}
+

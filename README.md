@@ -29,6 +29,40 @@ box score arrives — the provider publishes statistics minutes to hours after t
 final whistle, and waiting would delay the one thing everybody in the thread is
 waiting for. A game the provider never covered simply keeps the score.
 
+## Where to watch
+
+The scoreboard at the head of every game thread says where the game is on, and
+gets people there in one tap:
+
+![A scheduled game's scoreboard: the venue, then "Where to watch" with an ESPN+ chip marked Subscription and a Watch on ESPN+ button](screenshots/where-to-watch.png)
+
+Each channel is a chip — TV, streaming or radio, national listings first and
+local ones labelled with their team's area — and the **Watch** button opens that
+network's own live page in a new tab: ESPN's watch page (or the game itself in
+ESPN's player, when the feed carries that link), FOX Sports for FOX, FS1 and the
+Big Ten Network, CBS Sports for CBS and CBS Sports Network, Peacock for NBC, and
+so on. Services that are nothing but a subscription — ESPN+, Peacock, Prime
+Video — are marked as one. Nothing here says a game is free.
+
+![A live game: the reactions bar, then where to watch with a Watch on FOX button](screenshots/where-to-watch-live.png)
+
+No video is embedded. Live rights are sold per market and wrapped in DRM, and a
+forum cannot carry a broadcast; it can say where one is. The listings come from
+the scoreboard payload Picks already fetches, so drawing them costs no request.
+After the final whistle the row shrinks to a record of where it was shown, and a
+game with no listing shows nothing at all. On a phone the chips wrap and the
+button takes its own line:
+
+![The same row on a phone: Big Ten Network chip, full-width Watch button](screenshots/where-to-watch-phone.png)
+
+The scoreboard widget shows the chips on each card, and the button only when it
+is showing a single game.
+
+It is on by default. **Admin → Game Day** turns it off, or limits it to
+particular leagues:
+
+![The settings: show where to watch, and which leagues](screenshots/settings-watch.png)
+
 ## More than one sport
 
 The recap's *structure* is fixed — a score, a result, a sentence on how it went,
@@ -83,7 +117,8 @@ Two commands run on Flarum's scheduler and need nothing else:
 
 - Flarum 2
 - [`ernestdefoe/picks`](https://github.com/ernestdefoe/picks) for the fixtures
-  and box scores
+  and box scores — a Picks with the `broadcasts` column for
+  the full channel listing; an older one still gives the national channel
 - `flarum/tags` (optional — threads are posted untagged without it)
 - `flarum/sticky` (optional — the game-is-on state does nothing without it)
 

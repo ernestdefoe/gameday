@@ -28,8 +28,10 @@ require __DIR__ . '/../src/Service/Sports/Ice.php';
 require __DIR__ . '/../src/Service/Sports/Sports.php';
 require __DIR__ . '/../src/Service/Recap.php';
 require __DIR__ . '/../src/Service/Preview.php';
+require __DIR__ . '/../src/Service/WhereToWatch.php';
 
 use ErnestDefoe\Gameday\Service\Preview;
+use ErnestDefoe\Gameday\Service\WhereToWatch;
 use ErnestDefoe\Gameday\Service\Recap;
 use ErnestDefoe\Gameday\Service\Sports\Diamond;
 use ErnestDefoe\Gameday\Service\Sports\Gridiron;
@@ -761,6 +763,90 @@ $tests['a box score without the new detail reads exactly as it used to'] = funct
     }
 
     ok(str_contains($text, 'Final: Coastal Carolina 17, Liberty 34.'), 'the plain recap lost its score line', $text);
+};
+
+/* ------------------------------------------------------------ where to watch */
+
+/*
+ * 🚨 The listings are what Picks stores — the shape EspnProvider::broadcasts()
+ * produces from real scoreboard payloads (Picks' own tests hold those). Every
+ * network named here appeared in ESPN's college football, NFL, NHL or MLS
+ * listings for the first week of October 2026.
+ */
+$listing = fn (string $name, string $type = 'tv', string $market = 'national') => ['name' => $name, 'type' => $type, 'market' => $market];
+
+$tests['where to watch: a national ESPN game opens ESPN'] = function () use ($listing) {
+    $w = WhereToWatch::build(['listings' => [$listing('ESPN')], 'watch' => '', 'premium' => false], 'ESPN', 'scheduled');
+
+    same('ESPN', $w['channels'][0]['label'], 'the chip');
+    same(['url' => 'https://www.espn.com/watch/', 'label' => 'ESPN', 'subscription' => false], $w['watch'], 'the button');
+    same(false, $w['channels'][0]['subscription'], 'ESPN is never called free or paid');
+};
+
+$tests['where to watch: ESPN+ is a subscription stream'] = function () use ($listing) {
+    $w = WhereToWatch::build(['listings' => [$listing('ESPN+', 'streaming')]], '', 'scheduled');
+
+    same('streaming', $w['channels'][0]['kind'], 'a stream');
+    same(true, $w['channels'][0]['subscription'], 'marked as a subscription');
+    same(true, $w['watch']['subscription'], 'and the button says so');
+};
+
+$tests['where to watch: the event watch link wins for the ESPN family only'] = function () use ($listing) {
+    $link = 'https://www.espn.com/watch/player/_/id/abc';
+
+    same($link, WhereToWatch::build(['listings' => [$listing('ABC')], 'watch' => $link], '', 'live')['watch']['url'], 'ABC opens this game in ESPN\'s player');
+    same('https://www.foxsports.com/live', WhereToWatch::build(['listings' => [$listing('FOX')], 'watch' => $link], '', 'live')['watch']['url'], 'FOX ignores an ESPN link');
+    same('https://www.espn.com/watch/', WhereToWatch::build(['listings' => [$listing('ESPN')], 'watch' => 'https://evil.test/watch'], '', 'live')['watch']['url'], 'a foreign link is refused');
+};
+
+$tests['where to watch: each network opens its own player'] = function () use ($listing) {
+    $url = fn (string $name) => WhereToWatch::build(['listings' => [$listing($name)]], '', 'scheduled')['watch']['url'] ?? null;
+
+    same('https://www.foxsports.com/live/fs1', $url('FS1'), 'FS1');
+    same('https://www.foxsports.com/live/btn', $url('BTN'), 'BTN');
+    same('https://www.cbssports.com/watch/live', $url('CBS'), 'CBS');
+    same('https://www.cbssports.com/watch/cbs-sports-network', $url('CBSSN'), 'CBS Sports Network');
+    same('https://www.peacocktv.com/', $url('NBC'), 'NBC → Peacock');
+    same('https://www.cwtv.com/sports/', $url('CW'), 'The CW');
+    same('https://www.usanetwork.com/live', $url('USA Net'), 'USA Network');
+    same('https://www.amazon.com/primevideo', $url('Prime Video'), 'Prime Video');
+    same(null, $url('MW+'), 'an unknown network is a chip without a button');
+
+    same('Big Ten Network', WhereToWatch::build(['listings' => [$listing('BTN')]], '', 'scheduled')['channels'][0]['label'], 'BTN is named in full');
+    same('MW+', WhereToWatch::build(['listings' => [$listing('MW+', 'streaming')]], '', 'scheduled')['channels'][0]['label'], 'and an unknown one as the feed spells it');
+};
+
+$tests['where to watch: national first, local markets labelled, radio never the button'] = function () use ($listing) {
+    $w = WhereToWatch::build(['listings' => [
+        $listing('ERADM', 'radio'),
+        $listing('DSN', 'streaming', 'home'),
+        $listing('KCOP', 'tv', 'away'),
+        $listing('NHL Net'),
+    ]], '', 'scheduled', 'DET', 'WPG');
+
+    same(['NHL Network', 'ERADM', 'DSN', 'KCOP'], array_column($w['channels'], 'label'), 'national (TV, then radio), then home, then away');
+    same(['', '', 'DET', 'WPG'], array_column($w['channels'], 'team'), 'local markets carry their team');
+    same('', $w['channels'][1]['url'], 'radio has no link');
+    same(null, $w['watch'], 'NHL Network has no confirmed live page, and radio is not a Watch target');
+};
+
+$tests['where to watch: after the final, chips only'] = function () use ($listing) {
+    $w = WhereToWatch::build(['listings' => [$listing('CBS')]], '', 'final');
+
+    same(true, $w['compact'], 'compact');
+    same(null, $w['watch'], 'no Watch button on a finished game');
+};
+
+$tests['where to watch: nothing listed is nothing shown'] = function () {
+    same(null, WhereToWatch::build(null, '', 'scheduled'), 'no listing');
+    same(null, WhereToWatch::build(['listings' => []], '  ', 'live'), 'an empty listing');
+};
+
+$tests['where to watch: an older Picks still shows its national channel'] = function () {
+    $w = WhereToWatch::build(null, 'ESPN / ESPN+', 'scheduled');
+
+    same(['ESPN', 'ESPN+'], array_column($w['channels'], 'label'), 'split into chips');
+    same('streaming', $w['channels'][1]['kind'], 'ESPN+ is known to be a stream');
 };
 
 /* ------------------------------------------------------------------ the runner */

@@ -51,19 +51,15 @@ ernestdefoe-gameday:
         again when the game ends. Needs the Sticky extension.
       sticky_missing: The Sticky extension is not enabled, so this does nothing.
       tags_missing: The Tags extension is not enabled, so game threads are posted untagged.
-    tags:
-      title: Which tag each team's games go in
-      description: >-
-        The home team's tag is used first, then the away team's, then the
-        fallback above. A board with one football tag can map everybody to it.
-      team: Team
-      conference: Conference
-      tag: Tag
-      none: No tag of its own
-      save: Save mapping
-      saved: Mapping saved.
-      loading: Loading teams…
-      empty: No teams yet — sync them in Picks first.
+      watch_enabled_label: Show where to watch on the scoreboard
+      watch_enabled_help: >-
+        The channels a game is on, from the listings in the score feed, with a
+        Watch button that opens the network's own player in a new tab. Nothing
+        is streamed or embedded here — live rights do not allow it.
+      watch_leagues_label: Leagues that show where to watch
+      watch_leagues_help: >-
+        Tick none to show it for every league, including ones added later.
+      watch_leagues_none: Picks has no leagues to list yet.
   forum:
     board_scheduled: Kickoff
     board_stale: Waiting for the feed
@@ -72,6 +68,18 @@ ernestdefoe-gameday:
     board_possession: "{team} have the ball"
     # The rank a team carried INTO this game, which is why it never moves again.
     board_rank: "Ranked #{rank}"
+
+    # Where to watch — inside the scoreboard card. Network names are not translated.
+    watch_caption: Where to watch
+    watch_caption_final: Shown on
+    watch_kind_tv: TV
+    watch_kind_streaming: Streaming
+    watch_kind_radio: Radio
+    watch_local: "{team} area"
+    watch_subscription: Subscription
+    watch_button: "Watch on {network}"
+    watch_button_label: "Watch on {network} (opens in a new tab)"
+
 
     # The scoreboard as a widget — see ScoreboardWidget.
     widget_scoreboard: Scoreboard

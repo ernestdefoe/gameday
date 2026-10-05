@@ -33,6 +33,16 @@ class Scoreboard
     public const CLOCK_FRESH_FOR = 180;
 
     /**
+     * 🚨 Required, not `?Settings $settings = null`. The container fills an
+     * optional parameter with its default rather than resolving it, so the
+     * optional version was handed null on every request and both switches on
+     * the settings page did nothing at all.
+     */
+    public function __construct(protected Settings $settings)
+    {
+    }
+
+    /**
      * @param  object $event  a PickEvent, with its teams loaded
      * @return array<string, mixed>
      */
@@ -147,9 +157,56 @@ class Scoreboard
             'venueCity' => trim((string) ($event->venue_city ?? '')),
             'broadcast' => trim((string) ($event->broadcast ?? '')),
 
+            /*
+             * Where it is on and the button that opens it — see WhereToWatch.
+             * Null when the feed listed nothing, or this league is switched off.
+             */
+            'watch' => $this->watch($event, $state, $home, $away),
+
             'home' => $home,
             'away' => $away,
         ];
+    }
+
+    /**
+     * @param  array<string, mixed> $home
+     * @param  array<string, mixed> $away
+     * @return array<string, mixed>|null
+     */
+    protected function watch(object $event, string $state, array $home, array $away): ?array
+    {
+        if (! $this->settings->watchEnabled()) {
+            return null;
+        }
+
+        $leagues = $this->settings->watchLeagues();
+
+        if ($leagues !== null && ! in_array($this->league($event), $leagues, true)) {
+            return null;
+        }
+
+        $stored = $event->broadcasts ?? null;
+
+        // A Picks that has the column hands back an array; an old row a string.
+        if (is_string($stored)) {
+            $stored = json_decode($stored, true);
+        }
+
+        return WhereToWatch::build(
+            is_array($stored) ? $stored : null,
+            (string) ($event->broadcast ?? ''),
+            $state,
+            (string) ($home['abbr'] ?: $home['name']),
+            (string) ($away['abbr'] ?: $away['name'])
+        );
+    }
+
+    /** The game's league key, from its season — `cfb` when it has none. */
+    protected function league(object $event): string
+    {
+        $season = $event->week->season ?? null;
+
+        return (string) ($season->league ?? 'cfb') ?: 'cfb';
     }
 
     protected function periodLine(object $event, int $period, string $state): string

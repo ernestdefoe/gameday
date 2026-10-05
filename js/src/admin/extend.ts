@@ -107,6 +107,22 @@ export default [
       help: t('sticky_help') + (isEnabled('flarum-sticky') ? '' : ' ' + t('sticky_missing')),
       default: true,
     }))
+    .setting(() => ({
+      setting: 'ernestdefoe-gameday.watch_enabled',
+      type: 'boolean',
+      label: t('watch_enabled_label'),
+      help: t('watch_enabled_help'),
+      default: true,
+    }))
+    /*
+     * 🚨 A `function`, not an arrow: the page calls a custom setting with
+     * itself as `this`, and `this.setting()` is the stream the page's own Save
+     * button writes. An arrow would capture the module's `this` and every tick
+     * would go nowhere.
+     */
+    .customSetting(function (this: any) {
+      return watchLeagues(this.setting('ernestdefoe-gameday.watch_leagues'));
+    })
     /*
      * 🚨 `customSetting`, not `setting`. `setting()`'s callback is invoked
      * expecting a descriptor object, so a vnode-returning one crashes the page;
@@ -114,6 +130,64 @@ export default [
      */
     .customSetting(() => m(TeamTagMapper), -10),
 ];
+
+/**
+ * Which leagues show where to watch, as ticks.
+ *
+ * 🚨 Stored as the leagues that ARE shown, as JSON, and NONE ticked means all
+ * of them — so a league added to Picks later is included without anybody
+ * having to come back here. The list of leagues is Picks' registry, sent by
+ * the server; a copy here would go stale the first time one was added.
+ */
+function watchLeagues(stream: any) {
+  const leagues: Record<string, string> = (app.data as any)?.gamedayLeagues ?? {};
+  const keys = Object.keys(leagues);
+
+  let chosen: string[] = [];
+  try {
+    const parsed = JSON.parse(stream() || '[]');
+    chosen = Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    chosen = [];
+  }
+
+  // Read afresh on every tick: two ticks inside one redraw would otherwise both
+  // start from the list as it was drawn, and the second would undo the first.
+  const current = (): string[] => {
+    try {
+      const parsed = JSON.parse(stream() || '[]');
+      return Array.isArray(parsed) ? parsed.map(String) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const toggle = (key: string, on: boolean) => {
+    const now = current();
+    const next = on ? Array.from(new Set([...now, key])) : now.filter((k) => k !== key);
+    stream(next.length ? JSON.stringify(next) : '');
+  };
+
+  return m('.Form-group.GamedayWatchLeagues', [
+    m('label', t('watch_leagues_label')),
+    m('.helpText', t('watch_leagues_help')),
+    keys.length === 0
+      ? m('p.helpText', t('watch_leagues_none'))
+      : m(
+          '.GamedayWatchLeagues-list',
+          keys.map((key) =>
+            m('label.checkbox', [
+              m('input[type=checkbox]', {
+                checked: chosen.includes(key),
+                onchange: (e: any) => toggle(key, e.target.checked),
+              }),
+              ' ',
+              leagues[key],
+            ])
+          )
+        ),
+  ]);
+}
 
 /**
  * Every timezone the browser knows, with UTC first.

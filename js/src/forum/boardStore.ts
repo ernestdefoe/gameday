@@ -48,6 +48,8 @@ export interface Link {
 
 export interface WidgetBoard {
   id: number;
+  /** Where it is on; see whereToWatch. */
+  watch?: import('./whereToWatch').Watch | null;
   state: 'scheduled' | 'live' | 'final';
   periodLine: string;
   clock: string | null;

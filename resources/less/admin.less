@@ -58,3 +58,18 @@
     font-size: 13px;
   }
 }
+
+// The where-to-watch league ticks: a wrapping row, not a column of forty lines.
+.GamedayWatchLeagues-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin-top: 6px;
+
+  .checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: normal;
+  }
+}

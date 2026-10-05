@@ -47,6 +47,6 @@ class ScoreboardForDiscussion
             return null;
         }
 
-        return $model::query()->with(['homeTeam', 'awayTeam'])->find($id);
+        return $model::query()->with(['homeTeam', 'awayTeam', 'week.season'])->find($id);
     }
 }

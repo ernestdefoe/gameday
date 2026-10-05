@@ -140,6 +140,29 @@ class Settings
         };
     }
 
+    /** Whether a game's board says where it is on. On by default. */
+    public function watchEnabled(): bool
+    {
+        return (bool) $this->get('watch_enabled', true);
+    }
+
+    /**
+     * Which leagues show where to watch — null for every league.
+     *
+     * 🚨 Stored as the leagues that ARE shown, and an empty value means all of
+     * them. A board that adds a league later should get the feature with it,
+     * not discover months on that a list written before the league existed has
+     * been quietly leaving it out.
+     *
+     * @return list<string>|null
+     */
+    public function watchLeagues(): ?array
+    {
+        $decoded = json_decode((string) $this->get('watch_leagues', ''), true);
+
+        return is_array($decoded) && $decoded !== [] ? array_values(array_map('strval', $decoded)) : null;
+    }
+
     public function __construct(protected SettingsRepositoryInterface $settings)
     {
     }
