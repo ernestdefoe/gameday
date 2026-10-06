@@ -153,6 +153,11 @@ normalised by Picks' own code rather than typed by hand. The same assertions run
 on the Convoro build of Game Day, which is how the two are kept saying the same
 things.
 
+## Support
+
+- **Support forum:** [Game Day on ernestdefoe.online](https://ernestdefoe.online/d/113)
+- **Bug reports:** [GitHub issues](https://github.com/ernestdefoe/gameday/issues)
+
 ## Licence
 
 MIT.
