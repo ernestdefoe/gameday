@@ -53,9 +53,7 @@ export function startTicker(strip: HTMLElement): void {
 
   // Any deliberate input hands the strip over. `focusin` covers the keyboard
   // reader tabbing into a card's link, which hover never sees.
-  ['pointerdown', 'wheel', 'touchstart', 'keydown', 'focusin'].forEach((event) =>
-    strip.addEventListener(event, yieldNow, { passive: true })
-  );
+  ['pointerdown', 'wheel', 'touchstart', 'keydown', 'focusin'].forEach((event) => strip.addEventListener(event, yieldNow, { passive: true }));
 
   /*
    * 🚨 Off screen means stopped. A widget below the fold that kept stepping

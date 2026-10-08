@@ -44,7 +44,11 @@ app.initializers.add('ernestdefoe-gameday', () => {
     if (!discussion) return hero;
 
     let board = null;
-    try { board = discussion.attribute('gamedayBoard'); } catch (e) { board = null; }
+    try {
+      board = discussion.attribute('gamedayBoard');
+    } catch (e) {
+      board = null;
+    }
     if (!board) return hero;
 
     /*

@@ -63,7 +63,11 @@ export default class GamedayBoard extends Component<{ discussion: any }> {
 
     // Straight off the discussion, so the board is there when the thread is
     // rather than arriving a beat later and shoving the first post down.
-    try { this.board = this.attrs.discussion.attribute('gamedayBoard') || null; } catch (e) { this.board = null; }
+    try {
+      this.board = this.attrs.discussion.attribute('gamedayBoard') || null;
+    } catch (e) {
+      this.board = null;
+    }
 
     this.schedule();
   }
@@ -96,15 +100,18 @@ export default class GamedayBoard extends Component<{ discussion: any }> {
   }
 
   refresh() {
-    app.request<{ board: Board | null }>({
-      method: 'GET',
-      url: `${app.forum.attribute('apiUrl')}/gameday/board/${this.attrs.discussion.id()}`,
-    })
+    app
+      .request<{ board: Board | null }>({
+        method: 'GET',
+        url: `${app.forum.attribute('apiUrl')}/gameday/board/${this.attrs.discussion.id()}`,
+      })
       .then((res) => {
         if (res && res.board) this.board = res.board;
         m.redraw();
       })
-      .catch(() => { /* a missed poll is a stale board, not a broken page */ })
+      .catch(() => {
+        /* a missed poll is a stale board, not a broken page */
+      })
       .then(() => this.schedule());
   }
 
@@ -125,9 +132,9 @@ export default class GamedayBoard extends Component<{ discussion: any }> {
             {/* Said out loud. A board that silently drops its clock looks
                 broken in exactly the moment somebody is watching it. */}
             {b.clockStale ? <span className="GamedayBoard-stale">{t('stale')}</span> : null}
-            {b.state === 'scheduled' && b.kickoff
-              ? <span className="GamedayBoard-kickoff">{kickoffLabel(b.kickoff, !!b.kickoffTbd, extractText(t('time_tba')))}</span>
-              : null}
+            {b.state === 'scheduled' && b.kickoff ? (
+              <span className="GamedayBoard-kickoff">{kickoffLabel(b.kickoff, !!b.kickoffTbd, extractText(t('time_tba')))}</span>
+            ) : null}
           </div>
 
           {this.side(b.home)}
@@ -216,10 +223,7 @@ export default class GamedayBoard extends Component<{ discussion: any }> {
                 is what the team is called on a Saturday, and a rank trailing
                 after the name reads as a score. */}
             {s.rank ? (
-              <span
-                className="GamedayBoard-rank"
-                title={extractText(app.translator.trans('ernestdefoe-gameday.forum.board_rank', { rank: s.rank }))}
-              >
+              <span className="GamedayBoard-rank" title={extractText(app.translator.trans('ernestdefoe-gameday.forum.board_rank', { rank: s.rank }))}>
                 #{s.rank}
               </span>
             ) : null}
@@ -239,17 +243,19 @@ export default class GamedayBoard extends Component<{ discussion: any }> {
             the one thing on this board somebody reads at a glance, and colour
             alone would put it out of reach of the readers who need the glance
             most. */}
-        {s.hasBall
-          ? <span
-              className="GamedayBoard-ball"
-              /* 🚨 extractText(trans(...)), never transText(). Flarum 2 has no
+        {s.hasBall ? (
+          <span
+            className="GamedayBoard-ball"
+            /* 🚨 extractText(trans(...)), never transText(). Flarum 2 has no
                  transText — the same missing-method family as transChoice, and
                  it fails the same way: it throws inside view(), Mithril stops,
                  and the page sits on a spinner with a correct API response
                  already in hand and nothing in the console. */
-              title={extractText(app.translator.trans('ernestdefoe-gameday.forum.board_possession', { team: s.name }))}
-            >●</span>
-          : null}
+            title={extractText(app.translator.trans('ernestdefoe-gameday.forum.board_possession', { team: s.name }))}
+          >
+            ●
+          </span>
+        ) : null}
         <span className="GamedayBoard-score">{s.score === null ? '–' : s.score}</span>
       </div>
     );

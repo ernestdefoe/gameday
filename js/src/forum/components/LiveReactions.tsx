@@ -99,11 +99,12 @@ export default class LiveReactions extends Component<{ discussion: any }> {
   poll() {
     if (this.timer) clearTimeout(this.timer);
 
-    app.request<any>({
-      method: 'GET',
-      url: `${app.forum.attribute('apiUrl')}/gameday/reactions/${this.attrs.discussion.id()}`,
-      params: { since: this.since },
-    })
+    app
+      .request<any>({
+        method: 'GET',
+        url: `${app.forum.attribute('apiUrl')}/gameday/reactions/${this.attrs.discussion.id()}`,
+        params: { since: this.since },
+      })
       .then((res: any) => {
         /*
          * 🚨 The server's clock, not ours. Asking "since my own last timestamp"
@@ -115,7 +116,9 @@ export default class LiveReactions extends Component<{ discussion: any }> {
         (res.reactions || []).forEach((r: any) => this.launch(r.e));
         m.redraw();
       })
-      .catch(() => { /* a missed poll is a quiet moment, not a broken page */ })
+      .catch(() => {
+        /* a missed poll is a quiet moment, not a broken page */
+      })
       .then(() => {
         // Three seconds: fast enough that a roar still feels like a roar,
         // slow enough that a full stand is not a request per second each.
@@ -154,8 +157,7 @@ export default class LiveReactions extends Component<{ discussion: any }> {
 
     float.setAttribute(
       'style',
-      `left:${left}%;--gd-drift:${drift}px;--gd-rise:${rise}vh;` +
-        `animation-duration:${dur}ms;animation-delay:${delay}ms`
+      `left:${left}%;--gd-drift:${drift}px;--gd-rise:${rise}vh;` + `animation-duration:${dur}ms;animation-delay:${delay}ms`
     );
 
     this.sky.appendChild(float);
@@ -178,13 +180,17 @@ export default class LiveReactions extends Component<{ discussion: any }> {
     // not hand this one back to them anyway.
     this.launch(emoji);
 
-    app.request({
-      method: 'POST',
-      url: `${app.forum.attribute('apiUrl')}/gameday/reactions/${this.attrs.discussion.id()}`,
-      body: { emoji },
-    })
+    app
+      .request({
+        method: 'POST',
+        url: `${app.forum.attribute('apiUrl')}/gameday/reactions/${this.attrs.discussion.id()}`,
+        body: { emoji },
+      })
       .catch(() => {})
-      .then(() => { this.sending = false; m.redraw(); });
+      .then(() => {
+        this.sending = false;
+        m.redraw();
+      });
   }
 
   view() {
@@ -192,17 +198,19 @@ export default class LiveReactions extends Component<{ discussion: any }> {
       <div className={`GamedayReactions${this.detached ? ' GamedayReactions--detached' : ''}`}>
         <div className="GamedayReactions-bar">
           {EMOJI.map((e) =>
-            m('button.GamedayReactions-btn', {
-              type: 'button',
-              key: e,
-              onclick: () => this.send(e),
-              // The emoji is the label; a screen reader needs the word.
-              'aria-label': e,
-            }, e)
+            m(
+              'button.GamedayReactions-btn',
+              {
+                type: 'button',
+                key: e,
+                onclick: () => this.send(e),
+                // The emoji is the label; a screen reader needs the word.
+                'aria-label': e,
+              },
+              e
+            )
           )}
-          {this.overflow > 0
-            ? <span className="GamedayReactions-more">+{this.overflow}</span>
-            : null}
+          {this.overflow > 0 ? <span className="GamedayReactions-more">+{this.overflow}</span> : null}
         </div>
       </div>
     );

@@ -124,7 +124,7 @@ export default class TeamTagMapper extends Component {
           return {
             id: Number(row.id),
             name: String(row.attributes?.name ?? ''),
-            under: parent ? names[String(parent.id)] ?? '' : '',
+            under: parent ? (names[String(parent.id)] ?? '') : '',
           };
         });
 
@@ -137,10 +137,11 @@ export default class TeamTagMapper extends Component {
           return;
         }
 
-        TAGS = all.sort((a, b) =>
-          // Grouped by parent, then by name — which is the order somebody
-          // scanning for "the Alabama forum under the SEC" reads in.
-          (a.under || '\uffff').localeCompare(b.under || '\uffff') || a.name.localeCompare(b.name)
+        TAGS = all.sort(
+          (a, b) =>
+            // Grouped by parent, then by name — which is the order somebody
+            // scanning for "the Alabama forum under the SEC" reads in.
+            (a.under || '\uffff').localeCompare(b.under || '\uffff') || a.name.localeCompare(b.name)
         );
 
         m.redraw();
@@ -213,9 +214,7 @@ export default class TeamTagMapper extends Component {
                             // "SEC › Alabama", because a board with a forum per
                             // school has several tags whose names only differ by
                             // which conference they sit in.
-                            ...tags.map((tag) =>
-                              m('option', { value: String(tag.id) }, tag.under ? `${tag.under} › ${tag.name}` : tag.name)
-                            ),
+                            ...tags.map((tag) => m('option', { value: String(tag.id) }, tag.under ? `${tag.under} › ${tag.name}` : tag.name)),
                           ]
                         )
                       ),

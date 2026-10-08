@@ -128,7 +128,7 @@ export function attach(): void {
  * on its first answer looking live.
  */
 function schedule(force = false): void {
-  if (timer && ! force) return;
+  if (timer && !force) return;
 
   reschedule();
 }
@@ -246,11 +246,15 @@ function nearKickoff(board: WidgetBoard): boolean {
 function announce(): void {
   try {
     m.redraw();
-  } catch (e) { /* not mounted */ }
+  } catch (e) {
+    /* not mounted */
+  }
 
   try {
     (app as any).bespoke?.renderZones?.();
-  } catch (e) { /* Bespoke absent, or too old to expose it */ }
+  } catch (e) {
+    /* Bespoke absent, or too old to expose it */
+  }
 }
 
 function fetchBoards(): Promise<void> {

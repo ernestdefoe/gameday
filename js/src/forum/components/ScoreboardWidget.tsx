@@ -6,15 +6,7 @@ import type Mithril from 'mithril';
 import { startTicker } from '../tickerScroll';
 import { watchRow } from '../whereToWatch';
 import crestUrl from '../crest';
-import {
-  attach,
-  currentBoards,
-  detach,
-  isLoading,
-  seed,
-  type Side,
-  type WidgetBoard,
-} from '../boardStore';
+import { attach, currentBoards, detach, isLoading, seed, type Side, type WidgetBoard } from '../boardStore';
 
 declare const m: any;
 
@@ -125,10 +117,7 @@ export default class ScoreboardWidget extends Component<Attrs> {
     const link = s.showLink === false ? null : b.discussion;
 
     return (
-      <div
-        key={b.id}
-        className={`GamedayWidget-game GamedayWidget-game--${b.state}${b.redZone ? ' GamedayWidget-game--redzone' : ''}`}
-      >
+      <div key={b.id} className={`GamedayWidget-game GamedayWidget-game--${b.state}${b.redZone ? ' GamedayWidget-game--redzone' : ''}`}>
         <div className="GamedayWidget-board">
           <div className="GamedayWidget-status">
             {b.state === 'live' ? (
@@ -155,8 +144,8 @@ export default class ScoreboardWidget extends Component<Attrs> {
           {b.down || b.ballOn || b.redZone ? (
             <div className="GamedayWidget-situation">
               {b.down ? <span className="GamedayWidget-down">{b.down}</span> : null}
-            {/* Said after the down, the way it is said out loud. */}
-            {b.ballOn ? <span className="GamedayWidget-ballOn">{b.ballOn}</span> : null}
+              {/* Said after the down, the way it is said out loud. */}
+              {b.ballOn ? <span className="GamedayWidget-ballOn">{b.ballOn}</span> : null}
               {b.redZone ? <span className="GamedayWidget-rz">{t('red_zone')}</span> : null}
             </div>
           ) : null}
@@ -173,9 +162,7 @@ export default class ScoreboardWidget extends Component<Attrs> {
         {link ? (
           <a className="GamedayWidget-link" href={app.route('discussion', { id: `${link.id}-${link.slug}` })}>
             <span className="GamedayWidget-linkLabel">{t('to_the_thread')}</span>
-            {link.commentCount > 1 ? (
-              <span className="GamedayWidget-count">{link.commentCount}</span>
-            ) : null}
+            {link.commentCount > 1 ? <span className="GamedayWidget-count">{link.commentCount}</span> : null}
           </a>
         ) : null}
       </div>
@@ -240,10 +227,7 @@ export default class ScoreboardWidget extends Component<Attrs> {
             on every card for the one line in four that has something to put in
             it — and in a sidebar that space is the team name's. */}
         {s.rank ? (
-          <span
-            className="GamedayWidget-rank"
-            title={extractText(app.translator.trans('ernestdefoe-gameday.forum.widget_rank', { rank: s.rank }))}
-          >
+          <span className="GamedayWidget-rank" title={extractText(app.translator.trans('ernestdefoe-gameday.forum.widget_rank', { rank: s.rank }))}>
             #{s.rank}
           </span>
         ) : null}
