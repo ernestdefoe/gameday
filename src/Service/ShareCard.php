@@ -355,7 +355,7 @@ class ShareCard
             return false; // :: and ::1
         }
         $first = hexdec(substr($hex, 0, 4));
-        if (($first & 0xfe00) === 0xfc00 || ($first & 0xff00) === 0xff00 || ($first & 0xffc0) === 0xfe80) {
+        if (($first & 0xFE00) === 0xFC00 || ($first & 0xFF00) === 0xFF00 || ($first & 0xFFC0) === 0xFE80) {
             return false; // ULA, multicast, link-local
         }
 

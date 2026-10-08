@@ -23,7 +23,7 @@ class TickCommand extends Command
 
     public function handle(Threads $threads, Settings $settings): int
     {
-        if (!$settings->enabled()) {
+        if (! $settings->enabled()) {
             return self::SUCCESS;
         }
 

@@ -89,7 +89,7 @@ class CurrentGame
         $limit = max(1, min($limit, self::MOST));
 
         $ids = $this->cache->remember(
-            'gameday.current-games.' . $limit,
+            'gameday.current-games.'.$limit,
             self::PICK_FOR,
             // An empty array caches perfectly well; it is a null that does not,
             // which would run all three lookups per request out of season.

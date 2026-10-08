@@ -153,10 +153,10 @@ class Ice extends Sport
              * A shutout is the one goaltending line worth calling by its name.
              */
             if ($against === 0) {
-                return $saves . ' saves for the shutout';
+                return $saves.' saves for the shutout';
             }
 
-            return $saves . ' saves';
+            return $saves.' saves';
         }
 
         $goals = $this->number($stats['G'] ?? null);
@@ -169,11 +169,11 @@ class Ice extends Sport
         $parts = [];
 
         if (($goals ?? 0) > 0) {
-            $parts[] = $goals === 1 ? 'a goal' : $this->word((int) $goals) . ' goals';
+            $parts[] = $goals === 1 ? 'a goal' : $this->word((int) $goals).' goals';
         }
 
         if (($assists ?? 0) > 0) {
-            $parts[] = $assists === 1 ? 'an assist' : $this->word((int) $assists) . ' assists';
+            $parts[] = $assists === 1 ? 'an assist' : $this->word((int) $assists).' assists';
         }
 
         if ($parts === []) {
@@ -192,7 +192,7 @@ class Ice extends Sport
 
     public function formatStat(string $key, string $value): string
     {
-        return in_array($key, ['powerPlayPct', 'faceoffPercent'], true) ? $value . '%' : $value;
+        return in_array($key, ['powerPlayPct', 'faceoffPercent'], true) ? $value.'%' : $value;
     }
 
     protected function margin(string $winner, int $margin): string

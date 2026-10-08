@@ -23,8 +23,8 @@ $extenders = [
      * which is the whole reason the registry exists.
      */
     (new Extend\Frontend('admin'))
-        ->js(__DIR__ . '/js/dist/admin.js')
-        ->css(__DIR__ . '/resources/less/admin.less')
+        ->js(__DIR__.'/js/dist/admin.js')
+        ->css(__DIR__.'/resources/less/admin.less')
         ->content(function (Document $document): void {
             $document->payload['gamedaySports'] = (new Sports())->choices();
 
@@ -44,10 +44,10 @@ $extenders = [
      * frontend here at all until the board needed one.
      */
     (new Extend\Frontend('forum'))
-        ->js(__DIR__ . '/js/dist/forum.js')
-        ->css(__DIR__ . '/resources/less/forum.less'),
+        ->js(__DIR__.'/js/dist/forum.js')
+        ->css(__DIR__.'/resources/less/forum.less'),
 
-    new Extend\Locales(__DIR__ . '/resources/locale'),
+    new Extend\Locales(__DIR__.'/resources/locale'),
 
     // `gamedayBoard` on a game thread, and null on every other discussion.
     (new Extend\ApiResource(\Flarum\Api\Resource\DiscussionResource::class))
@@ -60,19 +60,19 @@ $extenders = [
      * `Service\Settings` is still the only thing that reads them.
      */
     (new Extend\Settings())
-        ->default(Settings::PREFIX . 'enabled', false)
-        ->default(Settings::PREFIX . 'author_id', 0)
-        ->default(Settings::PREFIX . 'lead_minutes', 180)
-        ->default(Settings::PREFIX . 'fallback_tag_id', 0)
-        ->default(Settings::PREFIX . 'sport', Sports::DEFAULT)
-        ->default(Settings::PREFIX . 'timezone', Settings::DEFAULT_TIMEZONE)
-        ->default(Settings::PREFIX . 'recaps', true)
-        ->default(Settings::PREFIX . 'sticky_while_live', true)
-        ->default(Settings::PREFIX . 'watch_enabled', true)
+        ->default(Settings::PREFIX.'enabled', false)
+        ->default(Settings::PREFIX.'author_id', 0)
+        ->default(Settings::PREFIX.'lead_minutes', 180)
+        ->default(Settings::PREFIX.'fallback_tag_id', 0)
+        ->default(Settings::PREFIX.'sport', Sports::DEFAULT)
+        ->default(Settings::PREFIX.'timezone', Settings::DEFAULT_TIMEZONE)
+        ->default(Settings::PREFIX.'recaps', true)
+        ->default(Settings::PREFIX.'sticky_while_live', true)
+        ->default(Settings::PREFIX.'watch_enabled', true)
         // Empty = every league; see Settings::watchLeagues().
-        ->default(Settings::PREFIX . 'watch_leagues', '')
-        ->default(Settings::PREFIX . 'highlights', true)
-        ->serializeToForum('gamedayEnabled', Settings::PREFIX . 'enabled', 'boolval'),
+        ->default(Settings::PREFIX.'watch_leagues', '')
+        ->default(Settings::PREFIX.'highlights', true)
+        ->serializeToForum('gamedayEnabled', Settings::PREFIX.'enabled', 'boolval'),
 
     (new Extend\Routes('api'))
         ->get('/gameday/team-tags', 'gameday.team-tags', TeamTagsController::class)
@@ -158,4 +158,3 @@ if (class_exists(\FoF\Seo\Extend\SEO::class)) {
 }
 
 return $extenders;
-

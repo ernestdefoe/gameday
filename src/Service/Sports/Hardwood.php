@@ -154,7 +154,7 @@ class Hardwood extends Sport
             return '';
         }
 
-        $parts = [$points . ' points'];
+        $parts = [$points.' points'];
 
         $rebounds = $this->number($stats['REB'] ?? null);
         $assists = $this->number($stats['AST'] ?? null);
@@ -165,11 +165,11 @@ class Hardwood extends Sport
          * is three facts where one was interesting.
          */
         if ($rebounds !== null && $rebounds >= 8) {
-            $parts[] = $rebounds . ' rebounds';
+            $parts[] = $rebounds.' rebounds';
         }
 
         if ($assists !== null && $assists >= 6) {
-            $parts[] = $assists . ' assists';
+            $parts[] = $assists.' assists';
         }
 
         $line = implode(', ', $parts);
@@ -184,7 +184,7 @@ class Hardwood extends Sport
 
     public function formatStat(string $key, string $value): string
     {
-        return str_ends_with($key, 'Pct') ? $this->trimPct((float) $value) . '%' : $value;
+        return str_ends_with($key, 'Pct') ? $this->trimPct((float) $value).'%' : $value;
     }
 
     protected function margin(string $winner, int $margin): string
@@ -213,7 +213,7 @@ class Hardwood extends Sport
     /** `13-40` → 13. The made half of a made-attempted pair. */
     protected function made(mixed $value): ?int
     {
-        if (!is_string($value) || !str_contains($value, '-')) {
+        if (! is_string($value) || ! str_contains($value, '-')) {
             return null;
         }
 

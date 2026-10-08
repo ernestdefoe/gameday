@@ -175,7 +175,7 @@ class Settings
 
     protected function get(string $key, mixed $default): mixed
     {
-        $value = $this->settings->get(self::PREFIX . $key);
+        $value = $this->settings->get(self::PREFIX.$key);
 
         return $value === null || $value === '' ? $default : $value;
     }

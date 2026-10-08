@@ -19,20 +19,19 @@ declare(strict_types=1);
  * Nothing here touches the database, the network or Flarum itself.
  */
 
-require __DIR__ . '/../src/Service/Sports/Sport.php';
-require __DIR__ . '/../src/Service/Sports/Gridiron.php';
-require __DIR__ . '/../src/Service/Sports/Soccer.php';
-require __DIR__ . '/../src/Service/Sports/Hardwood.php';
-require __DIR__ . '/../src/Service/Sports/Diamond.php';
-require __DIR__ . '/../src/Service/Sports/Ice.php';
-require __DIR__ . '/../src/Service/Sports/Sports.php';
-require __DIR__ . '/../src/Service/Recap.php';
-require __DIR__ . '/../src/Service/Preview.php';
-require __DIR__ . '/../src/Service/WhereToWatch.php';
-require __DIR__ . '/../src/Service/ShareCard.php';
+require __DIR__.'/../src/Service/Sports/Sport.php';
+require __DIR__.'/../src/Service/Sports/Gridiron.php';
+require __DIR__.'/../src/Service/Sports/Soccer.php';
+require __DIR__.'/../src/Service/Sports/Hardwood.php';
+require __DIR__.'/../src/Service/Sports/Diamond.php';
+require __DIR__.'/../src/Service/Sports/Ice.php';
+require __DIR__.'/../src/Service/Sports/Sports.php';
+require __DIR__.'/../src/Service/Recap.php';
+require __DIR__.'/../src/Service/Preview.php';
+require __DIR__.'/../src/Service/WhereToWatch.php';
+require __DIR__.'/../src/Service/ShareCard.php';
 
 use ErnestDefoe\Gameday\Service\Preview;
-use ErnestDefoe\Gameday\Service\WhereToWatch;
 use ErnestDefoe\Gameday\Service\Recap;
 use ErnestDefoe\Gameday\Service\ShareCard;
 use ErnestDefoe\Gameday\Service\Sports\Diamond;
@@ -41,6 +40,7 @@ use ErnestDefoe\Gameday\Service\Sports\Hardwood;
 use ErnestDefoe\Gameday\Service\Sports\Ice;
 use ErnestDefoe\Gameday\Service\Sports\Soccer;
 use ErnestDefoe\Gameday\Service\Sports\Sports;
+use ErnestDefoe\Gameday\Service\WhereToWatch;
 
 /* --------------------------------------------------------------- the harness */
 
@@ -51,14 +51,14 @@ function ok(bool $condition, string $why, string $context = ''): void
 {
     global $failures;
 
-    if (!$condition) {
-        $failures[] = $why . ($context === '' ? '' : "\n    ---\n    " . str_replace("\n", "\n    ", $context));
+    if (! $condition) {
+        $failures[] = $why.($context === '' ? '' : "\n    ---\n    ".str_replace("\n", "\n    ", $context));
     }
 }
 
 function same($expected, $actual, string $why): void
 {
-    ok($expected === $actual, $why . ' (expected ' . json_encode($expected) . ', got ' . json_encode($actual) . ')');
+    ok($expected === $actual, $why.' (expected '.json_encode($expected).', got '.json_encode($actual).')');
 }
 
 /* ------------------------------------------------------------- the box score */
@@ -69,7 +69,7 @@ function same($expected, $actual, string $why): void
  * whoever typed it; this one is CollegeFootballData's answer for Notre Dame 41,
  * Wisconsin 13, week one of 2026.
  */
-$box = json_decode((string) file_get_contents(__DIR__ . '/fixtures/normalised-box-score.json'), true);
+$box = json_decode((string) file_get_contents(__DIR__.'/fixtures/normalised-box-score.json'), true);
 // `fixtures/regenerate.php` rebuilds it from `cfbd-box-score.json` — the raw
 // provider answer, kept beside it so the normalised one is never hand-edited.
 
@@ -94,7 +94,7 @@ $tests['a game with no box score still gets its recap'] = function () use ($game
 
     ok(str_contains($text, 'Final: Notre Dame 41, Wisconsin 13.'), 'the score is missing', $text);
     ok(str_contains($text, 'still here, still searchable'), 'the closing line is missing', $text);
-    ok(!str_contains($text, 'out-gained'), 'nothing may be claimed about a game nobody has figures for');
+    ok(! str_contains($text, 'out-gained'), 'nothing may be claimed about a game nobody has figures for');
 };
 
 $tests['the margin is described rather than just stated'] = function () {
@@ -141,7 +141,7 @@ $tests['a close game does not claim somebody out-gained anybody'] = function () 
         ],
     );
 
-    ok(!str_contains($text, 'out-gained'), 'thirty yards is not being out-gained', $text);
+    ok(! str_contains($text, 'out-gained'), 'thirty yards is not being out-gained', $text);
     ok(str_contains($text, 'There was almost nothing in the yardage — 331 to 308.'), 'the even wording', $text);
 };
 
@@ -156,7 +156,7 @@ $tests['a clean game says nothing about turnovers'] = function () {
         ],
     );
 
-    ok(!str_contains($text, 'gave it away'), 'a clean game invented a turnover sentence', $text);
+    ok(! str_contains($text, 'gave it away'), 'a clean game invented a turnover sentence', $text);
 };
 
 $tests['the players are named the way somebody would say it'] = function () use ($game, $box) {
@@ -172,7 +172,7 @@ $tests['the players are named the way somebody would say it'] = function () use 
      * typo. Interceptions get their own wording.
      */
     ok(str_contains($text, 'and a touchdown, with an interception'), 'the interception wording', $text);
-    ok(!str_contains($text, 'once picked off'), 'counting words leaked into interceptions');
+    ok(! str_contains($text, 'once picked off'), 'counting words leaked into interceptions');
 };
 
 $tests['a player who leads two categories is named once'] = function () {
@@ -184,7 +184,7 @@ $tests['a player who leads two categories is named once'] = function () {
      */
     $text = (new Recap())->text(
         ['home_name' => 'Washington', 'away_name' => 'Washington State',
-         'home_score' => 24, 'away_score' => 10],
+            'home_score' => 24, 'away_score' => 10],
         [
             'home' => [
                 'team' => 'Washington', 'points' => 24,
@@ -216,7 +216,7 @@ $tests['the comparison carries the figures that explain a game'] = function () u
     $text = (new Recap())->text($game, $box);
 
     foreach (['First downs', 'Total yards', 'Third down', 'Turnovers', 'Possession'] as $row) {
-        ok(str_contains($text, $row), $row . ' is missing from the comparison');
+        ok(str_contains($text, $row), $row.' is missing from the comparison');
     }
 
     // The ratio and the clock survive as themselves rather than as numbers.
@@ -228,7 +228,7 @@ $tests['the comparison carries the figures that explain a game'] = function () u
      * table here needs an extension most boards do not have, and the failure
      * mode is a screenful of pipes.
      */
-    ok(!str_contains($text, '|---'), 'a Markdown table leaked into a Flarum recap', $text);
+    ok(! str_contains($text, '|---'), 'a Markdown table leaked into a Flarum recap', $text);
 };
 
 $tests['a row neither side has a figure for is not drawn'] = function () use ($game) {
@@ -238,7 +238,7 @@ $tests['a row neither side has a figure for is not drawn'] = function () use ($g
     ]);
 
     ok(str_contains($text, 'Total yards'), 'the row that has figures is missing', $text);
-    ok(!str_contains($text, 'Possession'), 'an empty row is worse than a missing one', $text);
+    ok(! str_contains($text, 'Possession'), 'an empty row is worse than a missing one', $text);
 };
 
 $tests['the emphasis style is the caller\'s, and none is a real answer'] = function () use ($game) {
@@ -251,7 +251,7 @@ $tests['the emphasis style is the caller\'s, and none is a real answer'] = funct
 
     $plain = (new Recap())->text($game, null);
     ok(str_contains($plain, 'Final: Notre Dame 41'), 'plain still says it');
-    ok(!str_contains($plain, '**') && !str_contains($plain, '[b]'), 'plain leaked markup', $plain);
+    ok(! str_contains($plain, '**') && ! str_contains($plain, '[b]'), 'plain leaked markup', $plain);
 };
 
 /*
@@ -267,7 +267,7 @@ $tests['a draw in football is an ordinary result, not a curiosity'] = function (
 
     $text = $soccer->text(
         ['home_name' => 'Everton', 'away_name' => 'Manchester United',
-         'home_score' => 2, 'away_score' => 2],
+            'home_score' => 2, 'away_score' => 2],
         [
             'home' => ['team' => 'Everton', 'points' => 2, 'leaders' => [], 'stats' => [
                 'possessionPct' => '45.4', 'totalShots' => '18', 'shotsOnTarget' => '6',
@@ -284,7 +284,7 @@ $tests['a draw in football is an ordinary result, not a curiosity'] = function (
 
     // 🚨 And NOT the gridiron wording. "It finished level, which almost never
     // happens" is true of American football and absurd here.
-    ok(!str_contains($text, 'almost never happens'), 'gridiron wording leaked into a football match', $text);
+    ok(! str_contains($text, 'almost never happens'), 'gridiron wording leaked into a football match', $text);
 
     ok(str_contains($text, "Everton had 18 shots to Manchester United's 9, 6 on target against 4."), 'the shots', $text);
     ok(str_contains($text, 'Possession'), "the comparison is the sport's own", $text);
@@ -296,7 +296,7 @@ $tests['a draw in football is an ordinary result, not a curiosity'] = function (
      */
     ok(str_contains($text, '45.4%'), 'the possession share lost its unit', $text);
     ok(str_contains($text, 'Yellow cards'), 'a football row is missing', $text);
-    ok(!str_contains($text, 'Total yards'), "and it carries none of gridiron's", $text);
+    ok(! str_contains($text, 'Total yards'), "and it carries none of gridiron's", $text);
 };
 
 $tests['a possession share is only remarked on when it was lopsided'] = function () {
@@ -305,17 +305,17 @@ $tests['a possession share is only remarked on when it was lopsided'] = function
     $even = $soccer->text(
         ['home_name' => 'A', 'away_name' => 'B', 'home_score' => 1, 'away_score' => 0],
         ['home' => ['stats' => ['possessionPct' => '52.0'], 'leaders' => []],
-         'away' => ['stats' => ['possessionPct' => '48.0'], 'leaders' => []]],
+            'away' => ['stats' => ['possessionPct' => '48.0'], 'leaders' => []]],
     );
 
     // Fifty-two per cent of the ball is not a fact about a match, and a recap
     // that reports it every week teaches people to stop reading.
-    ok(!str_contains($even, 'of the ball'), 'an even share was remarked on', $even);
+    ok(! str_contains($even, 'of the ball'), 'an even share was remarked on', $even);
 
     $lopsided = $soccer->text(
         ['home_name' => 'A', 'away_name' => 'B', 'home_score' => 1, 'away_score' => 0],
         ['home' => ['stats' => ['possessionPct' => '67.5'], 'leaders' => []],
-         'away' => ['stats' => ['possessionPct' => '32.5'], 'leaders' => []]],
+            'away' => ['stats' => ['possessionPct' => '32.5'], 'leaders' => []]],
     );
 
     ok(str_contains($lopsided, 'A had 67.5% of the ball.'), 'a lopsided share went unremarked', $lopsided);
@@ -332,10 +332,10 @@ $tests['a sport with no player box score renders no empty line'] = function () {
     $text = (new Recap(Recap::EMPHASIS_NONE, new Soccer()))->text(
         ['home_name' => 'A', 'away_name' => 'B', 'home_score' => 1, 'away_score' => 0],
         ['home' => ['stats' => ['totalShots' => '9'], 'leaders' => []],
-         'away' => ['stats' => ['totalShots' => '4'], 'leaders' => []]],
+            'away' => ['stats' => ['totalShots' => '4'], 'leaders' => []]],
     );
 
-    ok(!str_contains($text, "A — \n"), 'an empty leader line was written', $text);
+    ok(! str_contains($text, "A — \n"), 'an empty leader line was written', $text);
 };
 
 /*
@@ -349,14 +349,14 @@ $tests['a sport with no player box score renders no empty line'] = function () {
  * `tests/fixtures/regenerate.php` rebuilds them.
  */
 $espn = static fn (string $sport): array => json_decode(
-    (string) file_get_contents(__DIR__ . '/fixtures/espn-' . $sport . '.json'),
+    (string) file_get_contents(__DIR__.'/fixtures/espn-'.$sport.'.json'),
     true
 );
 
 $tests['basketball is described in basketball\'s words'] = function () use ($espn) {
     $text = (new Recap(Recap::EMPHASIS_NONE, new Hardwood()))->text(
         ['home_name' => 'Milwaukee Bucks', 'away_name' => 'Minnesota Timberwolves',
-         'home_score' => 103, 'away_score' => 106],
+            'home_score' => 103, 'away_score' => 106],
         $espn('nba'),
     );
 
@@ -365,7 +365,7 @@ $tests['basketball is described in basketball\'s words'] = function () use ($esp
      * gridiron's thresholds would call every basketball game comfortable.
      */
     ok(str_contains($text, 'Minnesota Timberwolves got out with it, by 3.'), 'the margin', $text);
-    ok(!str_contains($text, 'were never troubled'), 'a three-point game read as a rout', $text);
+    ok(! str_contains($text, 'were never troubled'), 'a three-point game read as a rout', $text);
 
     // The one line basketball has that nothing else does.
     ok(str_contains($text, 'Giannis Antetokounmpo 23 points, 13 rebounds, 10 assists — a triple-double'), 'the triple-double', $text);
@@ -378,13 +378,13 @@ $tests['basketball is described in basketball\'s words'] = function () use ($esp
     ok(str_contains($text, 'Anthony Edwards 25 points.'), 'a plain scoring line', $text);
 
     ok(str_contains($text, 'Points in the paint'), 'the comparison is basketball\'s own', $text);
-    ok(!str_contains($text, 'Total yards'), 'gridiron vocabulary leaked in', $text);
+    ok(! str_contains($text, 'Total yards'), 'gridiron vocabulary leaked in', $text);
 };
 
 $tests['baseball reads the group a figure came from'] = function () use ($espn) {
     $text = (new Recap(Recap::EMPHASIS_NONE, new Diamond()))->text(
         ['home_name' => 'Philadelphia Phillies', 'away_name' => 'Atlanta Braves',
-         'home_score' => 1, 'away_score' => 0],
+            'home_score' => 1, 'away_score' => 0],
         $espn('mlb'),
     );
 
@@ -410,13 +410,13 @@ $tests['baseball reads the group a figure came from'] = function () use ($espn) 
      * is everybody, tied on nothing — so the first name in the order won it and
      * "Ronald Acuna Jr. 0 for 3" was printed as though it were the highlight.
      */
-    ok(!str_contains($text, '0 for 3'), 'a quiet night was named as a highlight', $text);
+    ok(! str_contains($text, '0 for 3'), 'a quiet night was named as a highlight', $text);
 };
 
 $tests['hockey names the goaltender and only the groups with people in them'] = function () use ($espn) {
     $text = (new Recap(Recap::EMPHASIS_NONE, new Ice()))->text(
         ['home_name' => 'Buffalo Sabres', 'away_name' => 'Dallas Stars',
-         'home_score' => 2, 'away_score' => 3],
+            'home_score' => 2, 'away_score' => 3],
         $espn('nhl'),
     );
 
@@ -429,13 +429,13 @@ $tests['hockey names the goaltender and only the groups with people in them'] = 
      * never added.
      */
     ok(str_contains($text, 'Dallas Stars scored once on the power play.'), 'the power play', $text);
-    ok(!str_contains($text, "Stars once."), 'the sentence lost its verb', $text);
+    ok(! str_contains($text, 'Stars once.'), 'the sentence lost its verb', $text);
 
     ok(str_contains($text, 'Jake Oettinger 21 saves'), 'the goaltender', $text);
     ok(str_contains($text, 'a goal and an assist'), 'a skater', $text);
 
     // 🚨 ESPN's fourth hockey group, `skaters`, has labels and no athletes.
-    ok(!str_contains($text, 'skaters'), 'an empty group reached the prose', $text);
+    ok(! str_contains($text, 'skaters'), 'an empty group reached the prose', $text);
 };
 
 $tests['an NFL game needs no new words at all'] = function () use ($espn) {
@@ -447,7 +447,7 @@ $tests['an NFL game needs no new words at all'] = function () use ($espn) {
      */
     $text = (new Recap())->text(
         ['home_name' => 'Green Bay Packers', 'away_name' => 'Washington Commanders',
-         'home_score' => 27, 'away_score' => 18],
+            'home_score' => 27, 'away_score' => 18],
         $espn('nfl'),
     );
 
@@ -474,9 +474,9 @@ $tests['an unknown sport falls back rather than throwing'] = function () {
 $tests['a box score with nothing in it is treated as no box score'] = function () {
     $recap = new Recap();
 
-    ok(!$recap->usable(null), 'null is not a box score');
-    ok(!$recap->usable(['home' => ['stats' => []], 'away' => ['stats' => []]]), 'two empty sides are not a box score');
-    ok(!$recap->usable(['home' => ['stats' => ['totalYards' => '1']]]), 'one side is not a box score');
+    ok(! $recap->usable(null), 'null is not a box score');
+    ok(! $recap->usable(['home' => ['stats' => []], 'away' => ['stats' => []]]), 'two empty sides are not a box score');
+    ok(! $recap->usable(['home' => ['stats' => ['totalYards' => '1']]]), 'one side is not a box score');
     ok($recap->usable([
         'home' => ['stats' => ['totalYards' => '350']],
         'away' => ['stats' => ['totalYards' => '284']],
@@ -532,7 +532,7 @@ $tests['a full fixture is previewed with everything it was given'] = function ()
      * side is ranked is the preview reading itself back, which is exactly how
      * an automated post starts sounding like one.
      */
-    ok(!str_contains($text, 'are ranked'), 'the preview restated its own headline', $text);
+    ok(! str_contains($text, 'are ranked'), 'the preview restated its own headline', $text);
 };
 
 $tests['a fixture the feed barely covered says only what it knows'] = function () {
@@ -543,26 +543,26 @@ $tests['a fixture the feed barely covered says only what it knows'] = function (
     ]);
 
     ok(str_contains($text, 'Alabama at Kentucky'), 'the headline is the one thing that must always be there', $text);
-    ok(!str_contains($text, 'No. '), 'an unranked fixture printed a rank anyway', $text);
-    ok(!str_contains($text, ' at Kroger'), 'a venue appeared from nowhere', $text);
-    ok(!str_contains($text, 'On .'), 'an absent channel was announced as a channel', $text);
-    ok(!str_contains($text, ' are , '), 'an absent record was printed as an empty one', $text);
-    ok(!str_contains($text, ' game.'), 'a conference was invented', $text);
+    ok(! str_contains($text, 'No. '), 'an unranked fixture printed a rank anyway', $text);
+    ok(! str_contains($text, ' at Kroger'), 'a venue appeared from nowhere', $text);
+    ok(! str_contains($text, 'On .'), 'an absent channel was announced as a channel', $text);
+    ok(! str_contains($text, ' are , '), 'an absent record was printed as an empty one', $text);
+    ok(! str_contains($text, ' game.'), 'a conference was invented', $text);
     /*
      * Three blocks and no more: the headline, when it starts, and the sign-off.
      * Every other paragraph in this preview is earned by something the feed
      * sent, and a fourth here would mean one of them had been printed empty.
      */
-    same(3, substr_count($text, "
+    same(3, substr_count($text, '
 
-") + 1, 'a bare fixture produced a block it had nothing to put in');
+') + 1, 'a bare fixture produced a block it had nothing to put in');
 };
 
 $tests['a relative time never reaches the post'] = function () {
     $text = (new Preview())->text(fixture());
 
     foreach (['from now', 'ago', 'in 2 hours', 'hours from now'] as $phrase) {
-        ok(!str_contains($text, $phrase), 'the preview said "' . $phrase . '", which stops being true', $text);
+        ok(! str_contains($text, $phrase), 'the preview said "'.$phrase.'", which stops being true', $text);
     }
 };
 
@@ -610,7 +610,7 @@ $tests['a conference takes the article it is spoken with'] = function () {
             'away_conference' => $conference,
         ]));
 
-        ok(str_contains($text, $expected), $conference . ' did not read as "' . $expected . '"', $text);
+        ok(str_contains($text, $expected), $conference.' did not read as "'.$expected.'"', $text);
     }
 };
 
@@ -628,7 +628,7 @@ $tests['each sport calls the start of play by its own name'] = function () {
     foreach ($expected as $key => $phrase) {
         $text = (new Preview(Recap::EMPHASIS_NONE, $sports->get($key)))->text(fixture());
 
-        ok(str_contains($text, $phrase), $key . ' did not say "' . $phrase . '"', $text);
+        ok(str_contains($text, $phrase), $key.' did not say "'.$phrase.'"', $text);
     }
 };
 
@@ -637,11 +637,11 @@ $tests['an unbeaten record is read from the losses, not guessed'] = function () 
     ok(str_contains($both, 'Both come in unbeaten'), 'a draw was counted as a defeat', $both);
 
     $one = (new Preview())->text(fixture(['home_record' => '1-1']));
-    ok(!str_contains($one, 'unbeaten'), 'a side with a loss was called unbeaten', $one);
+    ok(! str_contains($one, 'unbeaten'), 'a side with a loss was called unbeaten', $one);
     ok(str_contains($one, 'Alabama are 1-0, Kentucky 1-1.'), 'the plain form line was not written', $one);
 
     $none = (new Preview())->text(fixture(['home_record' => '0-0', 'away_record' => '0-0']));
-    ok(!str_contains($none, 'unbeaten'), 'two teams who have not played were called unbeaten', $none);
+    ok(! str_contains($none, 'unbeaten'), 'two teams who have not played were called unbeaten', $none);
 };
 
 $tests['a rank in prose is never written with a hash'] = function () {
@@ -673,15 +673,21 @@ $tests['a neutral site is vs, not at'] = function () {
 $tests['a preview invites a pick when there is somewhere to send them'] = function () {
     $text = (new Preview())->text(fixture(['picks_url' => 'https://fbsfb.com/picks/week/5']));
 
-    ok(str_contains($text, 'Pick this game before kickoff: https://fbsfb.com/picks/week/5'),
-        'the preview did not invite a pick', $text);
+    ok(
+        str_contains($text, 'Pick this game before kickoff: https://fbsfb.com/picks/week/5'),
+        'the preview did not invite a pick',
+        $text
+    );
 };
 
 $tests['a preview with nowhere to send them advertises nothing'] = function () {
     $text = (new Preview())->text(fixture());
 
-    ok(! str_contains($text, 'Pick this game'),
-        'a board with no pick\'em was told to go and pick', $text);
+    ok(
+        ! str_contains($text, 'Pick this game'),
+        'a board with no pick\'em was told to go and pick',
+        $text
+    );
     ok(str_contains($text, 'Thread is open'), 'the closing line went missing', $text);
 };
 
@@ -696,7 +702,7 @@ function detailedBox(array $overrides = []): array
         'linescores' => ['home' => [3, 14, 0, 0], 'away' => [10, 0, 10, 14]],
         'scoring' => [
             ['period' => 1, 'clock' => '9:43', 'team' => 'LIB', 'type' => 'Field Goal Good',
-             'text' => 'Chase Reeves 29 Yd Field Goal', 'home' => 0, 'away' => 3],
+                'text' => 'Chase Reeves 29 Yd Field Goal', 'home' => 0, 'away' => 3],
         ],
         'market' => ['provider' => 'DraftKings', 'line' => 'LIB -2.5', 'total' => 50.5],
         'swing' => ['text' => 'A 39 yard touchdown pass', 'toward' => 'home', 'points' => 20, 'after' => 69],
@@ -855,8 +861,8 @@ $tests['crest fetch: an IP host is taken only in its one canonical spelling, and
     // curl reads 0177.0.0.1 as octal 127.0.0.1; a lenient resolver read it as
     // the public 177.0.0.1. Every non-canonical spelling is refused outright.
     foreach (['0177.0.0.1', '012.0.0.1', '0x7f.0.0.1', '2130706433', '127.1', '127.0.0.1', '10.0.0.5',
-              '169.254.169.254', '100.64.1.1', '192.168.1.1', '[::1]', '[::ffff:127.0.0.1]', '[fe80::1]', '[fd00::1]'] as $host) {
-        same(null, ShareCard::publicIps($host), $host . ' is refused');
+        '169.254.169.254', '100.64.1.1', '192.168.1.1', '[::1]', '[::ffff:127.0.0.1]', '[fe80::1]', '[fd00::1]'] as $host) {
+        same(null, ShareCard::publicIps($host), $host.' is refused');
     }
 
     same(['8.8.8.8'], ShareCard::publicIps('8.8.8.8'), 'a public dotted quad passes');
@@ -871,17 +877,17 @@ foreach ($tests as $name => $test) {
 
     if (count($failures) === $before) {
         $passed++;
-        echo "  ok   " . $name . "\n";
+        echo '  ok   '.$name."\n";
         continue;
     }
 
-    echo "  FAIL " . $name . "\n";
+    echo '  FAIL '.$name."\n";
 
     foreach (array_slice($failures, $before) as $failure) {
-        echo "       " . $failure . "\n";
+        echo '       '.$failure."\n";
     }
 }
 
-echo "\n" . $passed . '/' . count($tests) . " passed\n";
+echo "\n".$passed.'/'.count($tests)." passed\n";
 
 exit($failures === [] ? 0 : 1);

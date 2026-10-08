@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ErnestDefoe\Gameday\Console;
 
-use ErnestDefoe\Gameday\GamedayThread;
 use ErnestDefoe\Gameday\Service\Threads;
 use Flarum\Console\AbstractCommand;
 use Symfony\Component\Console\Input\InputOption;
@@ -75,7 +74,7 @@ class RewriteOpenersCommand extends AbstractCommand
 
                 $shown++;
                 $this->output->writeln('');
-                $this->output->writeln('<info>' . $title . '</info>');
+                $this->output->writeln('<info>'.$title.'</info>');
                 $this->output->writeln($text);
             }
         );

@@ -77,7 +77,7 @@ class Recap
                 $line = $this->leaderLine($stats[$side]['leaders'] ?? []);
 
                 if ($line !== '') {
-                    $blocks[] = $this->bold($name) . ' — ' . $line;
+                    $blocks[] = $this->bold($name).' — '.$line;
                 }
             }
 
@@ -145,17 +145,17 @@ class Recap
         $heads = [];
 
         for ($i = 0; $i < $periods; $i++) {
-            $heads[] = $i < 4 ? $this->sport->periodName($i + 1) : 'OT' . ($i - 3 > 1 ? $i - 3 : '');
+            $heads[] = $i < 4 ? $this->sport->periodName($i + 1) : 'OT'.($i - 3 > 1 ? $i - 3 : '');
         }
 
         $row = function (string $name, array $points, int $total) use ($periods, $heads): string {
             $parts = [];
 
             for ($i = 0; $i < $periods; $i++) {
-                $parts[] = $heads[$i] . ' ' . (int) ($points[$i] ?? 0);
+                $parts[] = $heads[$i].' '.(int) ($points[$i] ?? 0);
             }
 
-            return $this->bold($name) . ' — ' . implode(' · ', $parts) . ' — final ' . $total;
+            return $this->bold($name).' — '.implode(' · ', $parts).' — final '.$total;
         };
 
         return implode("\n", [
@@ -236,7 +236,7 @@ class Recap
                 continue;
             }
 
-            $when = trim($this->sport->periodName((int) ($play['period'] ?? 0)) . ' ' . (string) ($play['clock'] ?? ''));
+            $when = trim($this->sport->periodName((int) ($play['period'] ?? 0)).' '.(string) ($play['clock'] ?? ''));
             $what = trim((string) ($play['text'] ?? '')) ?: trim((string) ($play['type'] ?? ''));
 
             if ($what === '') {
@@ -295,7 +295,7 @@ class Recap
                 default => sprintf('%s was a push.', $line),
             };
         } else {
-            $lines[] = 'The line was ' . $line . '.';
+            $lines[] = 'The line was '.$line.'.';
         }
 
         $total = $market['total'] ?? null;
@@ -312,7 +312,7 @@ class Recap
         if (($market['provider'] ?? '') !== '') {
             // Named, because two books rarely agree and an unattributed number
             // reads as a fact of the universe.
-            $lines[] = 'Line from ' . $market['provider'] . '.';
+            $lines[] = 'Line from '.$market['provider'].'.';
         }
 
         return implode("\n", $lines);
@@ -345,7 +345,7 @@ class Recap
         foreach (array_keys($this->sport->leaderCategories()) as $category) {
             $leader = $leaders[$category] ?? null;
 
-            if (!is_array($leader) || ($leader['name'] ?? '') === '') {
+            if (! is_array($leader) || ($leader['name'] ?? '') === '') {
                 continue;
             }
 
@@ -359,10 +359,10 @@ class Recap
         $parts = [];
 
         foreach ($byPlayer as $name => $lines) {
-            $parts[] = $name . ' ' . implode(', and ', $lines);
+            $parts[] = $name.' '.implode(', and ', $lines);
         }
 
-        return $parts === [] ? '' : implode('; ', $parts) . '.';
+        return $parts === [] ? '' : implode('; ', $parts).'.';
     }
 
     /* -------------------------------------------------------- the comparison */
@@ -395,7 +395,7 @@ class Recap
 
         // The heading says which column is which, once, rather than repeating
         // both names on every line.
-        array_unshift($lines, $this->bold($home . ' / ' . $away));
+        array_unshift($lines, $this->bold($home.' / '.$away));
 
         return implode("\n", $lines);
     }
@@ -405,12 +405,11 @@ class Recap
     protected function bold(string $text): string
     {
         return match ($this->emphasis) {
-            self::EMPHASIS_BBCODE => '[b]' . $text . '[/b]',
-            self::EMPHASIS_MARKDOWN => '**' . $text . '**',
+            self::EMPHASIS_BBCODE => '[b]'.$text.'[/b]',
+            self::EMPHASIS_MARKDOWN => '**'.$text.'**',
             default => $text,
         };
     }
-
 
     /**
      * @param  array<string, mixed>|null $box
@@ -418,7 +417,7 @@ class Recap
      */
     protected function sides(?array $box): ?array
     {
-        if (!is_array($box) || !isset($box['home'], $box['away'])) {
+        if (! is_array($box) || ! isset($box['home'], $box['away'])) {
             return null;
         }
 

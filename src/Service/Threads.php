@@ -224,7 +224,7 @@ class Threads
      */
     public function enrich(): int
     {
-        if (!$this->settings->recaps() || !$this->boxScore->available()) {
+        if (! $this->settings->recaps() || ! $this->boxScore->available()) {
             return 0;
         }
 
@@ -256,7 +256,7 @@ class Threads
              */
             $game = PickEvent::with(['homeTeam', 'awayTeam', 'week.season'])->find($row->event_id);
 
-            if (!$this->recap($game)->usable($box)) {
+            if (! $this->recap($game)->usable($box)) {
                 continue;
             }
 
@@ -371,7 +371,7 @@ class Threads
             }
 
             if ($report !== null) {
-                $report($titleChanges ? $discussion->title . '  ->  ' . $title : $discussion->title, $text);
+                $report($titleChanges ? $discussion->title.'  ->  '.$title : $discussion->title, $text);
             }
 
             if (! $dryRun) {
@@ -445,11 +445,10 @@ class Threads
     protected function isGeneratedTitle(string $title, PickEvent $game): bool
     {
         $joiner = $game->neutral_site ? ' vs ' : ' at ';
-        $plain = trim(($game->awayTeam->name ?? 'Away') . $joiner . ($game->homeTeam->name ?? 'Home'));
+        $plain = trim(($game->awayTeam->name ?? 'Away').$joiner.($game->homeTeam->name ?? 'Home'));
 
         return $title === $plain;
     }
-
 
     protected function openOne(PickEvent $game, User $author): bool
     {
@@ -529,7 +528,7 @@ class Threads
      */
     protected function tag(Discussion $discussion, PickEvent $game): void
     {
-        if (!$this->extensions->isEnabled('flarum-tags')) {
+        if (! $this->extensions->isEnabled('flarum-tags')) {
             return;
         }
 
@@ -546,7 +545,7 @@ class Threads
 
         $tagId = $tagId ?: $this->settings->fallbackTagId();
 
-        if ($tagId < 1 || !$this->db->table('tags')->where('id', $tagId)->exists()) {
+        if ($tagId < 1 || ! $this->db->table('tags')->where('id', $tagId)->exists()) {
             return;
         }
 
@@ -559,7 +558,7 @@ class Threads
     /** @param bool $sticky */
     protected function setSticky(int $discussionId, bool $sticky): void
     {
-        if (!$this->extensions->isEnabled('flarum-sticky')) {
+        if (! $this->extensions->isEnabled('flarum-sticky')) {
             return;
         }
 
@@ -650,15 +649,15 @@ class Threads
          */
         return trim(
             $this->ranked($game->awayTeam->name ?? 'Away', (int) $game->away_rank)
-            . $joiner
-            . $this->ranked($game->homeTeam->name ?? 'Home', (int) $game->home_rank)
+            .$joiner
+            .$this->ranked($game->homeTeam->name ?? 'Home', (int) $game->home_rank)
         );
     }
 
     /** "#12 Alabama", or just "Alabama". */
     protected function ranked(string $name, int $rank): string
     {
-        return $rank > 0 ? '#' . $rank . ' ' . $name : $name;
+        return $rank > 0 ? '#'.$rank.' '.$name : $name;
     }
 
     /**
@@ -721,7 +720,7 @@ class Threads
              * not the same thing.
              */
             'picks_url' => $game->week_id
-                ? rtrim((string) $this->config->url(), '/') . '/picks/week/' . (int) $game->week_id
+                ? rtrim((string) $this->config->url(), '/').'/picks/week/'.(int) $game->week_id
                 : '',
         ];
     }

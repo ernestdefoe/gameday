@@ -152,10 +152,10 @@ abstract class Sport
         if ($number > $this->periodsInRegulation()) {
             $extra = $number - $this->periodsInRegulation();
 
-            return 'OT' . ($extra > 1 ? $extra : '');
+            return 'OT'.($extra > 1 ? $extra : '');
         }
 
-        return $this->periodAbbreviation() . $number;
+        return $this->periodAbbreviation().$number;
     }
 
     /** The letter a period is written with: Q for a quarter, P for a period. */
@@ -180,7 +180,7 @@ abstract class Sport
     /** A figure the feed wrote as a string, when it really is a number. */
     protected function number(mixed $value): ?int
     {
-        if (!is_string($value) && !is_int($value)) {
+        if (! is_string($value) && ! is_int($value)) {
             return null;
         }
 
@@ -192,7 +192,7 @@ abstract class Sport
     /** The same, for figures that are genuinely fractional — a possession share. */
     protected function decimal(mixed $value): ?float
     {
-        if (!is_string($value) && !is_int($value) && !is_float($value)) {
+        if (! is_string($value) && ! is_int($value) && ! is_float($value)) {
             return null;
         }
 
@@ -215,7 +215,7 @@ abstract class Sport
             0 => 'not at all',
             1 => 'once',
             2 => 'twice',
-            default => $n . ' times',
+            default => $n.' times',
         };
     }
 }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ErnestDefoe\Gameday\Block;
 
-use Ernestdefoe\PageBuilder\Block\AbstractBlock;
 use ErnestDefoe\Gameday\Service\CurrentGame;
+use Ernestdefoe\PageBuilder\Block\AbstractBlock;
 use Flarum\User\User;
 
 /**

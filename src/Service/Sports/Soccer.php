@@ -139,16 +139,16 @@ final class Soccer extends Sport
     /** A possession share is a percentage and has to say so. */
     public function formatStat(string $key, string $value): string
     {
-        return $key === 'possessionPct' && $value !== '' ? $value . '%' : $value;
+        return $key === 'possessionPct' && $value !== '' ? $value.'%' : $value;
     }
 
     protected function margin(string $winner, int $margin): string
     {
         return match (true) {
-            $margin === 1 => $winner . ' edged it.',
-            $margin === 2 => $winner . ' won by two.',
-            $margin >= 4 => $winner . ' were far too good.',
-            default => $winner . ' won comfortably.',
+            $margin === 1 => $winner.' edged it.',
+            $margin === 2 => $winner.' won by two.',
+            $margin >= 4 => $winner.' were far too good.',
+            default => $winner.' won comfortably.',
         };
     }
 }

@@ -29,7 +29,7 @@ class CurrentBoardController implements RequestHandlerInterface
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $limit = (int) (\Illuminate\Support\Arr::get($request->getQueryParams(), 'limit', CurrentGame::MOST));
+        $limit = (int) \Illuminate\Support\Arr::get($request->getQueryParams(), 'limit', CurrentGame::MOST);
 
         $this->live->nudge();
 

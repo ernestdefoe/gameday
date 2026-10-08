@@ -90,7 +90,7 @@ class Preview
         $picks = trim((string) ($game['picks_url'] ?? ''));
 
         if ($picks !== '') {
-            $blocks[] = 'Pick this game before kickoff: ' . $picks;
+            $blocks[] = 'Pick this game before kickoff: '.$picks;
         }
 
         /*
@@ -121,12 +121,12 @@ class Preview
         $joiner = ! empty($game['neutral_site']) ? ' vs ' : ' at ';
 
         $line = $this->ranked($away, (int) ($game['away_rank'] ?? 0))
-            . $joiner
-            . $this->ranked($home, (int) ($game['home_rank'] ?? 0));
+            .$joiner
+            .$this->ranked($home, (int) ($game['home_rank'] ?? 0));
 
         $week = trim((string) ($game['week'] ?? ''));
 
-        return $this->bold($line) . ($week === '' ? '' : ' — ' . $week);
+        return $this->bold($line).($week === '' ? '' : ' — '.$week);
     }
 
     /**
@@ -146,7 +146,7 @@ class Preview
         $sentences = [];
 
         if ($kickoff instanceof \DateTimeInterface) {
-            $at = (new \DateTimeImmutable('@' . $kickoff->getTimestamp()))
+            $at = (new \DateTimeImmutable('@'.$kickoff->getTimestamp()))
                 ->setTimezone(new \DateTimeZone($this->timezone));
 
             $where = trim((string) ($game['venue'] ?? ''));
@@ -163,9 +163,9 @@ class Preview
                  * the placeholder was set in.
                  */
                 ! empty($game['kickoff_tbd'])
-                    ? 'on ' . (new \DateTimeImmutable('@' . $kickoff->getTimestamp()))
+                    ? 'on '.(new \DateTimeImmutable('@'.$kickoff->getTimestamp()))
                         ->setTimezone(new \DateTimeZone('America/New_York'))
-                        ->format('l j F') . ', time to be announced'
+                        ->format('l j F').', time to be announced'
                     :
                 /*
                  * Time first, then the day: "3:30pm EDT on Saturday 12
@@ -176,15 +176,15 @@ class Preview
                  * is wrong for most of the people reading it, in a post that is
                  * never rewritten.
                  */
-                $at->format('g:ia T') . ' on ' . $at->format('l j F'),
-                $where === '' ? '' : ', at ' . $where . ($city === '' ? '' : ', ' . $city),
+                $at->format('g:ia T').' on '.$at->format('l j F'),
+                $where === '' ? '' : ', at '.$where.($city === '' ? '' : ', '.$city),
             );
         }
 
         $broadcast = trim((string) ($game['broadcast'] ?? ''));
 
         if ($broadcast !== '') {
-            $sentences[] = 'On ' . $broadcast . '.';
+            $sentences[] = 'On '.$broadcast.'.';
         }
 
         return implode(' ', $sentences);
@@ -260,7 +260,7 @@ class Preview
         $conference = trim((string) ($game['home_conference'] ?? ''));
 
         if ($conference !== '' && $conference === trim((string) ($game['away_conference'] ?? ''))) {
-            $said[] = 'It is ' . $this->article($conference) . ' ' . $conference . ' game.';
+            $said[] = 'It is '.$this->article($conference).' '.$conference.' game.';
         }
 
         return implode(' ', $said);
@@ -325,7 +325,7 @@ class Preview
      */
     protected function ranked(string $name, int $rank): string
     {
-        return $rank > 0 ? 'No. ' . $rank . ' ' . $name : $name;
+        return $rank > 0 ? 'No. '.$rank.' '.$name : $name;
     }
 
     /**
@@ -349,8 +349,8 @@ class Preview
     protected function bold(string $text): string
     {
         return match ($this->emphasis) {
-            Recap::EMPHASIS_BBCODE => '[b]' . $text . '[/b]',
-            Recap::EMPHASIS_MARKDOWN => '**' . $text . '**',
+            Recap::EMPHASIS_BBCODE => '[b]'.$text.'[/b]',
+            Recap::EMPHASIS_MARKDOWN => '**'.$text.'**',
             default => $text,
         };
     }

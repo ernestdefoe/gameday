@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ErnestDefoe\Gameday\Seo;
 
-use ErnestDefoe\Gameday\GamedayThread;
 use ErnestDefoe\Gameday\Service\ScoreboardForDiscussion;
 use ErnestDefoe\Gameday\Service\ShareCard;
 use Flarum\Foundation\Config;
@@ -71,7 +70,7 @@ class GameThreadPage implements PageDriverInterface
              * which is the thing this exists to replace, and they do it
              * without complaining.
              */
-            $seo->setImage(rtrim((string) $this->config->url(), '/') . $path);
+            $seo->setImage(rtrim((string) $this->config->url(), '/').$path);
         }
     }
 
@@ -95,8 +94,10 @@ class GameThreadPage implements PageDriverInterface
         if (($board['state'] ?? '') === 'final') {
             return sprintf(
                 'Final: %s %s, %s %s%s. Scores, box score and the full thread.',
-                $aName, (string) ($away['score'] ?? ''),
-                $hName, (string) ($home['score'] ?? ''),
+                $aName,
+                (string) ($away['score'] ?? ''),
+                $hName,
+                (string) ($home['score'] ?? ''),
                 $where
             );
         }
@@ -105,7 +106,10 @@ class GameThreadPage implements PageDriverInterface
 
         return trim(sprintf(
             '%s at %s%s.%s Live score, box score and the game thread.',
-            $aName, $hName, $where, $when !== '' ? ' '.$when.'.' : ''
+            $aName,
+            $hName,
+            $where,
+            $when !== '' ? ' '.$when.'.' : ''
         ));
     }
 }

@@ -23,7 +23,7 @@ class EnrichCommand extends Command
 
     public function handle(Threads $threads, Settings $settings, \ErnestDefoe\Gameday\Service\Highlights $highlights): int
     {
-        if (!$settings->enabled()) {
+        if (! $settings->enabled()) {
             return self::SUCCESS;
         }
 

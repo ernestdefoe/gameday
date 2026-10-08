@@ -185,7 +185,7 @@ class PerformersBlock extends AbstractBlock
                      * right, they are two performances — but the same line
                      * cannot arrive twice from two sides of one payload.
                      */
-                    $candidates[$group][$this->key($name) . '|' . $category] = [
+                    $candidates[$group][$this->key($name).'|'.$category] = [
                         'score' => $score,
                         'category' => $category,
                         'label' => self::CATEGORIES[$category]['label'],
@@ -273,7 +273,7 @@ class PerformersBlock extends AbstractBlock
             $groups[] = ['key' => $key, 'title' => $title, 'players' => $players];
         }
 
-        return ['week' => $weekName ?: ('Week ' . $week), 'groups' => $groups];
+        return ['week' => $weekName ?: ('Week '.$week), 'groups' => $groups];
     }
 
     /**
@@ -375,15 +375,15 @@ class PerformersBlock extends AbstractBlock
             'receiving' => trim(sprintf('%s rec, %s yds%s', $get('REC'), $get('YDS'), $this->tds($get('TD')))),
             // TOT is total tackles; SACKS and INT are the ones worth naming.
             'defensive' => trim(implode(', ', array_filter([
-                $get('TOT') !== '' ? $get('TOT') . ((int) $get('TOT') === 1 ? ' tackle' : ' tackles') : '',
-                (float) $get('SACKS') > 0 ? $get('SACKS') . ((float) $get('SACKS') === 1.0 ? ' sack' : ' sacks') : '',
-                (int) $get('INT') > 0 ? $get('INT') . ' INT' : '',
+                $get('TOT') !== '' ? $get('TOT').((int) $get('TOT') === 1 ? ' tackle' : ' tackles') : '',
+                (float) $get('SACKS') > 0 ? $get('SACKS').((float) $get('SACKS') === 1.0 ? ' sack' : ' sacks') : '',
+                (int) $get('INT') > 0 ? $get('INT').' INT' : '',
             ]))),
             'interceptions' => trim(sprintf('%s INT, %s yds%s', $get('INT'), $get('YDS'), $this->tds($get('TD')))),
             'kicking' => trim(implode(', ', array_filter([
-                $get('FG') !== '' ? $get('FG') . ' FG' : '',
-                $get('LONG') !== '' ? 'long ' . $get('LONG') : '',
-                $get('PTS') !== '' ? $get('PTS') . ' pts' : '',
+                $get('FG') !== '' ? $get('FG').' FG' : '',
+                $get('LONG') !== '' ? 'long '.$get('LONG') : '',
+                $get('PTS') !== '' ? $get('PTS').' pts' : '',
             ]))),
             'punting' => trim(sprintf('%s punts, %s avg', $get('NO'), $get('AVG'))),
             'kickReturns', 'puntReturns' => trim(sprintf('%s ret, %s yds%s', $get('NO'), $get('YDS'), $this->tds($get('TD')))),
@@ -417,7 +417,7 @@ class PerformersBlock extends AbstractBlock
 
     protected function tds(string $td): string
     {
-        return (int) $td > 0 ? ', ' . (int) $td . ' TD' : '';
+        return (int) $td > 0 ? ', '.(int) $td.' TD' : '';
     }
 
     /**
@@ -578,7 +578,7 @@ class PerformersBlock extends AbstractBlock
             // Six hex digits or nothing: a half-written colour in a gradient is
             // a card that renders black.
             if (preg_match('/^[0-9a-f]{6}$/i', $colour)) {
-                $out[mb_strtoupper((string) $team->abbreviation)] = '#' . $colour;
+                $out[mb_strtoupper((string) $team->abbreviation)] = '#'.$colour;
             }
         }
 

@@ -127,7 +127,7 @@ class WhereToWatch
             $channel = self::channel((string) ($listing['name'] ?? ''), (string) ($listing['type'] ?? ''), (string) ($listing['market'] ?? ''), $homeAbbr, $awayAbbr);
 
             if ($channel !== null) {
-                $channels[$channel['label'] . '|' . $channel['market']] ??= $channel;
+                $channels[$channel['label'].'|'.$channel['market']] ??= $channel;
             }
         }
 

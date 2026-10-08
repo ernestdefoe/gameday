@@ -120,7 +120,7 @@ final class Gridiron extends Sport
         $scores = match (true) {
             $touchdowns < 1 => '',
             $touchdowns === 1 => ' and a touchdown',
-            default => ' and ' . $this->word($touchdowns) . ' touchdowns',
+            default => ' and '.$this->word($touchdowns).' touchdowns',
         };
 
         return match ($category) {
@@ -149,10 +149,10 @@ final class Gridiron extends Sport
     protected function margin(string $winner, int $margin): string
     {
         return match (true) {
-            $margin <= 3 => $winner . ' took it by ' . $margin . '.',
-            $margin >= 28 => $winner . ' were never troubled.',
-            $margin >= 17 => $winner . ' had it comfortably.',
-            default => $winner . ' won it by ' . $margin . '.',
+            $margin <= 3 => $winner.' took it by '.$margin.'.',
+            $margin >= 28 => $winner.' were never troubled.',
+            $margin >= 17 => $winner.' had it comfortably.',
+            default => $winner.' won it by '.$margin.'.',
         };
     }
 
@@ -166,17 +166,17 @@ final class Gridiron extends Sport
         return match (true) {
             $n < 1 => '',
             $n === 1 => ', with an interception',
-            default => ', with ' . $this->word($n) . ' interceptions',
+            default => ', with '.$this->word($n).' interceptions',
         };
     }
 
     private function carries(?int $n): string
     {
-        return $n === null ? 'ran' : ($n === 1 ? 'one carry' : $n . ' carries');
+        return $n === null ? 'ran' : ($n === 1 ? 'one carry' : $n.' carries');
     }
 
     private function catches(?int $n): string
     {
-        return $n === null ? 'caught' : ($n === 1 ? 'one catch' : $n . ' catches');
+        return $n === null ? 'caught' : ($n === 1 ? 'one catch' : $n.' catches');
     }
 }

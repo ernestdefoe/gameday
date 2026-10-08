@@ -170,14 +170,14 @@ class Diamond extends Sport
                 return '';
             }
 
-            $line = $innings . ' innings';
+            $line = $innings.' innings';
 
             if ($earned !== null) {
-                $line .= $earned === 0 ? ', no earned runs' : ', ' . $earned . ' earned';
+                $line .= $earned === 0 ? ', no earned runs' : ', '.$earned.' earned';
             }
 
             if ($strikeouts !== null && $strikeouts > 0) {
-                $line .= ', ' . $strikeouts . ' struck out';
+                $line .= ', '.$strikeouts.' struck out';
             }
 
             return $line;
@@ -209,11 +209,11 @@ class Diamond extends Sport
         $said = $this->hitLine($line);
 
         if (($homeRuns ?? 0) > 0) {
-            $said .= ', ' . ($homeRuns === 1 ? 'a home run' : $this->word((int) $homeRuns) . ' home runs');
+            $said .= ', '.($homeRuns === 1 ? 'a home run' : $this->word((int) $homeRuns).' home runs');
         }
 
         if ($rbi !== null && $rbi > 0) {
-            $said .= ', ' . $rbi . ' driven in';
+            $said .= ', '.$rbi.' driven in';
         }
 
         return $said;
@@ -244,6 +244,6 @@ class Diamond extends Sport
     {
         $parts = explode('-', $line, 2);
 
-        return count($parts) === 2 ? $parts[0] . ' for ' . $parts[1] : $line;
+        return count($parts) === 2 ? $parts[0].' for '.$parts[1] : $line;
     }
 }

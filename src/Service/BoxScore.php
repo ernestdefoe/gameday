@@ -43,7 +43,7 @@ class BoxScore
      */
     public function forEvent(int $eventId): ?array
     {
-        if (!$this->available()) {
+        if (! $this->available()) {
             return null;
         }
 

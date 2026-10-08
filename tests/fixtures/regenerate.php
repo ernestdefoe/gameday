@@ -20,21 +20,21 @@ declare(strict_types=1);
  * with nothing but this repository.
  */
 
-$picks = getenv('PICKS_PATH') ?: dirname(__DIR__, 3) . '/picks';
+$picks = getenv('PICKS_PATH') ?: dirname(__DIR__, 3).'/picks';
 
-if (!is_file($picks . '/src/Service/BoxScoreService.php')) {
+if (! is_file($picks.'/src/Service/BoxScoreService.php')) {
     fwrite(STDERR, "Picks not found at {$picks}. Set PICKS_PATH.\n");
     exit(1);
 }
 
-require $picks . '/src/Service/BoxScoreService.php';
+require $picks.'/src/Service/BoxScoreService.php';
 
-require $picks . '/src/Service/Leagues/League.php';
-require $picks . '/src/Service/Leagues/Leagues.php';
-require $picks . '/src/Service/Providers/Provider.php';
-require $picks . '/src/Service/Providers/EspnProvider.php';
+require $picks.'/src/Service/Leagues/League.php';
+require $picks.'/src/Service/Leagues/Leagues.php';
+require $picks.'/src/Service/Providers/Provider.php';
+require $picks.'/src/Service/Providers/EspnProvider.php';
 
-$raw = json_decode((string) file_get_contents(__DIR__ . '/cfbd-box-score.json'), true);
+$raw = json_decode((string) file_get_contents(__DIR__.'/cfbd-box-score.json'), true);
 
 /*
  * `normalise()` is pure — it reads nothing off the service — so the constructor
@@ -52,8 +52,8 @@ if ($document === null) {
 }
 
 file_put_contents(
-    __DIR__ . '/normalised-box-score.json',
-    json_encode($document, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n"
+    __DIR__.'/normalised-box-score.json',
+    json_encode($document, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n"
 );
 
 echo "Wrote normalised-box-score.json\n";
@@ -80,7 +80,7 @@ $espn = new class extends Resofire\Picks\Service\Providers\EspnProvider {
 };
 
 foreach (['nfl' => 'nfl', 'nba' => 'nba', 'mlb' => 'mlb', 'nhl' => 'nhl', 'soccer' => 'epl'] as $file => $league) {
-    $espn->file = $picks . '/tests/fixtures/espn-summary-' . $file . '.json';
+    $espn->file = $picks.'/tests/fixtures/espn-summary-'.$file.'.json';
 
     /*
      * 🚨 A DISTINCT event id per sport. The adapter caches a summary by event
@@ -88,7 +88,7 @@ foreach (['nfl' => 'nfl', 'nba' => 'nba', 'mlb' => 'mlb', 'nhl' => 'nhl', 'socce
      * here handed back the first sport's box score five times. Every fixture
      * was American football, and every recap read plausibly.
      */
-    $sides = $espn->boxScore($leagues->get($league), 'fixture-' . $file, 2026, 1);
+    $sides = $espn->boxScore($leagues->get($league), 'fixture-'.$file, 2026, 1);
 
     if ($sides === null) {
         fwrite(STDERR, "The adapter rejected {$file}.\n");
@@ -98,8 +98,8 @@ foreach (['nfl' => 'nfl', 'nba' => 'nba', 'mlb' => 'mlb', 'nhl' => 'nhl', 'socce
     $document = $method->invoke($service, 0, $sides['teams'], $sides['players'], $leagues->get($league));
 
     file_put_contents(
-        __DIR__ . '/espn-' . $file . '.json',
-        json_encode($document, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n"
+        __DIR__.'/espn-'.$file.'.json',
+        json_encode($document, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n"
     );
 
     echo "Wrote espn-{$file}.json\n";
