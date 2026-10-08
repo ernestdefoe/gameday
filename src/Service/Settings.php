@@ -173,7 +173,7 @@ class Settings
     {
     }
 
-    protected function get(string $key, $default)
+    protected function get(string $key, mixed $default): mixed
     {
         $value = $this->settings->get(self::PREFIX . $key);
 

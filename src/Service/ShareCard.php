@@ -148,7 +148,7 @@ class ShareCard
     }
 
     /** @param array<string, mixed> $side */
-    protected function side($im, array $side, int $x, int $white, int $muted, bool $final): void
+    protected function side(\GdImage $im, array $side, int $x, int $white, int $muted, bool $final): void
     {
         $crest = $this->crest((string) ($side['logo'] ?? $side['logoLight'] ?? ''));
 
@@ -205,7 +205,7 @@ class ShareCard
      * decode as an image is kept, re-encoded as PNG. Nothing else ever lands
      * in the public crest folder.
      */
-    protected function crest(string $url)
+    protected function crest(string $url): ?\GdImage
     {
         if ($url === '' || ! preg_match('~^https://~i', $url)) {
             return null;
@@ -363,7 +363,7 @@ class ShareCard
     }
 
     /** Centred text, measured rather than guessed at. */
-    protected function centred($im, string $text, int $cx, int $y, int $size, int $colour, string $font): void
+    protected function centred(\GdImage $im, string $text, int $cx, int $y, int $size, int $colour, string $font): void
     {
         if ($text === '') {
             return;

@@ -248,7 +248,7 @@ class CurrentGame
          * and draw the same game twice.
          */
         return array_values(array_unique(array_map(
-            fn ($row) => (int) $row->id,
+            fn ($row) => (int) $row->getKey(),
             $query->get()->all()
         )));
     }

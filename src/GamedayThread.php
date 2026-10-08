@@ -4,6 +4,7 @@ namespace ErnestDefoe\Gameday;
 
 use Flarum\Database\AbstractModel;
 use Flarum\Discussion\Discussion;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * The thread a game has.
@@ -14,6 +15,9 @@ use Flarum\Discussion\Discussion;
  * @property string      $state
  * @property int|null    $recap_post_id
  * @property \Carbon\Carbon|null $stats_at
+ * @property \Carbon\Carbon|null $opened_at
+ * @property \Carbon\Carbon|null $live_at
+ * @property \Carbon\Carbon|null $resolved_at
  */
 class GamedayThread extends AbstractModel
 {
@@ -43,7 +47,7 @@ class GamedayThread extends AbstractModel
         'resolved_at' => 'datetime',
     ];
 
-    public function discussion()
+    public function discussion(): BelongsTo
     {
         return $this->belongsTo(Discussion::class, 'discussion_id');
     }

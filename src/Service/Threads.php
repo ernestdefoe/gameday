@@ -599,7 +599,9 @@ class Threads
 
     protected function sportFor(?PickEvent $game): string
     {
-        $season = $game?->week?->season;
+        // picks declares week() without a return type, so the relation is read
+        // as an attribute.
+        $season = $game?->getAttribute('week')?->season;
 
         if ($season !== null && method_exists($season, 'leagueDefinition')) {
             $sport = $season->leagueDefinition()->sport;
