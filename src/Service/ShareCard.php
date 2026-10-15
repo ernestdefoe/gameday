@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ErnestDefoe\Gameday\Service;
 
+use Flarum\Foundation\Config;
 use Flarum\Foundation\Paths;
 use GuzzleHttp\Client;
 
@@ -28,7 +29,7 @@ class ShareCard
     private const FONT = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf';
     private const FONT_REGULAR = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf';
 
-    public function __construct(protected Paths $paths)
+    public function __construct(protected Paths $paths, protected Config $config)
     {
     }
 
@@ -135,7 +136,7 @@ class ShareCard
             $this->centred($im, $venue, 600, self::HEIGHT - 95, 20, $muted, self::FONT_REGULAR);
         }
 
-        $this->centred($im, 'FBSFB.COM', 600, self::HEIGHT - 45, 20, $white, self::FONT);
+        $this->centred($im, strtoupper(preg_replace('/^www\./i', '', (string) $this->config->url()->getHost())), 600, self::HEIGHT - 45, 20, $white, self::FONT);
 
         $ok = imagepng($im, $file, 6);
         imagedestroy($im);
