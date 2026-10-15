@@ -117,3 +117,263 @@ ernestdefoe-gameday:
     widget_field_link: Link to the game thread
     widget_field_hide: Hide when there is no game
     widget_field_scroll: Advance through the games on its own
+    widget_default_title: Game Day
+    performers_empty: No box scores yet this week.
+
+  # Everything Game Day writes on the server: the opening post, the recap, the
+  # share card, the page-builder blocks and the search-engine description.
+  # Posts are written once, in the forum's default language.
+  api:
+    thread:
+      matchup_at: "{away} at {home}"
+      matchup_vs: "{away} vs {home}"
+      ranked: "#{rank} {name}"
+      home: Home
+      away: Away
+    preview:
+      ranked: "No. {rank} {name}"
+      when: "{kickoff} is {at}{where}."
+      time_on: "{time} on {date}"
+      date_tbd: "on {date}, time to be announced"
+      at_venue: "at {venue}"
+      on_tv: "On {broadcast}."
+      both_unbeaten: "Both come in unbeaten — {away} {awayRecord}, {home} {homeRecord}."
+      records: "{away} are {awayRecord}, {home} {homeRecord}."
+      two_ranked: Two ranked sides.
+      # {article} is "a" or "an", picked for the English conference name.
+      conference_game: "It is {article, select, an {an} other {a}} {conference} game."
+      pick: "Pick this game before kickoff: {url}"
+      # Also how a rerun recognises an opener it already wrote.
+      signature: Thread is open — predictions, complaints and everything in between.
+    recap:
+      final: "Final: {home} {homeScore}, {away} {awayScore}."
+      closing: The thread is an ordinary topic again now — still here, still searchable.
+      by_the_quarter: By the quarter
+      line_final: "final {total}"
+      turning_point: The turning point
+      biggest_swing: The biggest swing
+      swung: "That swung it {points} points {team}'s way."
+      scoring: Scoring
+      against_the_line: Against the line
+      covered: "{favourite} ({line}) covered."
+      not_covered: "{favourite} ({line}) did not cover."
+      push: "{line} was a push."
+      line_was: "The line was {line}."
+      over: "{points} points, over the total of {total}."
+      under: "{points} points, under the total of {total}."
+      exactly: "{points} points, exactly the total."
+      line_from: "Line from {provider}."
+      and_join: ", and "
+    sports:
+      common:
+        drawn: It finished level.
+        drawn_unfinished: It finished level, which means it did not finish.
+        kickoff: First whistle
+        period_abbr: P
+        overtime: OT
+        overtime_n: "OT{n}"
+        percent: "{value}%"
+        times: "{count, plural, =0 {not at all} =1 {once} =2 {twice} other {# times}}"
+        word_2: two
+        word_3: three
+        word_4: four
+        word_5: five
+        word_6: six
+        took_by: "{winner} took it by {margin}."
+        took_by_one: "{winner} took it by one."
+        won_by: "{winner} won it by {margin}."
+        won_by_two: "{winner} won it by two."
+        comfortable: "{winner} had it comfortably."
+        never_troubled: "{winner} were never troubled."
+      gridiron:
+        period_abbr: Q
+        kickoff: Kickoff
+        stats:
+          first_downs: First downs
+          total_yards: Total yards
+          passing_yards: Passing yards
+          rushing_yards: Rushing yards
+          third_down: Third down
+          fourth_down: Fourth down
+          penalties: Penalties
+          turnovers: Turnovers
+          possession: Possession
+        yardage_close: "There was almost nothing in the yardage — {more} to {fewer}."
+        outgained: "{leader} out-gained {trailer} {more} to {fewer}."
+        giveaways_each: "They gave it away {times} each."
+        giveaways: "{team} gave it away {times}, {other} {otherTimes}."
+        touchdown: and a touchdown
+        touchdowns: "and {words} touchdowns"
+        interception: with an interception
+        interceptions: "with {words} interceptions"
+        ran: ran
+        caught: caught
+        carries: "{count, plural, =1 {one carry} other {# carries}}"
+        catches: "{count, plural, =1 {one catch} other {# catches}}"
+        for_line: "{what} for {yards}{rest}"
+        drawn: It finished level, which almost never happens.
+      soccer:
+        period_abbr: H
+        kickoff: Kick-off
+        stats:
+          possession: Possession
+          shots: Shots
+          on_target: On target
+          corners: Corners
+          saves: Saves
+          fouls: Fouls
+          offsides: Offsides
+          yellow_cards: Yellow cards
+          red_cards: Red cards
+        shots_on_target: "{home} had {homeShots} shots to {away}'s {awayShots}, {homeOn} on target against {awayOn}."
+        shots: "{home} had {homeShots} shots to {away}'s {awayShots}."
+        possession: "{team} had {share}% of the ball."
+        drawn: A draw.
+        edged: "{winner} edged it."
+        won_by_two: "{winner} won by two."
+        far_too_good: "{winner} were far too good."
+        won_comfortably: "{winner} won comfortably."
+      hardwood:
+        period_abbr: Q
+        kickoff: Tip-off
+        stats:
+          field_goals: Field goals
+          field_goal_pct: FG%
+          three_pointers: Three-pointers
+          three_point_pct: 3P%
+          free_throws: Free throws
+          rebounds: Rebounds
+          assists: Assists
+          steals: Steals
+          blocks: Blocks
+          turnovers: Turnovers
+          points_in_paint: Points in the paint
+        shot_pct: "{better} shot {betterPct}% to {worse}'s {worsePct}%."
+        threes: "{team} made {more} threes to {fewer}."
+        turnovers: "{team} gave it away {times} to {other}'s {fewer}."
+        points: "{n} points"
+        rebounds: "{n} rebounds"
+        assists: "{n} assists"
+        triple_double: a triple-double
+        got_out: "{winner} got out with it, by {margin}."
+        drawn: The game did not finish level in the ordinary way — check the result.
+      diamond:
+        period_abbr: "Inn "
+        kickoff: First pitch
+        stats:
+          hits: Hits
+          runs: Runs
+          home_runs: Home runs
+          rbi: RBI
+          walks: Walks
+          strikeouts: Strikeouts
+          left_on_base: Left on base
+          pitching_strikeouts: Strikeouts by pitchers
+          earned_runs: Earned runs allowed
+          errors: Errors
+        outhit_lost: "{more} out-hit {fewer} {moreHits} to {fewerHits} and lost anyway."
+        outhit: "{more} out-hit {fewer} {moreHits} to {fewerHits}."
+        deep_both: "They went deep {times} between them — {home} {homeHr}, {away} {awayHr}."
+        deep: "{team} went deep {times}."
+        errors: "It was not clean — {home} {homeTimes}, {away} {awayTimes} in the field."
+        innings: "{ip} innings"
+        no_earned: no earned runs
+        earned: "{n} earned"
+        struck_out: "{n} struck out"
+        home_run: a home run
+        home_runs: "{words} home runs"
+        driven_in: "{n} driven in"
+        hit_line: "{hits} for {atBats}"
+      ice:
+        period_abbr: P
+        kickoff: Puck drop
+        stats:
+          shots: Shots
+          power_play_goals: Power-play goals
+          power_plays: Power plays
+          faceoffs: Faceoffs
+          blocked_shots: Blocked shots
+          hits: Hits
+          giveaways: Giveaways
+          takeaways: Takeaways
+          penalty_minutes: Penalty minutes
+        outshot: "{more} out-shot {fewer} {moreShots} to {fewerShots}."
+        power_play_both: "Both scored on the power play — {home} {homeTimes}, {away} {awayTimes}."
+        power_play: "{team} scored {times} on the power play."
+        saves_shutout: "{n} saves for the shutout"
+        saves: "{n} saves"
+        goal: a goal
+        goals: "{words} goals"
+        assist: an assist
+        assists: "{words} assists"
+        goals_and_assists: "{goals} and {assists}"
+        hat_trick: a hat-trick
+    scoreboard:
+      final: Final
+      final_ot: Final / OT
+      period_1: 1st
+      period_2: 2nd
+      period_3: 3rd
+      period_4: 4th
+    card:
+      final: FINAL
+      live: LIVE
+      kickoff: KICKOFF
+    seo:
+      final: "Final: {away} {awayScore}, {home} {homeScore}{where}. Scores, box score and the full thread."
+      upcoming: "{away} at {home}{where}.{when} Live score, box score and the game thread."
+    scoreboard_block:
+      name: Scoreboard
+      default_title: Game Day
+      field_title: Title
+      field_title_help: Leave empty for no heading — the board says what it is.
+      field_link: Link to the game thread
+      field_link_help: The link is dropped anyway for a reader who cannot open the thread.
+      field_hide: Hide when there is no game
+      field_hide_help: Otherwise the block says so. Off-season, that is a panel saying nothing every day for months.
+      field_scroll: Advance through the games on its own
+      field_scroll_help: Only where the strip is wide enough to scroll. It stops for hover, focus, touch and a hidden tab, and never runs for a reader who has asked for reduced motion.
+    performers:
+      name: Players of the week
+      field_title: Title
+      field_limit: How many per group
+      field_hide: Hide until there are box scores
+      field_hide_help: Box scores arrive after a game finishes, and only for games Game Day opened a thread for.
+      week: "Week {week}"
+      groups:
+        offence: Offence
+        defence: Defence
+        special: Special teams
+      categories:
+        passing: Passing
+        rushing: Rushing
+        receiving: Receiving
+        defensive: Defence
+        interceptions: Interceptions
+        kicking: Kicking
+        punting: Punting
+        kickReturns: Kick returns
+        puntReturns: Punt returns
+      big:
+        yards: yards
+        tackles: tackles
+        interception: interception
+        interceptions: interceptions
+        points: points
+        average: average
+      line:
+        yds: "{n} yds"
+        car: "{n} car"
+        rec: "{n} rec"
+        tackle: "{n} tackle"
+        tackles: "{n} tackles"
+        sack: "{n} sack"
+        sacks: "{n} sacks"
+        int: "{n} INT"
+        fg: "{n} FG"
+        long: "long {n}"
+        pts: "{n} pts"
+        punts: "{n} punts"
+        avg: "{n} avg"
+        ret: "{n} ret"
+        td: "{n} TD"

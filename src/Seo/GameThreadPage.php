@@ -6,6 +6,7 @@ namespace ErnestDefoe\Gameday\Seo;
 
 use ErnestDefoe\Gameday\Service\ScoreboardForDiscussion;
 use ErnestDefoe\Gameday\Service\ShareCard;
+use ErnestDefoe\Gameday\Service\Words;
 use Flarum\Foundation\Config;
 use FoF\Seo\Page\PageDriverInterface;
 use FoF\Seo\SeoProperties;
@@ -92,24 +93,22 @@ class GameThreadPage implements PageDriverInterface
         $where = $venue !== '' ? ', '.$venue : '';
 
         if (($board['state'] ?? '') === 'final') {
-            return sprintf(
-                'Final: %s %s, %s %s%s. Scores, box score and the full thread.',
-                $aName,
-                (string) ($away['score'] ?? ''),
-                $hName,
-                (string) ($home['score'] ?? ''),
-                $where
-            );
+            return Words::t('api.seo.final', [
+                'away' => $aName,
+                'awayScore' => (string) ($away['score'] ?? ''),
+                'home' => $hName,
+                'homeScore' => (string) ($home['score'] ?? ''),
+                'where' => $where,
+            ]);
         }
 
         $when = trim((string) ($board['statusDetail'] ?? $board['status'] ?? ''));
 
-        return trim(sprintf(
-            '%s at %s%s.%s Live score, box score and the game thread.',
-            $aName,
-            $hName,
-            $where,
-            $when !== '' ? ' '.$when.'.' : ''
-        ));
+        return trim(Words::t('api.seo.upcoming', [
+            'away' => $aName,
+            'home' => $hName,
+            'where' => $where,
+            'when' => $when !== '' ? ' '.$when.'.' : '',
+        ]));
     }
 }

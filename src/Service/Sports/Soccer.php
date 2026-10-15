@@ -22,7 +22,7 @@ final class Soccer extends Sport
 {
     protected function periodAbbreviation(): string
     {
-        return 'H';
+        return $this->t('soccer.period_abbr');
     }
 
     protected function periodsInRegulation(): int
@@ -38,7 +38,7 @@ final class Soccer extends Sport
     // Hyphenated, which is how it is written everywhere the sport is called football.
     public function kickoff(): string
     {
-        return 'Kick-off';
+        return $this->t('soccer.kickoff');
     }
 
     public function name(): string
@@ -49,15 +49,15 @@ final class Soccer extends Sport
     public function comparison(): array
     {
         return [
-            'possessionPct' => 'Possession',
-            'totalShots' => 'Shots',
-            'shotsOnTarget' => 'On target',
-            'wonCorners' => 'Corners',
-            'saves' => 'Saves',
-            'foulsCommitted' => 'Fouls',
-            'offsides' => 'Offsides',
-            'yellowCards' => 'Yellow cards',
-            'redCards' => 'Red cards',
+            'possessionPct' => $this->t('soccer.stats.possession'),
+            'totalShots' => $this->t('soccer.stats.shots'),
+            'shotsOnTarget' => $this->t('soccer.stats.on_target'),
+            'wonCorners' => $this->t('soccer.stats.corners'),
+            'saves' => $this->t('soccer.stats.saves'),
+            'foulsCommitted' => $this->t('soccer.stats.fouls'),
+            'offsides' => $this->t('soccer.stats.offsides'),
+            'yellowCards' => $this->t('soccer.stats.yellow_cards'),
+            'redCards' => $this->t('soccer.stats.red_cards'),
         ];
     }
 
@@ -96,16 +96,15 @@ final class Soccer extends Sport
 
         if ($homeShots !== null && $awayShots !== null && $homeShots + $awayShots > 0) {
             $out[] = $homeOn !== null && $awayOn !== null
-                ? sprintf(
-                    '%s had %d shots to %s\'s %d, %d on target against %d.',
-                    $home,
-                    $homeShots,
-                    $away,
-                    $awayShots,
-                    $homeOn,
-                    $awayOn,
-                )
-                : sprintf('%s had %d shots to %s\'s %d.', $home, $homeShots, $away, $awayShots);
+                ? $this->t('soccer.shots_on_target', [
+                    'home' => $home,
+                    'homeShots' => (string) $homeShots,
+                    'away' => $away,
+                    'awayShots' => (string) $awayShots,
+                    'homeOn' => (string) $homeOn,
+                    'awayOn' => (string) $awayOn,
+                ])
+                : $this->t('soccer.shots', ['home' => $home, 'homeShots' => (string) $homeShots, 'away' => $away, 'awayShots' => (string) $awayShots]);
         }
 
         $possession = $this->decimal($sides['home']['stats']['possessionPct'] ?? null);
@@ -120,7 +119,7 @@ final class Soccer extends Sport
             $share = $possession >= 50 ? $possession : 100 - $possession;
 
             if ($share >= 58) {
-                $out[] = sprintf('%s had %s%% of the ball.', $side, rtrim(rtrim(number_format($share, 1), '0'), '.'));
+                $out[] = $this->t('soccer.possession', ['team' => $side, 'share' => rtrim(rtrim(number_format($share, 1), '0'), '.')]);
             }
         }
 
@@ -133,22 +132,22 @@ final class Soccer extends Sport
      */
     protected function drawnGame(): string
     {
-        return 'A draw.';
+        return $this->t('soccer.drawn');
     }
 
     /** A possession share is a percentage and has to say so. */
     public function formatStat(string $key, string $value): string
     {
-        return $key === 'possessionPct' && $value !== '' ? $value.'%' : $value;
+        return $key === 'possessionPct' && $value !== '' ? $this->percent($value) : $value;
     }
 
     protected function margin(string $winner, int $margin): string
     {
         return match (true) {
-            $margin === 1 => $winner.' edged it.',
-            $margin === 2 => $winner.' won by two.',
-            $margin >= 4 => $winner.' were far too good.',
-            default => $winner.' won comfortably.',
+            $margin === 1 => $this->t('soccer.edged', ['winner' => $winner]),
+            $margin === 2 => $this->t('soccer.won_by_two', ['winner' => $winner]),
+            $margin >= 4 => $this->t('soccer.far_too_good', ['winner' => $winner]),
+            default => $this->t('soccer.won_comfortably', ['winner' => $winner]),
         };
     }
 }

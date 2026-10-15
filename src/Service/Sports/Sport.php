@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ErnestDefoe\Gameday\Service\Sports;
 
+use ErnestDefoe\Gameday\Service\Words;
+
 /**
  * What a sport says about itself.
  *
@@ -117,7 +119,7 @@ abstract class Sport
 
     protected function drawnGame(): string
     {
-        return 'It finished level.';
+        return $this->t('common.drawn');
     }
 
     /**
@@ -152,7 +154,7 @@ abstract class Sport
         if ($number > $this->periodsInRegulation()) {
             $extra = $number - $this->periodsInRegulation();
 
-            return 'OT'.($extra > 1 ? $extra : '');
+            return $this->overtime($extra);
         }
 
         return $this->periodAbbreviation().$number;
@@ -161,7 +163,7 @@ abstract class Sport
     /** The letter a period is written with: Q for a quarter, P for a period. */
     protected function periodAbbreviation(): string
     {
-        return 'P';
+        return $this->t('common.period_abbr');
     }
 
     /** How many of them a game has before it goes to extra time. */
@@ -172,7 +174,7 @@ abstract class Sport
 
     public function kickoff(): string
     {
-        return 'First whistle';
+        return $this->t('common.kickoff');
     }
 
     /* --------------------------------------------------------- shared words */
@@ -203,19 +205,33 @@ abstract class Sport
 
     protected function word(int $n): string
     {
-        return match ($n) {
-            2 => 'two', 3 => 'three', 4 => 'four', 5 => 'five', 6 => 'six',
-            default => (string) $n,
-        };
+        return $n >= 2 && $n <= 6 ? $this->t('common.word_'.$n) : (string) $n;
     }
 
     protected function times(int $n): string
     {
-        return match ($n) {
-            0 => 'not at all',
-            1 => 'once',
-            2 => 'twice',
-            default => $n.' times',
-        };
+        return $this->t('common.times', ['count' => $n]);
+    }
+
+    /** "OT", then "OT2", "OT3" for each overtime after the first. */
+    public function overtime(int $extra): string
+    {
+        return $extra > 1 ? $this->t('common.overtime_n', ['n' => (string) $extra]) : $this->t('common.overtime');
+    }
+
+    /** A figure with a percent sign, the way this sport prints a share. */
+    protected function percent(string $value): string
+    {
+        return $this->t('common.percent', ['value' => $value]);
+    }
+
+    /**
+     * A sentence or label in this extension's locale file.
+     *
+     * @param array<string, mixed> $params
+     */
+    protected function t(string $key, array $params = []): string
+    {
+        return Words::t('api.sports.'.$key, $params);
     }
 }

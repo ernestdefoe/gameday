@@ -43,7 +43,12 @@ function bespoke(): void {
     icon: '🏈',
     zones: ['above-list', 'sidebar', 'below-list', 'footer', 'hero'],
     schema: [
-      { key: 'title', type: 'text', label: 'ernestdefoe-gameday.forum.widget_field_title', default: 'Game Day' },
+      {
+        key: 'title',
+        type: 'text',
+        label: 'ernestdefoe-gameday.forum.widget_field_title',
+        default: app.translator.trans('ernestdefoe-gameday.forum.widget_default_title', {}, true) as unknown as string,
+      },
       { key: 'showLink', type: 'toggle', label: 'ernestdefoe-gameday.forum.widget_field_link', default: true },
       { key: 'hideWhenEmpty', type: 'toggle', label: 'ernestdefoe-gameday.forum.widget_field_hide', default: true },
       { key: 'autoScroll', type: 'toggle', label: 'ernestdefoe-gameday.forum.widget_field_scroll', default: true },

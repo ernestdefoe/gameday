@@ -250,7 +250,7 @@ class Scoreboard
     {
         if ($state === 'final') {
             // Overtime is worth saying; a regulation finish is just "Final".
-            return $period > 4 ? 'Final / OT' : 'Final';
+            return Words::t($period > 4 ? 'api.scoreboard.final_ot' : 'api.scoreboard.final');
         }
 
         if ($state !== 'live') {
@@ -281,12 +281,11 @@ class Scoreboard
     protected static function ordinal(int $period): string
     {
         return match (true) {
-            $period === 1 => '1st',
-            $period === 2 => '2nd',
-            $period === 3 => '3rd',
-            $period === 4 => '4th',
+            $period >= 1 && $period <= 4 => Words::t('api.scoreboard.period_'.$period),
             // 5 is the first overtime, 6 the second, and so on.
-            default => 'OT'.($period > 5 ? (string) ($period - 4) : ''),
+            default => $period > 5
+                ? Words::t('api.sports.common.overtime_n', ['n' => (string) ($period - 4)])
+                : Words::t('api.sports.common.overtime'),
         };
     }
 

@@ -184,9 +184,9 @@ class ShareCard
     protected function headline(array $board): string
     {
         return match ((string) ($board['state'] ?? '')) {
-            'final' => 'FINAL',
-            'live' => 'LIVE',
-            default => 'KICKOFF',
+            'final' => Words::t('api.card.final'),
+            'live' => Words::t('api.card.live'),
+            default => Words::t('api.card.kickoff'),
         };
     }
 

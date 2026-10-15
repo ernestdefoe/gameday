@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ErnestDefoe\Gameday\Block;
 
+use ErnestDefoe\Gameday\Service\Words;
 use Ernestdefoe\PageBuilder\Block\AbstractBlock;
 use Flarum\User\User;
 use Illuminate\Database\ConnectionInterface;
@@ -24,15 +25,15 @@ class PerformersBlock extends AbstractBlock
 {
     /** ESPN's leader categories, in the order a football page reads them. */
     private const CATEGORIES = [
-        'passing' => ['label' => 'Passing', 'sort' => 'YDS', 'group' => 'offence'],
-        'rushing' => ['label' => 'Rushing', 'sort' => 'YDS', 'group' => 'offence'],
-        'receiving' => ['label' => 'Receiving', 'sort' => 'YDS', 'group' => 'offence'],
-        'defensive' => ['label' => 'Defence', 'sort' => 'TOT', 'group' => 'defence'],
-        'interceptions' => ['label' => 'Interceptions', 'sort' => 'INT', 'group' => 'defence'],
-        'kicking' => ['label' => 'Kicking', 'sort' => 'PTS', 'group' => 'special'],
-        'punting' => ['label' => 'Punting', 'sort' => 'AVG', 'group' => 'special'],
-        'kickReturns' => ['label' => 'Kick returns', 'sort' => 'YDS', 'group' => 'special'],
-        'puntReturns' => ['label' => 'Punt returns', 'sort' => 'YDS', 'group' => 'special'],
+        'passing' => ['sort' => 'YDS', 'group' => 'offence'],
+        'rushing' => ['sort' => 'YDS', 'group' => 'offence'],
+        'receiving' => ['sort' => 'YDS', 'group' => 'offence'],
+        'defensive' => ['sort' => 'TOT', 'group' => 'defence'],
+        'interceptions' => ['sort' => 'INT', 'group' => 'defence'],
+        'kicking' => ['sort' => 'PTS', 'group' => 'special'],
+        'punting' => ['sort' => 'AVG', 'group' => 'special'],
+        'kickReturns' => ['sort' => 'YDS', 'group' => 'special'],
+        'puntReturns' => ['sort' => 'YDS', 'group' => 'special'],
     ];
 
     /**
@@ -43,11 +44,7 @@ class PerformersBlock extends AbstractBlock
      * reads those where they exist and falls back to `leaders` where they do
      * not, which is every box score fetched before that change.
      */
-    private const GROUPS = [
-        'offence' => 'Offence',
-        'defence' => 'Defence',
-        'special' => 'Special teams',
-    ];
+    private const GROUPS = ['offence', 'defence', 'special'];
 
     public function __construct(protected ConnectionInterface $db)
     {
@@ -68,7 +65,7 @@ class PerformersBlock extends AbstractBlock
 
     public function name(): string
     {
-        return 'Players of the week';
+        return Words::t('api.performers.name');
     }
 
     public function icon(): string
@@ -84,14 +81,14 @@ class PerformersBlock extends AbstractBlock
     public function settingsSchema(): array
     {
         return [
-            ['key' => 'title', 'type' => 'text', 'label' => 'Title', 'default' => 'Players of the week'],
-            ['key' => 'limit', 'type' => 'range', 'label' => 'How many per group', 'default' => 5, 'min' => 1, 'max' => 10],
+            ['key' => 'title', 'type' => 'text', 'label' => Words::t('api.performers.field_title'), 'default' => Words::t('api.performers.name')],
+            ['key' => 'limit', 'type' => 'range', 'label' => Words::t('api.performers.field_limit'), 'default' => 5, 'min' => 1, 'max' => 10],
             [
                 'key' => 'hideWhenEmpty',
                 'type' => 'toggle',
-                'label' => 'Hide until there are box scores',
+                'label' => Words::t('api.performers.field_hide'),
                 'default' => true,
-                'help' => 'Box scores arrive after a game finishes, and only for games Game Day opened a thread for.',
+                'help' => Words::t('api.performers.field_hide_help'),
             ],
         ];
     }
@@ -188,7 +185,6 @@ class PerformersBlock extends AbstractBlock
                     $candidates[$group][$this->key($name).'|'.$category] = [
                         'score' => $score,
                         'category' => $category,
-                        'label' => self::CATEGORIES[$category]['label'],
                         'name' => $name,
                         'stats' => $stats,
                         'headshot' => $headshot,
@@ -222,7 +218,9 @@ class PerformersBlock extends AbstractBlock
 
         $groups = [];
 
-        foreach (self::GROUPS as $key => $title) {
+        foreach (self::GROUPS as $key) {
+            $title = Words::t('api.performers.groups.'.$key);
+
             $list = array_values($candidates[$key] ?? []);
 
             if ($list === []) {
@@ -249,7 +247,7 @@ class PerformersBlock extends AbstractBlock
                 $players[] = [
                     'rank' => ++$rank,
                     'name' => $c['name'],
-                    'label' => $c['label'],
+                    'label' => Words::t('api.performers.categories.'.$c['category']),
                     'line' => $this->line($c['category'], $c['stats']),
                     'big' => $big,
                     'bigLabel' => $bigLabel,
@@ -273,7 +271,7 @@ class PerformersBlock extends AbstractBlock
             $groups[] = ['key' => $key, 'title' => $title, 'players' => $players];
         }
 
-        return ['week' => $weekName ?: ('Week '.$week), 'groups' => $groups];
+        return ['week' => $weekName ?: Words::t('api.performers.week', ['week' => (string) $week]), 'groups' => $groups];
     }
 
     /**
@@ -370,23 +368,23 @@ class PerformersBlock extends AbstractBlock
         $get = fn (string $k) => trim((string) ($stats[$k] ?? ''));
 
         return match ($category) {
-            'passing' => trim(sprintf('%s, %s yds%s', $get('C/ATT'), $get('YDS'), $this->tds($get('TD')))),
-            'rushing' => trim(sprintf('%s car, %s yds%s', $get('CAR'), $get('YDS'), $this->tds($get('TD')))),
-            'receiving' => trim(sprintf('%s rec, %s yds%s', $get('REC'), $get('YDS'), $this->tds($get('TD')))),
+            'passing' => trim($get('C/ATT').', '.$this->yds($get('YDS')).$this->tds($get('TD'))),
+            'rushing' => trim($this->abbr('car', $get('CAR')).', '.$this->yds($get('YDS')).$this->tds($get('TD'))),
+            'receiving' => trim($this->abbr('rec', $get('REC')).', '.$this->yds($get('YDS')).$this->tds($get('TD'))),
             // TOT is total tackles; SACKS and INT are the ones worth naming.
             'defensive' => trim(implode(', ', array_filter([
-                $get('TOT') !== '' ? $get('TOT').((int) $get('TOT') === 1 ? ' tackle' : ' tackles') : '',
-                (float) $get('SACKS') > 0 ? $get('SACKS').((float) $get('SACKS') === 1.0 ? ' sack' : ' sacks') : '',
-                (int) $get('INT') > 0 ? $get('INT').' INT' : '',
+                $get('TOT') !== '' ? $this->abbr((int) $get('TOT') === 1 ? 'tackle' : 'tackles', $get('TOT')) : '',
+                (float) $get('SACKS') > 0 ? $this->abbr((float) $get('SACKS') === 1.0 ? 'sack' : 'sacks', $get('SACKS')) : '',
+                (int) $get('INT') > 0 ? $this->abbr('int', $get('INT')) : '',
             ]))),
-            'interceptions' => trim(sprintf('%s INT, %s yds%s', $get('INT'), $get('YDS'), $this->tds($get('TD')))),
+            'interceptions' => trim($this->abbr('int', $get('INT')).', '.$this->yds($get('YDS')).$this->tds($get('TD'))),
             'kicking' => trim(implode(', ', array_filter([
-                $get('FG') !== '' ? $get('FG').' FG' : '',
-                $get('LONG') !== '' ? 'long '.$get('LONG') : '',
-                $get('PTS') !== '' ? $get('PTS').' pts' : '',
+                $get('FG') !== '' ? $this->abbr('fg', $get('FG')) : '',
+                $get('LONG') !== '' ? $this->abbr('long', $get('LONG')) : '',
+                $get('PTS') !== '' ? $this->abbr('pts', $get('PTS')) : '',
             ]))),
-            'punting' => trim(sprintf('%s punts, %s avg', $get('NO'), $get('AVG'))),
-            'kickReturns', 'puntReturns' => trim(sprintf('%s ret, %s yds%s', $get('NO'), $get('YDS'), $this->tds($get('TD')))),
+            'punting' => trim($this->abbr('punts', $get('NO')).', '.$this->abbr('avg', $get('AVG'))),
+            'kickReturns', 'puntReturns' => trim($this->abbr('ret', $get('NO')).', '.$this->yds($get('YDS')).$this->tds($get('TD'))),
             default => '',
         };
     }
@@ -406,18 +404,30 @@ class PerformersBlock extends AbstractBlock
         $get = fn (string $k) => trim((string) ($stats[$k] ?? ''));
 
         return match ($category) {
-            'passing', 'rushing', 'receiving', 'kickReturns', 'puntReturns' => [$get('YDS'), 'yards'],
-            'defensive' => [$get('TOT'), 'tackles'],
-            'interceptions' => [$get('INT'), (int) $get('INT') === 1 ? 'interception' : 'interceptions'],
-            'kicking' => [$get('PTS'), 'points'],
-            'punting' => [$get('AVG'), 'average'],
+            'passing', 'rushing', 'receiving', 'kickReturns', 'puntReturns' => [$get('YDS'), Words::t('api.performers.big.yards')],
+            'defensive' => [$get('TOT'), Words::t('api.performers.big.tackles')],
+            'interceptions' => [$get('INT'), Words::t((int) $get('INT') === 1 ? 'api.performers.big.interception' : 'api.performers.big.interceptions')],
+            'kicking' => [$get('PTS'), Words::t('api.performers.big.points')],
+            'punting' => [$get('AVG'), Words::t('api.performers.big.average')],
             default => ['', ''],
         };
     }
 
     protected function tds(string $td): string
     {
-        return (int) $td > 0 ? ', '.(int) $td.' TD' : '';
+        return (int) $td > 0 ? ', '.$this->abbr('td', (string) (int) $td) : '';
+    }
+
+    /** "287 yds". */
+    protected function yds(string $value): string
+    {
+        return $this->abbr('yds', $value);
+    }
+
+    /** A figure with its short unit after it: "3 TD", "long 52". */
+    protected function abbr(string $unit, string $value): string
+    {
+        return Words::t('api.performers.line.'.$unit, ['n' => $value]);
     }
 
     /**

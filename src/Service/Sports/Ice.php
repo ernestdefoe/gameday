@@ -20,7 +20,7 @@ class Ice extends Sport
 {
     protected function periodAbbreviation(): string
     {
-        return 'P';
+        return $this->t('ice.period_abbr');
     }
 
     protected function periodsInRegulation(): int
@@ -35,7 +35,7 @@ class Ice extends Sport
 
     public function kickoff(): string
     {
-        return 'Puck drop';
+        return $this->t('ice.kickoff');
     }
 
     public function name(): string
@@ -46,15 +46,15 @@ class Ice extends Sport
     public function comparison(): array
     {
         return [
-            'shotsTotal' => 'Shots',
-            'powerPlayGoals' => 'Power-play goals',
-            'powerPlayOpportunities' => 'Power plays',
-            'faceoffPercent' => 'Faceoffs',
-            'blockedShots' => 'Blocked shots',
-            'hits' => 'Hits',
-            'giveaways' => 'Giveaways',
-            'takeaways' => 'Takeaways',
-            'penaltyMinutes' => 'Penalty minutes',
+            'shotsTotal' => $this->t('ice.stats.shots'),
+            'powerPlayGoals' => $this->t('ice.stats.power_play_goals'),
+            'powerPlayOpportunities' => $this->t('ice.stats.power_plays'),
+            'faceoffPercent' => $this->t('ice.stats.faceoffs'),
+            'blockedShots' => $this->t('ice.stats.blocked_shots'),
+            'hits' => $this->t('ice.stats.hits'),
+            'giveaways' => $this->t('ice.stats.giveaways'),
+            'takeaways' => $this->t('ice.stats.takeaways'),
+            'penaltyMinutes' => $this->t('ice.stats.penalty_minutes'),
         ];
     }
 
@@ -69,13 +69,12 @@ class Ice extends Sport
             $more = $homeShots > $awayShots ? $home : $away;
             $fewer = $homeShots > $awayShots ? $away : $home;
 
-            $said[] = sprintf(
-                '%s out-shot %s %d to %d.',
-                $more,
-                $fewer,
-                max($homeShots, $awayShots),
-                min($homeShots, $awayShots),
-            );
+            $said[] = $this->t('ice.outshot', [
+                'more' => $more,
+                'fewer' => $fewer,
+                'moreShots' => (string) max($homeShots, $awayShots),
+                'fewerShots' => (string) min($homeShots, $awayShots),
+            ]);
         }
 
         /*
@@ -95,23 +94,14 @@ class Ice extends Sport
              * never added.
              */
             $said[] = match (true) {
-                ($homePp ?? 0) > 0 && ($awayPp ?? 0) > 0 => sprintf(
-                    'Both scored on the power play — %s %s, %s %s.',
-                    $home,
-                    $this->times((int) $homePp),
-                    $away,
-                    $this->times((int) $awayPp),
-                ),
-                ($homePp ?? 0) > 0 => sprintf(
-                    '%s scored %s on the power play.',
-                    $home,
-                    $this->times((int) $homePp),
-                ),
-                default => sprintf(
-                    '%s scored %s on the power play.',
-                    $away,
-                    $this->times((int) $awayPp),
-                ),
+                ($homePp ?? 0) > 0 && ($awayPp ?? 0) > 0 => $this->t('ice.power_play_both', [
+                    'home' => $home,
+                    'homeTimes' => $this->times((int) $homePp),
+                    'away' => $away,
+                    'awayTimes' => $this->times((int) $awayPp),
+                ]),
+                ($homePp ?? 0) > 0 => $this->t('ice.power_play', ['team' => $home, 'times' => $this->times((int) $homePp)]),
+                default => $this->t('ice.power_play', ['team' => $away, 'times' => $this->times((int) $awayPp)]),
             };
         }
 
@@ -153,10 +143,10 @@ class Ice extends Sport
              * A shutout is the one goaltending line worth calling by its name.
              */
             if ($against === 0) {
-                return $saves.' saves for the shutout';
+                return $this->t('ice.saves_shutout', ['n' => (string) $saves]);
             }
 
-            return $saves.' saves';
+            return $this->t('ice.saves', ['n' => (string) $saves]);
         }
 
         $goals = $this->number($stats['G'] ?? null);
@@ -169,22 +159,22 @@ class Ice extends Sport
         $parts = [];
 
         if (($goals ?? 0) > 0) {
-            $parts[] = $goals === 1 ? 'a goal' : $this->word((int) $goals).' goals';
+            $parts[] = $goals === 1 ? $this->t('ice.goal') : $this->t('ice.goals', ['words' => $this->word((int) $goals)]);
         }
 
         if (($assists ?? 0) > 0) {
-            $parts[] = $assists === 1 ? 'an assist' : $this->word((int) $assists).' assists';
+            $parts[] = $assists === 1 ? $this->t('ice.assist') : $this->t('ice.assists', ['words' => $this->word((int) $assists)]);
         }
 
         if ($parts === []) {
             return '';
         }
 
-        $line = implode(' and ', $parts);
+        $line = count($parts) === 2 ? $this->t('ice.goals_and_assists', ['goals' => $parts[0], 'assists' => $parts[1]]) : $parts[0];
 
         // Three goals is a hat-trick and the whole rink knows it.
         if (($goals ?? 0) >= 3) {
-            $line .= ' — a hat-trick';
+            $line .= ' — '.$this->t('ice.hat_trick');
         }
 
         return $line;
@@ -192,16 +182,16 @@ class Ice extends Sport
 
     public function formatStat(string $key, string $value): string
     {
-        return in_array($key, ['powerPlayPct', 'faceoffPercent'], true) ? $value.'%' : $value;
+        return in_array($key, ['powerPlayPct', 'faceoffPercent'], true) ? $this->percent($value) : $value;
     }
 
     protected function margin(string $winner, int $margin): string
     {
         return match (true) {
-            $margin === 1 => sprintf('%s took it by one.', $winner),
-            $margin === 2 => sprintf('%s won it by two.', $winner),
-            $margin <= 4 => sprintf('%s had it comfortably.', $winner),
-            default => sprintf('%s were never troubled.', $winner),
+            $margin === 1 => $this->t('common.took_by_one', ['winner' => $winner]),
+            $margin === 2 => $this->t('common.won_by_two', ['winner' => $winner]),
+            $margin <= 4 => $this->t('common.comfortable', ['winner' => $winner]),
+            default => $this->t('common.never_troubled', ['winner' => $winner]),
         };
     }
 
@@ -212,6 +202,6 @@ class Ice extends Sport
          * settle every game. A level score means the feed handed us a game that
          * was not finished.
          */
-        return 'It finished level, which means it did not finish.';
+        return $this->t('common.drawn_unfinished');
     }
 }

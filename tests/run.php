@@ -19,6 +19,8 @@ declare(strict_types=1);
  * Nothing here touches the database, the network or Flarum itself.
  */
 
+require __DIR__.'/../vendor/autoload.php';
+require __DIR__.'/../src/Service/Words.php';
 require __DIR__.'/../src/Service/Sports/Sport.php';
 require __DIR__.'/../src/Service/Sports/Gridiron.php';
 require __DIR__.'/../src/Service/Sports/Soccer.php';
@@ -41,6 +43,19 @@ use ErnestDefoe\Gameday\Service\Sports\Ice;
 use ErnestDefoe\Gameday\Service\Sports\Soccer;
 use ErnestDefoe\Gameday\Service\Sports\Sports;
 use ErnestDefoe\Gameday\Service\WhereToWatch;
+use ErnestDefoe\Gameday\Service\Words;
+use Symfony\Component\Translation\Loader\YamlFileLoader;
+use Symfony\Component\Translation\Translator;
+
+/*
+ * 🚨 Every sentence below comes out of the locale file, loaded exactly the way
+ * Flarum loads it — one ICU MessageFormat catalogue — so a broken message or a
+ * missing key fails here rather than in somebody's game thread.
+ */
+$translator = new Translator('en');
+$translator->addLoader('yaml', new YamlFileLoader());
+$translator->addResource('yaml', __DIR__.'/../resources/locale/en.yml', 'en', 'messages+intl-icu');
+Words::use(fn (string $id, array $params): string => $translator->trans($id, $params));
 
 /* --------------------------------------------------------------- the harness */
 

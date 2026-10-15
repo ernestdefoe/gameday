@@ -23,7 +23,7 @@ class Diamond extends Sport
 {
     protected function periodAbbreviation(): string
     {
-        return 'Inn ';
+        return $this->t('diamond.period_abbr');
     }
 
     protected function periodsInRegulation(): int
@@ -38,7 +38,7 @@ class Diamond extends Sport
 
     public function kickoff(): string
     {
-        return 'First pitch';
+        return $this->t('diamond.kickoff');
     }
 
     public function name(): string
@@ -49,16 +49,16 @@ class Diamond extends Sport
     public function comparison(): array
     {
         return [
-            'batting.hits' => 'Hits',
-            'batting.runs' => 'Runs',
-            'batting.homeRuns' => 'Home runs',
-            'batting.RBIs' => 'RBI',
-            'batting.walks' => 'Walks',
-            'batting.strikeouts' => 'Strikeouts',
-            'batting.runnersLeftOnBase' => 'Left on base',
-            'pitching.strikeouts' => 'Strikeouts by pitchers',
-            'pitching.earnedRuns' => 'Earned runs allowed',
-            'fielding.errors' => 'Errors',
+            'batting.hits' => $this->t('diamond.stats.hits'),
+            'batting.runs' => $this->t('diamond.stats.runs'),
+            'batting.homeRuns' => $this->t('diamond.stats.home_runs'),
+            'batting.RBIs' => $this->t('diamond.stats.rbi'),
+            'batting.walks' => $this->t('diamond.stats.walks'),
+            'batting.strikeouts' => $this->t('diamond.stats.strikeouts'),
+            'batting.runnersLeftOnBase' => $this->t('diamond.stats.left_on_base'),
+            'pitching.strikeouts' => $this->t('diamond.stats.pitching_strikeouts'),
+            'pitching.earnedRuns' => $this->t('diamond.stats.earned_runs'),
+            'fielding.errors' => $this->t('diamond.stats.errors'),
         ];
     }
 
@@ -86,21 +86,19 @@ class Diamond extends Sport
                 : null;
 
             if ($winnerByRuns !== null && $winnerByRuns === $fewerHits) {
-                $said[] = sprintf(
-                    '%s out-hit %s %d to %d and lost anyway.',
-                    $moreHits,
-                    $fewerHits,
-                    max($homeHits, $awayHits),
-                    min($homeHits, $awayHits),
-                );
+                $said[] = $this->t('diamond.outhit_lost', [
+                    'more' => $moreHits,
+                    'fewer' => $fewerHits,
+                    'moreHits' => (string) max($homeHits, $awayHits),
+                    'fewerHits' => (string) min($homeHits, $awayHits),
+                ]);
             } else {
-                $said[] = sprintf(
-                    '%s out-hit %s %d to %d.',
-                    $moreHits,
-                    $fewerHits,
-                    max($homeHits, $awayHits),
-                    min($homeHits, $awayHits),
-                );
+                $said[] = $this->t('diamond.outhit', [
+                    'more' => $moreHits,
+                    'fewer' => $fewerHits,
+                    'moreHits' => (string) max($homeHits, $awayHits),
+                    'fewerHits' => (string) min($homeHits, $awayHits),
+                ]);
             }
         }
 
@@ -110,16 +108,15 @@ class Diamond extends Sport
 
         if (($homeHr ?? 0) + ($awayHr ?? 0) > 0) {
             $said[] = match (true) {
-                ($homeHr ?? 0) > 0 && ($awayHr ?? 0) > 0 => sprintf(
-                    'They went deep %s between them — %s %d, %s %d.',
-                    $this->times((int) $homeHr + (int) $awayHr),
-                    $home,
-                    (int) $homeHr,
-                    $away,
-                    (int) $awayHr,
-                ),
-                ($homeHr ?? 0) > 0 => sprintf('%s went deep %s.', $home, $this->times((int) $homeHr)),
-                default => sprintf('%s went deep %s.', $away, $this->times((int) $awayHr)),
+                ($homeHr ?? 0) > 0 && ($awayHr ?? 0) > 0 => $this->t('diamond.deep_both', [
+                    'times' => $this->times((int) $homeHr + (int) $awayHr),
+                    'home' => $home,
+                    'homeHr' => (string) (int) $homeHr,
+                    'away' => $away,
+                    'awayHr' => (string) (int) $awayHr,
+                ]),
+                ($homeHr ?? 0) > 0 => $this->t('diamond.deep', ['team' => $home, 'times' => $this->times((int) $homeHr)]),
+                default => $this->t('diamond.deep', ['team' => $away, 'times' => $this->times((int) $awayHr)]),
             };
         }
 
@@ -132,13 +129,12 @@ class Diamond extends Sport
         $awayErr = $this->number($sides['away']['stats']['fielding.errors'] ?? null);
 
         if (($homeErr ?? 0) + ($awayErr ?? 0) >= 2) {
-            $said[] = sprintf(
-                'It was not clean — %s %s, %s %s in the field.',
-                $home,
-                $this->times((int) $homeErr),
-                $away,
-                $this->times((int) $awayErr),
-            );
+            $said[] = $this->t('diamond.errors', [
+                'home' => $home,
+                'homeTimes' => $this->times((int) $homeErr),
+                'away' => $away,
+                'awayTimes' => $this->times((int) $awayErr),
+            ]);
         }
 
         return $said;
@@ -170,14 +166,14 @@ class Diamond extends Sport
                 return '';
             }
 
-            $line = $innings.' innings';
+            $line = $this->t('diamond.innings', ['ip' => $innings]);
 
             if ($earned !== null) {
-                $line .= $earned === 0 ? ', no earned runs' : ', '.$earned.' earned';
+                $line .= ', '.($earned === 0 ? $this->t('diamond.no_earned') : $this->t('diamond.earned', ['n' => (string) $earned]));
             }
 
             if ($strikeouts !== null && $strikeouts > 0) {
-                $line .= ', '.$strikeouts.' struck out';
+                $line .= ', '.$this->t('diamond.struck_out', ['n' => (string) $strikeouts]);
             }
 
             return $line;
@@ -209,11 +205,11 @@ class Diamond extends Sport
         $said = $this->hitLine($line);
 
         if (($homeRuns ?? 0) > 0) {
-            $said .= ', '.($homeRuns === 1 ? 'a home run' : $this->word((int) $homeRuns).' home runs');
+            $said .= ', '.($homeRuns === 1 ? $this->t('diamond.home_run') : $this->t('diamond.home_runs', ['words' => $this->word((int) $homeRuns)]));
         }
 
         if ($rbi !== null && $rbi > 0) {
-            $said .= ', '.$rbi.' driven in';
+            $said .= ', '.$this->t('diamond.driven_in', ['n' => (string) $rbi]);
         }
 
         return $said;
@@ -222,10 +218,10 @@ class Diamond extends Sport
     protected function margin(string $winner, int $margin): string
     {
         return match (true) {
-            $margin === 1 => sprintf('%s took it by one.', $winner),
-            $margin <= 3 => sprintf('%s won it by %d.', $winner, $margin),
-            $margin <= 6 => sprintf('%s had it comfortably.', $winner),
-            default => sprintf('%s were never troubled.', $winner),
+            $margin === 1 => $this->t('common.took_by_one', ['winner' => $winner]),
+            $margin <= 3 => $this->t('common.won_by', ['winner' => $winner, 'margin' => (string) $margin]),
+            $margin <= 6 => $this->t('common.comfortable', ['winner' => $winner]),
+            default => $this->t('common.never_troubled', ['winner' => $winner]),
         };
     }
 
@@ -236,7 +232,7 @@ class Diamond extends Sport
          * suspended or called game — genuinely rare, and worth saying plainly
          * rather than dressing up as a result.
          */
-        return 'It finished level, which means it did not finish.';
+        return $this->t('common.drawn_unfinished');
     }
 
     /** `2-4` → "2 for 4", which is how anybody says it out loud. */
@@ -244,6 +240,6 @@ class Diamond extends Sport
     {
         $parts = explode('-', $line, 2);
 
-        return count($parts) === 2 ? $parts[0].' for '.$parts[1] : $line;
+        return count($parts) === 2 ? $this->t('diamond.hit_line', ['hits' => $parts[0], 'atBats' => $parts[1]]) : $line;
     }
 }

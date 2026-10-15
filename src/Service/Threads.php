@@ -431,7 +431,9 @@ class Threads
             }
         }
 
-        return $includeCurrent && str_contains($content, self::CURRENT_SIGNATURE);
+        // The English line, and whatever the forum's language file says instead.
+        return $includeCurrent
+            && (str_contains($content, self::CURRENT_SIGNATURE) || str_contains($content, Words::t('api.preview.signature')));
     }
 
     /**
@@ -444,8 +446,7 @@ class Threads
      */
     protected function isGeneratedTitle(string $title, PickEvent $game): bool
     {
-        $joiner = $game->neutral_site ? ' vs ' : ' at ';
-        $plain = trim(($game->awayTeam->name ?? 'Away').$joiner.($game->homeTeam->name ?? 'Home'));
+        $plain = trim($this->matchup($game, $this->awayName($game), $this->homeName($game)));
 
         return $title === $plain;
     }
@@ -624,8 +625,8 @@ class Threads
     protected function game(PickEvent $game): array
     {
         return [
-            'home_name' => (string) ($game->homeTeam->name ?? 'Home'),
-            'away_name' => (string) ($game->awayTeam->name ?? 'Away'),
+            'home_name' => $this->homeName($game),
+            'away_name' => $this->awayName($game),
             'home_score' => (int) $game->home_score,
             'away_score' => (int) $game->away_score,
         ];
@@ -634,7 +635,6 @@ class Threads
     protected function title(PickEvent $game): string
     {
         // Away team first: "Alabama at Auburn" is how anybody would say it.
-        $joiner = $game->neutral_site ? ' vs ' : ' at ';
 
         /*
          * 🚨 The rank goes in the TITLE, which is the one place it cannot be
@@ -647,17 +647,33 @@ class Threads
          * An unranked team is named plainly, so a board whose feed carries no
          * ranks at all gets exactly the titles it got before.
          */
-        return trim(
-            $this->ranked($game->awayTeam->name ?? 'Away', (int) $game->away_rank)
-            .$joiner
-            .$this->ranked($game->homeTeam->name ?? 'Home', (int) $game->home_rank)
-        );
+        return trim($this->matchup(
+            $game,
+            $this->ranked($this->awayName($game), (int) $game->away_rank),
+            $this->ranked($this->homeName($game), (int) $game->home_rank)
+        ));
+    }
+
+    /** "Alabama at Auburn", or "Alabama vs Auburn" at a neutral site. */
+    protected function matchup(PickEvent $game, string $away, string $home): string
+    {
+        return Words::t($game->neutral_site ? 'api.thread.matchup_vs' : 'api.thread.matchup_at', ['away' => $away, 'home' => $home]);
+    }
+
+    protected function homeName(PickEvent $game): string
+    {
+        return (string) ($game->homeTeam->name ?? Words::t('api.thread.home'));
+    }
+
+    protected function awayName(PickEvent $game): string
+    {
+        return (string) ($game->awayTeam->name ?? Words::t('api.thread.away'));
     }
 
     /** "#12 Alabama", or just "Alabama". */
     protected function ranked(string $name, int $rank): string
     {
-        return $rank > 0 ? '#'.$rank.' '.$name : $name;
+        return $rank > 0 ? Words::t('api.thread.ranked', ['rank' => (string) $rank, 'name' => $name]) : $name;
     }
 
     /**
@@ -692,8 +708,8 @@ class Threads
     protected function previewOf(PickEvent $game): array
     {
         return [
-            'home_name' => (string) ($game->homeTeam->name ?? 'Home'),
-            'away_name' => (string) ($game->awayTeam->name ?? 'Away'),
+            'home_name' => $this->homeName($game),
+            'away_name' => $this->awayName($game),
             'home_rank' => (int) $game->home_rank,
             'away_rank' => (int) $game->away_rank,
             'home_record' => (string) $game->home_record,

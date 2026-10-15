@@ -17,7 +17,7 @@ final class Gridiron extends Sport
 {
     protected function periodAbbreviation(): string
     {
-        return 'Q';
+        return $this->t('gridiron.period_abbr');
     }
 
     protected function periodsInRegulation(): int
@@ -32,7 +32,7 @@ final class Gridiron extends Sport
 
     public function kickoff(): string
     {
-        return 'Kickoff';
+        return $this->t('gridiron.kickoff');
     }
 
     public function name(): string
@@ -50,15 +50,15 @@ final class Gridiron extends Sport
     public function comparison(): array
     {
         return [
-            'firstDowns' => 'First downs',
-            'totalYards' => 'Total yards',
-            'netPassingYards' => 'Passing yards',
-            'rushingYards' => 'Rushing yards',
-            'thirdDownEff' => 'Third down',
-            'fourthDownEff' => 'Fourth down',
-            'totalPenaltiesYards' => 'Penalties',
-            'turnovers' => 'Turnovers',
-            'possessionTime' => 'Possession',
+            'firstDowns' => $this->t('gridiron.stats.first_downs'),
+            'totalYards' => $this->t('gridiron.stats.total_yards'),
+            'netPassingYards' => $this->t('gridiron.stats.passing_yards'),
+            'rushingYards' => $this->t('gridiron.stats.rushing_yards'),
+            'thirdDownEff' => $this->t('gridiron.stats.third_down'),
+            'fourthDownEff' => $this->t('gridiron.stats.fourth_down'),
+            'totalPenaltiesYards' => $this->t('gridiron.stats.penalties'),
+            'turnovers' => $this->t('gridiron.stats.turnovers'),
+            'possessionTime' => $this->t('gridiron.stats.possession'),
         ];
     }
 
@@ -86,8 +86,8 @@ final class Gridiron extends Sport
             $out[] = $more - $fewer < 40
                 // Two teams within forty yards did not win it there, and saying
                 // one "out-gained" the other implies they did.
-                ? sprintf('There was almost nothing in the yardage — %d to %d.', $more, $fewer)
-                : sprintf('%s out-gained %s %d to %d.', $leader, $trailer, $more, $fewer);
+                ? $this->t('gridiron.yardage_close', ['more' => (string) $more, 'fewer' => (string) $fewer])
+                : $this->t('gridiron.outgained', ['leader' => $leader, 'trailer' => $trailer, 'more' => (string) $more, 'fewer' => (string) $fewer]);
         }
 
         $homeAway = $this->number($sides['home']['stats']['turnovers'] ?? null);
@@ -95,14 +95,13 @@ final class Gridiron extends Sport
 
         if ($homeAway !== null && $awayAway !== null && $homeAway + $awayAway > 0) {
             $out[] = $homeAway === $awayAway
-                ? sprintf('They gave it away %s each.', $this->times($homeAway))
-                : sprintf(
-                    '%s gave it away %s, %s %s.',
-                    $homeAway > $awayAway ? $home : $away,
-                    $this->times(max($homeAway, $awayAway)),
-                    $homeAway > $awayAway ? $away : $home,
-                    min($homeAway, $awayAway) === 0 ? 'not at all' : $this->times(min($homeAway, $awayAway)),
-                );
+                ? $this->t('gridiron.giveaways_each', ['times' => $this->times($homeAway)])
+                : $this->t('gridiron.giveaways', [
+                    'team' => $homeAway > $awayAway ? $home : $away,
+                    'times' => $this->times(max($homeAway, $awayAway)),
+                    'other' => $homeAway > $awayAway ? $away : $home,
+                    'otherTimes' => $this->times(min($homeAway, $awayAway)),
+                ]);
         }
 
         return $out;
@@ -119,20 +118,18 @@ final class Gridiron extends Sport
         $touchdowns = $this->number($stats['TD'] ?? null) ?? 0;
         $scores = match (true) {
             $touchdowns < 1 => '',
-            $touchdowns === 1 => ' and a touchdown',
-            default => ' and '.$this->word($touchdowns).' touchdowns',
+            $touchdowns === 1 => ' '.$this->t('gridiron.touchdown'),
+            default => ' '.$this->t('gridiron.touchdowns', ['words' => $this->word($touchdowns)]),
         };
 
         return match ($category) {
-            'passing' => sprintf(
-                '%s for %d%s%s',
+            'passing' => $this->forLine(
                 (string) ($stats['C/ATT'] ?? ''),
                 $yards,
-                $scores,
-                $this->picks($this->number($stats['INT'] ?? null) ?? 0),
+                $scores.$this->picks($this->number($stats['INT'] ?? null) ?? 0),
             ),
-            'rushing' => sprintf('%s for %d%s', $this->carries($this->number($stats['CAR'] ?? null)), $yards, $scores),
-            'receiving' => sprintf('%s for %d%s', $this->catches($this->number($stats['REC'] ?? null)), $yards, $scores),
+            'rushing' => $this->forLine($this->carries($this->number($stats['CAR'] ?? null)), $yards, $scores),
+            'receiving' => $this->forLine($this->catches($this->number($stats['REC'] ?? null)), $yards, $scores),
             default => '',
         };
     }
@@ -143,16 +140,16 @@ final class Gridiron extends Sport
      */
     protected function drawnGame(): string
     {
-        return 'It finished level, which almost never happens.';
+        return $this->t('gridiron.drawn');
     }
 
     protected function margin(string $winner, int $margin): string
     {
         return match (true) {
-            $margin <= 3 => $winner.' took it by '.$margin.'.',
-            $margin >= 28 => $winner.' were never troubled.',
-            $margin >= 17 => $winner.' had it comfortably.',
-            default => $winner.' won it by '.$margin.'.',
+            $margin <= 3 => $this->t('common.took_by', ['winner' => $winner, 'margin' => (string) $margin]),
+            $margin >= 28 => $this->t('common.never_troubled', ['winner' => $winner]),
+            $margin >= 17 => $this->t('common.comfortable', ['winner' => $winner]),
+            default => $this->t('common.won_by', ['winner' => $winner, 'margin' => (string) $margin]),
         };
     }
 
@@ -165,18 +162,24 @@ final class Gridiron extends Sport
     {
         return match (true) {
             $n < 1 => '',
-            $n === 1 => ', with an interception',
-            default => ', with '.$this->word($n).' interceptions',
+            $n === 1 => ', '.$this->t('gridiron.interception'),
+            default => ', '.$this->t('gridiron.interceptions', ['words' => $this->word($n)]),
         };
     }
 
     private function carries(?int $n): string
     {
-        return $n === null ? 'ran' : ($n === 1 ? 'one carry' : $n.' carries');
+        return $n === null ? $this->t('gridiron.ran') : $this->t('gridiron.carries', ['count' => $n]);
     }
 
     private function catches(?int $n): string
     {
-        return $n === null ? 'caught' : ($n === 1 ? 'one catch' : $n.' catches');
+        return $n === null ? $this->t('gridiron.caught') : $this->t('gridiron.catches', ['count' => $n]);
+    }
+
+    /** "22/31 for 287 and two touchdowns". */
+    private function forLine(string $what, int $yards, string $rest): string
+    {
+        return $this->t('gridiron.for_line', ['what' => $what, 'yards' => (string) $yards, 'rest' => $rest]);
     }
 }

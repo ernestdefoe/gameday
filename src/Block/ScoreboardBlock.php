@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ErnestDefoe\Gameday\Block;
 
 use ErnestDefoe\Gameday\Service\CurrentGame;
+use ErnestDefoe\Gameday\Service\Words;
 use Ernestdefoe\PageBuilder\Block\AbstractBlock;
 use Flarum\User\User;
 
@@ -30,7 +31,7 @@ class ScoreboardBlock extends AbstractBlock
 
     public function name(): string
     {
-        return 'Scoreboard';
+        return Words::t('api.scoreboard_block.name');
     }
 
     public function icon(): string
@@ -49,30 +50,30 @@ class ScoreboardBlock extends AbstractBlock
             [
                 'key' => 'title',
                 'type' => 'text',
-                'label' => 'Title',
-                'default' => 'Game Day',
-                'help' => 'Leave empty for no heading — the board says what it is.',
+                'label' => Words::t('api.scoreboard_block.field_title'),
+                'default' => Words::t('api.scoreboard_block.default_title'),
+                'help' => Words::t('api.scoreboard_block.field_title_help'),
             ],
             [
                 'key' => 'showLink',
                 'type' => 'toggle',
-                'label' => 'Link to the game thread',
+                'label' => Words::t('api.scoreboard_block.field_link'),
                 'default' => true,
-                'help' => 'The link is dropped anyway for a reader who cannot open the thread.',
+                'help' => Words::t('api.scoreboard_block.field_link_help'),
             ],
             [
                 'key' => 'hideWhenEmpty',
                 'type' => 'toggle',
-                'label' => 'Hide when there is no game',
+                'label' => Words::t('api.scoreboard_block.field_hide'),
                 'default' => true,
-                'help' => 'Otherwise the block says so. Off-season, that is a panel saying nothing every day for months.',
+                'help' => Words::t('api.scoreboard_block.field_hide_help'),
             ],
             [
                 'key' => 'autoScroll',
                 'type' => 'toggle',
-                'label' => 'Advance through the games on its own',
+                'label' => Words::t('api.scoreboard_block.field_scroll'),
                 'default' => true,
-                'help' => 'Only where the strip is wide enough to scroll. It stops for hover, focus, touch and a hidden tab, and never runs for a reader who has asked for reduced motion.',
+                'help' => Words::t('api.scoreboard_block.field_scroll_help'),
             ],
         ];
     }

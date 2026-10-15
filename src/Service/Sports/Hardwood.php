@@ -22,7 +22,7 @@ class Hardwood extends Sport
 {
     protected function periodAbbreviation(): string
     {
-        return 'Q';
+        return $this->t('hardwood.period_abbr');
     }
 
     protected function periodsInRegulation(): int
@@ -37,7 +37,7 @@ class Hardwood extends Sport
 
     public function kickoff(): string
     {
-        return 'Tip-off';
+        return $this->t('hardwood.kickoff');
     }
 
     public function name(): string
@@ -48,17 +48,17 @@ class Hardwood extends Sport
     public function comparison(): array
     {
         return [
-            'fieldGoalsMade-fieldGoalsAttempted' => 'Field goals',
-            'fieldGoalPct' => 'FG%',
-            'threePointFieldGoalsMade-threePointFieldGoalsAttempted' => 'Three-pointers',
-            'threePointFieldGoalPct' => '3P%',
-            'freeThrowsMade-freeThrowsAttempted' => 'Free throws',
-            'totalRebounds' => 'Rebounds',
-            'assists' => 'Assists',
-            'steals' => 'Steals',
-            'blocks' => 'Blocks',
-            'turnovers' => 'Turnovers',
-            'pointsInPaint' => 'Points in the paint',
+            'fieldGoalsMade-fieldGoalsAttempted' => $this->t('hardwood.stats.field_goals'),
+            'fieldGoalPct' => $this->t('hardwood.stats.field_goal_pct'),
+            'threePointFieldGoalsMade-threePointFieldGoalsAttempted' => $this->t('hardwood.stats.three_pointers'),
+            'threePointFieldGoalPct' => $this->t('hardwood.stats.three_point_pct'),
+            'freeThrowsMade-freeThrowsAttempted' => $this->t('hardwood.stats.free_throws'),
+            'totalRebounds' => $this->t('hardwood.stats.rebounds'),
+            'assists' => $this->t('hardwood.stats.assists'),
+            'steals' => $this->t('hardwood.stats.steals'),
+            'blocks' => $this->t('hardwood.stats.blocks'),
+            'turnovers' => $this->t('hardwood.stats.turnovers'),
+            'pointsInPaint' => $this->t('hardwood.stats.points_in_paint'),
         ];
     }
 
@@ -87,13 +87,12 @@ class Hardwood extends Sport
                 $better = $homePct > $awayPct ? $home : $away;
                 $worse = $homePct > $awayPct ? $away : $home;
 
-                $said[] = sprintf(
-                    '%s shot %s%% to %s\'s %s%%.',
-                    $better,
-                    $this->trimPct(max($homePct, $awayPct)),
-                    $worse,
-                    $this->trimPct(min($homePct, $awayPct)),
-                );
+                $said[] = $this->t('hardwood.shot_pct', [
+                    'better' => $better,
+                    'betterPct' => $this->trimPct(max($homePct, $awayPct)),
+                    'worse' => $worse,
+                    'worsePct' => $this->trimPct(min($homePct, $awayPct)),
+                ]);
             }
         }
 
@@ -108,12 +107,11 @@ class Hardwood extends Sport
         if ($homeThrees !== null && $awayThrees !== null && abs($homeThrees - $awayThrees) >= 5) {
             $more = $homeThrees > $awayThrees ? $home : $away;
 
-            $said[] = sprintf(
-                '%s made %d threes to %d.',
-                $more,
-                max($homeThrees, $awayThrees),
-                min($homeThrees, $awayThrees),
-            );
+            $said[] = $this->t('hardwood.threes', [
+                'team' => $more,
+                'more' => (string) max($homeThrees, $awayThrees),
+                'fewer' => (string) min($homeThrees, $awayThrees),
+            ]);
         }
 
         // Turnovers, on the same rule as everywhere else: only a real gap.
@@ -123,13 +121,12 @@ class Hardwood extends Sport
         if ($homeTo !== null && $awayTo !== null && abs($homeTo - $awayTo) >= 6) {
             $sloppier = $homeTo > $awayTo ? $home : $away;
 
-            $said[] = sprintf(
-                '%s gave it away %s to %s\'s %d.',
-                $sloppier,
-                $this->times(max($homeTo, $awayTo)),
-                $sloppier === $home ? $away : $home,
-                min($homeTo, $awayTo),
-            );
+            $said[] = $this->t('hardwood.turnovers', [
+                'team' => $sloppier,
+                'times' => $this->times(max($homeTo, $awayTo)),
+                'other' => $sloppier === $home ? $away : $home,
+                'fewer' => (string) min($homeTo, $awayTo),
+            ]);
         }
 
         return $said;
@@ -154,7 +151,7 @@ class Hardwood extends Sport
             return '';
         }
 
-        $parts = [$points.' points'];
+        $parts = [$this->t('hardwood.points', ['n' => (string) $points])];
 
         $rebounds = $this->number($stats['REB'] ?? null);
         $assists = $this->number($stats['AST'] ?? null);
@@ -165,18 +162,18 @@ class Hardwood extends Sport
          * is three facts where one was interesting.
          */
         if ($rebounds !== null && $rebounds >= 8) {
-            $parts[] = $rebounds.' rebounds';
+            $parts[] = $this->t('hardwood.rebounds', ['n' => (string) $rebounds]);
         }
 
         if ($assists !== null && $assists >= 6) {
-            $parts[] = $assists.' assists';
+            $parts[] = $this->t('hardwood.assists', ['n' => (string) $assists]);
         }
 
         $line = implode(', ', $parts);
 
         // The one thing basketball has that nothing else does.
         if (($rebounds ?? 0) >= 10 && ($assists ?? 0) >= 10 && $points >= 10) {
-            $line .= ' — a triple-double';
+            $line .= ' — '.$this->t('hardwood.triple_double');
         }
 
         return $line;
@@ -184,17 +181,17 @@ class Hardwood extends Sport
 
     public function formatStat(string $key, string $value): string
     {
-        return str_ends_with($key, 'Pct') ? $this->trimPct((float) $value).'%' : $value;
+        return str_ends_with($key, 'Pct') ? $this->percent($this->trimPct((float) $value)) : $value;
     }
 
     protected function margin(string $winner, int $margin): string
     {
         return match (true) {
-            $margin <= 3 => sprintf('%s got out with it, by %d.', $winner, $margin),
-            $margin <= 8 => sprintf('%s took it by %d.', $winner, $margin),
-            $margin <= 15 => sprintf('%s won it by %d.', $winner, $margin),
-            $margin <= 25 => sprintf('%s had it comfortably.', $winner),
-            default => sprintf('%s were never troubled.', $winner),
+            $margin <= 3 => $this->t('hardwood.got_out', ['winner' => $winner, 'margin' => (string) $margin]),
+            $margin <= 8 => $this->t('common.took_by', ['winner' => $winner, 'margin' => (string) $margin]),
+            $margin <= 15 => $this->t('common.won_by', ['winner' => $winner, 'margin' => (string) $margin]),
+            $margin <= 25 => $this->t('common.comfortable', ['winner' => $winner]),
+            default => $this->t('common.never_troubled', ['winner' => $winner]),
         };
     }
 
@@ -207,7 +204,7 @@ class Hardwood extends Sport
          * recap that said "it finished level" about a suspended game would be
          * stating something nobody claimed.
          */
-        return 'The game did not finish level in the ordinary way — check the result.';
+        return $this->t('hardwood.drawn');
     }
 
     /** `13-40` → 13. The made half of a made-attempted pair. */

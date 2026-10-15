@@ -60,7 +60,7 @@ class Recap
         $awayScore = (int) ($game['away_score'] ?? 0);
 
         $blocks = [
-            $this->bold(sprintf('Final: %s %d, %s %d.', $home, $homeScore, $away, $awayScore)),
+            $this->bold(Words::t('api.recap.final', ['home' => $home, 'homeScore' => (string) $homeScore, 'away' => $away, 'awayScore' => (string) $awayScore])),
             $this->sport->outcome($home, $away, $homeScore, $awayScore),
         ];
 
@@ -111,7 +111,7 @@ class Recap
          * not closed — the most common question under a finished game thread on
          * any forum that has ever had one.
          */
-        $blocks[] = 'The thread is an ordinary topic again now — still here, still searchable.';
+        $blocks[] = Words::t('api.recap.closing');
 
         return implode("\n\n", $blocks);
     }
@@ -145,7 +145,7 @@ class Recap
         $heads = [];
 
         for ($i = 0; $i < $periods; $i++) {
-            $heads[] = $i < 4 ? $this->sport->periodName($i + 1) : 'OT'.($i - 3 > 1 ? $i - 3 : '');
+            $heads[] = $i < 4 ? $this->sport->periodName($i + 1) : $this->sport->overtime($i - 3);
         }
 
         $row = function (string $name, array $points, int $total) use ($periods, $heads): string {
@@ -155,11 +155,11 @@ class Recap
                 $parts[] = $heads[$i].' '.(int) ($points[$i] ?? 0);
             }
 
-            return $this->bold($name).' — '.implode(' · ', $parts).' — final '.$total;
+            return $this->bold($name).' — '.implode(' · ', $parts).' — '.Words::t('api.recap.line_final', ['total' => (string) $total]);
         };
 
         return implode("\n", [
-            $this->bold('By the quarter'),
+            $this->bold(Words::t('api.recap.by_the_quarter')),
             $row($away, $a, $awayScore),
             $row($home, $h, $homeScore),
         ]);
@@ -205,9 +205,9 @@ class Recap
         $decisive = $winner !== null && ($swing['toward'] ?? '') === $winner;
 
         return implode("\n", [
-            $this->bold($decisive ? 'The turning point' : 'The biggest swing'),
+            $this->bold(Words::t($decisive ? 'api.recap.turning_point' : 'api.recap.biggest_swing')),
             $text,
-            sprintf("That swung it %d points %s's way.", $points, $gained),
+            Words::t('api.recap.swung', ['points' => (string) $points, 'team' => $gained]),
         ]);
     }
 
@@ -229,7 +229,7 @@ class Recap
             return '';
         }
 
-        $lines = [$this->bold('Scoring')];
+        $lines = [$this->bold(Words::t('api.recap.scoring'))];
 
         foreach ($plays as $play) {
             if (! is_array($play)) {
@@ -276,7 +276,7 @@ class Recap
             return '';
         }
 
-        $lines = [$this->bold('Against the line')];
+        $lines = [$this->bold(Words::t('api.recap.against_the_line'))];
 
         // "LIB -2.5" — the abbreviation names the favourite, the number the price.
         if (preg_match('/^(\S+)\s*([+-]?\d+(?:\.\d+)?)$/', $line, $m)) {
@@ -290,12 +290,12 @@ class Recap
             $margin = $homeIsFavourite ? $homeScore - $awayScore : $awayScore - $homeScore;
 
             $lines[] = match (true) {
-                $margin > $spread => sprintf('%s (%s) covered.', $favourite, $line),
-                $margin < $spread => sprintf('%s (%s) did not cover.', $favourite, $line),
-                default => sprintf('%s was a push.', $line),
+                $margin > $spread => Words::t('api.recap.covered', ['favourite' => $favourite, 'line' => $line]),
+                $margin < $spread => Words::t('api.recap.not_covered', ['favourite' => $favourite, 'line' => $line]),
+                default => Words::t('api.recap.push', ['line' => $line]),
             };
         } else {
-            $lines[] = 'The line was '.$line.'.';
+            $lines[] = Words::t('api.recap.line_was', ['line' => $line]);
         }
 
         $total = $market['total'] ?? null;
@@ -303,16 +303,16 @@ class Recap
         if ($total !== null) {
             $points = $homeScore + $awayScore;
             $lines[] = match (true) {
-                $points > (float) $total => sprintf('%d points, over the total of %s.', $points, $total),
-                $points < (float) $total => sprintf('%d points, under the total of %s.', $points, $total),
-                default => sprintf('%d points, exactly the total.', $points),
+                $points > (float) $total => Words::t('api.recap.over', ['points' => (string) $points, 'total' => (string) $total]),
+                $points < (float) $total => Words::t('api.recap.under', ['points' => (string) $points, 'total' => (string) $total]),
+                default => Words::t('api.recap.exactly', ['points' => (string) $points]),
             };
         }
 
         if (($market['provider'] ?? '') !== '') {
             // Named, because two books rarely agree and an unattributed number
             // reads as a fact of the universe.
-            $lines[] = 'Line from '.$market['provider'].'.';
+            $lines[] = Words::t('api.recap.line_from', ['provider' => (string) $market['provider']]);
         }
 
         return implode("\n", $lines);
@@ -359,7 +359,7 @@ class Recap
         $parts = [];
 
         foreach ($byPlayer as $name => $lines) {
-            $parts[] = $name.' '.implode(', and ', $lines);
+            $parts[] = $name.' '.implode(Words::t('api.recap.and_join'), $lines);
         }
 
         return $parts === [] ? '' : implode('; ', $parts).'.';

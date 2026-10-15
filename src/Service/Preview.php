@@ -90,7 +90,7 @@ class Preview
         $picks = trim((string) ($game['picks_url'] ?? ''));
 
         if ($picks !== '') {
-            $blocks[] = 'Pick this game before kickoff: '.$picks;
+            $blocks[] = Words::t('api.preview.pick', ['url' => $picks]);
         }
 
         /*
@@ -100,7 +100,7 @@ class Preview
          * reply to it. Without that, a board of machine-written threads reads
          * like a noticeboard rather than a conversation.
          */
-        $blocks[] = 'Thread is open — predictions, complaints and everything in between.';
+        $blocks[] = Words::t('api.preview.signature');
 
         return implode("\n\n", $blocks);
     }
@@ -118,11 +118,10 @@ class Preview
      */
     protected function headline(array $game, string $home, string $away): string
     {
-        $joiner = ! empty($game['neutral_site']) ? ' vs ' : ' at ';
-
-        $line = $this->ranked($away, (int) ($game['away_rank'] ?? 0))
-            .$joiner
-            .$this->ranked($home, (int) ($game['home_rank'] ?? 0));
+        $line = Words::t(! empty($game['neutral_site']) ? 'api.thread.matchup_vs' : 'api.thread.matchup_at', [
+            'away' => $this->ranked($away, (int) ($game['away_rank'] ?? 0)),
+            'home' => $this->ranked($home, (int) ($game['home_rank'] ?? 0)),
+        ]);
 
         $week = trim((string) ($game['week'] ?? ''));
 
@@ -152,9 +151,8 @@ class Preview
             $where = trim((string) ($game['venue'] ?? ''));
             $city = trim((string) ($game['venue_city'] ?? ''));
 
-            $sentences[] = sprintf(
-                '%s is %s%s.',
-                $this->sport->kickoff(),
+            $sentences[] = Words::t('api.preview.when', [
+                'kickoff' => $this->sport->kickoff(),
                 /*
                  * 🚨 An unannounced time arrives as a placeholder of midnight
                  * Eastern, and printed as a time it is a confident lie — "12:00am
@@ -162,10 +160,9 @@ class Preview
                  * that the time is still to come, with the day read in the zone
                  * the placeholder was set in.
                  */
-                ! empty($game['kickoff_tbd'])
-                    ? 'on '.(new \DateTimeImmutable('@'.$kickoff->getTimestamp()))
-                        ->setTimezone(new \DateTimeZone('America/New_York'))
-                        ->format('l j F').', time to be announced'
+                'at' => ! empty($game['kickoff_tbd'])
+                    ? Words::t('api.preview.date_tbd', ['date' => Words::date((new \DateTimeImmutable('@'.$kickoff->getTimestamp()))
+                        ->setTimezone(new \DateTimeZone('America/New_York')), 'l j F')])
                     :
                 /*
                  * Time first, then the day: "3:30pm EDT on Saturday 12
@@ -176,15 +173,15 @@ class Preview
                  * is wrong for most of the people reading it, in a post that is
                  * never rewritten.
                  */
-                $at->format('g:ia T').' on '.$at->format('l j F'),
-                $where === '' ? '' : ', at '.$where.($city === '' ? '' : ', '.$city),
-            );
+                Words::t('api.preview.time_on', ['time' => Words::date($at, 'g:ia T'), 'date' => Words::date($at, 'l j F')]),
+                'where' => $where === '' ? '' : ', '.Words::t('api.preview.at_venue', ['venue' => $where.($city === '' ? '' : ', '.$city)]),
+            ]);
         }
 
         $broadcast = trim((string) ($game['broadcast'] ?? ''));
 
         if ($broadcast !== '') {
-            $sentences[] = 'On '.$broadcast.'.';
+            $sentences[] = Words::t('api.preview.on_tv', ['broadcast' => $broadcast]);
         }
 
         return implode(' ', $sentences);
@@ -215,16 +212,15 @@ class Preview
          * neither number has a loss after it.
          */
         if ($this->unbeaten($homeRecord) && $this->unbeaten($awayRecord)) {
-            return sprintf(
-                'Both come in unbeaten — %s %s, %s %s.',
-                $away,
-                $awayRecord,
-                $home,
-                $homeRecord,
-            );
+            return Words::t('api.preview.both_unbeaten', [
+                'away' => $away,
+                'awayRecord' => $awayRecord,
+                'home' => $home,
+                'homeRecord' => $homeRecord,
+            ]);
         }
 
-        return sprintf('%s are %s, %s %s.', $away, $awayRecord, $home, $homeRecord);
+        return Words::t('api.preview.records', ['away' => $away, 'awayRecord' => $awayRecord, 'home' => $home, 'homeRecord' => $homeRecord]);
     }
 
     /**
@@ -248,7 +244,7 @@ class Preview
          * the page says it out loud.
          */
         if ((int) ($game['home_rank'] ?? 0) > 0 && (int) ($game['away_rank'] ?? 0) > 0) {
-            $said[] = 'Two ranked sides.';
+            $said[] = Words::t('api.preview.two_ranked');
         }
 
         /*
@@ -260,7 +256,7 @@ class Preview
         $conference = trim((string) ($game['home_conference'] ?? ''));
 
         if ($conference !== '' && $conference === trim((string) ($game['away_conference'] ?? ''))) {
-            $said[] = 'It is '.$this->article($conference).' '.$conference.' game.';
+            $said[] = Words::t('api.preview.conference_game', ['article' => $this->article($conference), 'conference' => $conference]);
         }
 
         return implode(' ', $said);
@@ -325,7 +321,7 @@ class Preview
      */
     protected function ranked(string $name, int $rank): string
     {
-        return $rank > 0 ? 'No. '.$rank.' '.$name : $name;
+        return $rank > 0 ? Words::t('api.preview.ranked', ['rank' => (string) $rank, 'name' => $name]) : $name;
     }
 
     /**

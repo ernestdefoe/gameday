@@ -24,7 +24,7 @@ export default function registerPerformers(): void {
 
         return m('.GdPerformers', [
           settings.title ? m('h3.GdPerformers-title', settings.title) : null,
-          m('p.GdPerformers-empty', 'No box scores yet this week.'),
+          m('p.GdPerformers-empty', app.translator.trans('ernestdefoe-gameday.forum.performers_empty')),
         ]);
       }
 
