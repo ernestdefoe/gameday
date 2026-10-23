@@ -95,12 +95,11 @@
     width: calc(100% - var(--sidebar-width, 190px) - var(--gap, 50px));
   }
 
-  // Bespoke can put the sidebar on the left, and then the space has to be made
-  // in front of the board rather than behind it.
-  html[data-bespoke-side='left'] .Page-hero > .container > .GamedayBoard,
-  html[data-bespoke-side='left'] .Page-hero > .container > .GamedayHighlights {
-    margin-inline-start: calc(var(--sidebar-width, 190px) + var(--gap, 50px));
-  }
+  // 🚨 No offset for Bespoke's "sidebar on the left". That setting moves the
+  // sidebar on the discussion LIST only; a discussion page, the only place this
+  // board appears, keeps it on the right. Pushing the board right for it left
+  // a gap in front and the board out of line with the posts (Wil Vincent,
+  // 2026-10-23), on every Bespoke forum left on its default.
 }
 
 /*
@@ -123,6 +122,13 @@
     // A little more room under the title than the theme gives it, now that the
     // title is bigger. Not enough to leave the band looking empty.
     padding-bottom: 22px;
+
+    // The crest is centred on the title row, which is the band less that
+    // padding, so it sat 11px high and was sliced off at the band's top edge.
+    // Half the padding down puts it in the middle of the band.
+    .item-gamedayCrest {
+      top: calc(50% + 11px);
+    }
     overflow: hidden;
 
     /*

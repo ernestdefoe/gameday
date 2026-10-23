@@ -155,7 +155,11 @@ class Scoreboard
              */
             'venue' => trim((string) ($event->venue ?? '')),
             'venueCity' => trim((string) ($event->venue_city ?? '')),
-            'broadcast' => trim((string) ($event->broadcast ?? '')),
+            // 🚨 Gated with the watch row. With where-to-watch off the board
+            // fell back to printing the channel beside the stadium, so a forum
+            // outside the US could not hide US channels at all (Wil Vincent,
+            // 2026-10-23: his members watch on DAZN and Disney+).
+            'broadcast' => $this->settings->watchEnabled() ? trim((string) ($event->broadcast ?? '')) : '',
 
             /*
              * Where it is on and the button that opens it — see WhereToWatch.

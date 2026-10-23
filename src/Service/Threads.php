@@ -727,7 +727,9 @@ class Threads
             'kickoff_tbd' => (bool) $game->time_tbd,
             'venue' => (string) $game->venue,
             'venue_city' => (string) $game->venue_city,
-            'broadcast' => (string) $game->broadcast,
+            // A US channel means nothing to a board outside the US; the switch
+            // that hides where to watch hides the channel here too.
+            'broadcast' => $this->settings->watchEnabled() ? (string) $game->broadcast : '',
             'week' => (string) ($game->week->name ?? ''),
             /*
              * 🚨 Built from the week's own id, so the link lands on the round

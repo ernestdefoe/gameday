@@ -55,7 +55,10 @@ ernestdefoe-gameday:
       watch_enabled_help: >-
         The channels a game is on, from the listings in the score feed, with a
         Watch button that opens the network's own player in a new tab. Nothing
-        is streamed or embedded here — live rights do not allow it.
+        is streamed or embedded here — live rights do not allow it. Turn it off to hide
+        channels everywhere, including the opening post: the listings are
+        ESPN's, which are US channels only, so a forum outside the US may not
+        want them.
       watch_leagues_label: Leagues that show where to watch
       watch_leagues_help: >-
         Tick none to show it for every league, including ones added later.
