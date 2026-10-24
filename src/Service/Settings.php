@@ -23,7 +23,7 @@ class Settings
     /** Off until somebody says otherwise: installing an extension is not consent to post. */
     public function enabled(): bool
     {
-        return (bool) $this->get('enabled', false);
+        return $this->flag('enabled', false);
     }
 
     /**
@@ -55,7 +55,7 @@ class Settings
     /** Whether a finished game gets a recap at all. */
     public function recaps(): bool
     {
-        return (bool) $this->get('recaps', true);
+        return $this->flag('recaps', true);
     }
 
     /**
@@ -119,7 +119,7 @@ class Settings
      */
     public function stickyWhileLive(): bool
     {
-        return (bool) $this->get('sticky_while_live', true);
+        return $this->flag('sticky_while_live', true);
     }
 
     /**
@@ -143,7 +143,7 @@ class Settings
     /** Whether a game's board says where it is on. On by default. */
     public function watchEnabled(): bool
     {
-        return (bool) $this->get('watch_enabled', true);
+        return $this->flag('watch_enabled', true);
     }
 
     /**
@@ -166,11 +166,27 @@ class Settings
     /** Whether a finished game's thread shows its highlight clips. On by default. */
     public function highlightsEnabled(): bool
     {
-        return (bool) $this->get('highlights', true);
+        return $this->flag('highlights', true);
     }
 
     public function __construct(protected SettingsRepositoryInterface $settings)
     {
+    }
+
+    /**
+     * A switch from the admin page.
+     *
+     * 🚨 Only a MISSING value means the default. Flarum stores a switch turned
+     * off as an empty string as often as "0", and get() reads an empty string
+     * as unset, so every switch that defaults to on read back as on however it
+     * was saved: "Show where to watch" switched off still showed the channel
+     * and its Watch button (Wil Vincent, 2026-10-24).
+     */
+    protected function flag(string $key, bool $default): bool
+    {
+        $value = $this->settings->get(self::PREFIX.$key);
+
+        return $value === null ? $default : filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 
     protected function get(string $key, mixed $default): mixed

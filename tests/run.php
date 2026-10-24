@@ -32,6 +32,7 @@ require __DIR__.'/../src/Service/Recap.php';
 require __DIR__.'/../src/Service/Preview.php';
 require __DIR__.'/../src/Service/WhereToWatch.php';
 require __DIR__.'/../src/Service/ShareCard.php';
+require __DIR__.'/../src/Service/Settings.php';
 
 use ErnestDefoe\Gameday\Service\Preview;
 use ErnestDefoe\Gameday\Service\Recap;
@@ -882,6 +883,37 @@ $tests['crest fetch: an IP host is taken only in its one canonical spelling, and
 
     same(['8.8.8.8'], ShareCard::publicIps('8.8.8.8'), 'a public dotted quad passes');
     same(['2606:4700::1111'], ShareCard::publicIps('[2606:4700::1111]'), 'a public IPv6 literal passes');
+};
+
+$tests['settings: a switch saved as an empty string is OFF, not the default'] = function () {
+    // Flarum stores a switched-off toggle as "" as often as "0". Read as unset,
+    // "Show where to watch" off still showed the channel and its Watch button.
+    $store = function (array $values) {
+        return new class($values) implements \Flarum\Settings\SettingsRepositoryInterface {
+            public function __construct(private array $v) {}
+            public function all(): array { return $this->v; }
+            public function get(string $key, $default = null): mixed { return array_key_exists($key, $this->v) ? $this->v[$key] : $default; }
+            public function set(string $key, mixed $value): void { $this->v[$key] = $value; }
+            public function delete(string $keyLike): void { unset($this->v[$keyLike]); }
+        };
+    };
+    $p = \ErnestDefoe\Gameday\Service\Settings::PREFIX;
+
+    foreach (['', '0', 'false', false, 0] as $off) {
+        $s = new \ErnestDefoe\Gameday\Service\Settings($store([$p.'watch_enabled' => $off, $p.'recaps' => $off, $p.'sticky_while_live' => $off, $p.'highlights' => $off]));
+        same(false, $s->watchEnabled(), 'where to watch off, saved as '.var_export($off, true));
+        same(false, $s->recaps(), 'recaps off, saved as '.var_export($off, true));
+        same(false, $s->stickyWhileLive(), 'sticky off, saved as '.var_export($off, true));
+        same(false, $s->highlightsEnabled(), 'highlights off, saved as '.var_export($off, true));
+    }
+
+    foreach (['1', 'true', true, 1] as $on) {
+        same(true, (new \ErnestDefoe\Gameday\Service\Settings($store([$p.'watch_enabled' => $on])))->watchEnabled(), 'on, saved as '.var_export($on, true));
+    }
+
+    $unset = new \ErnestDefoe\Gameday\Service\Settings($store([]));
+    same(true, $unset->watchEnabled(), 'never saved: the default, on');
+    same(false, $unset->enabled(), 'never saved: game threads stay off');
 };
 
 /* ------------------------------------------------------------------ the runner */
