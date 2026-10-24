@@ -297,9 +297,9 @@ class Threads
      *
      * 🚨 THREE conditions before anything is touched, and they are the reason
      * this is safe on a live board: the post must be the discussion's first, it
-     * must have been posted by the account Game Day posts as, and its text must
-     * still be a shape this extension generated. A post somebody has edited is
-     * somebody's writing.
+     * must have been posted by the account Game Day posts as and never edited
+     * by anyone, and its text must still be a shape this extension generated.
+     * A post somebody has edited is somebody's writing.
      *
      * @param  callable(string, string): void|null $report
      * @return array{rewritten: int, skipped: int, retitled: int}
@@ -343,7 +343,10 @@ class Threads
 
             $post = CommentPost::find($discussion->first_post_id);
 
-            if ($post === null || (int) $post->user_id !== (int) $author->id) {
+            // 🚨 edited_at is set only when a person edits through Flarum; this
+            // method's own rewrite saves content without touching it. So an
+            // edit that kept the closing line is still never overwritten.
+            if ($post === null || (int) $post->user_id !== (int) $author->id || $post->edited_at !== null) {
                 $skipped++;
 
                 continue;

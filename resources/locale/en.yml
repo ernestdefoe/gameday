@@ -34,14 +34,11 @@ ernestdefoe-gameday:
       timezone_label: Time zone for kickoff times
       timezone_help: >-
         The opening post says when the game starts, printed in this zone with
-        the abbreviation beside it. Until kickoff, Game Day checks its openers
-        every hour and brings any that are out of date up to date, so a moved
-        kickoff is corrected. It only touches an opener that is still its own
-        text, posted by the account above and ending with its usual closing
-        line; a post someone has rewritten past that is left alone. Flarum
-        stores every date in UTC and has no board-wide zone of its own, which
-        is why this is asked for here. Eastern by default, because that is the
-        zone this sport's schedules are published in.
+        the abbreviation beside it. Un-edited openers are kept up to date until
+        kickoff, so a moved kickoff is corrected; anything someone has edited is
+        left alone. Flarum stores every date in UTC and has no board-wide zone
+        of its own, which is why this is asked for here. Eastern by default,
+        because that is the zone this sport's schedules are published in.
       timezone_here: (this server)
       recaps_label: Post a recap when the game finishes
       recaps_help: >-

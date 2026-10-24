@@ -156,10 +156,8 @@ Two commands run on Flarum's scheduler and need nothing else:
 - `gameday:enrich` — hourly; fills out recaps whose box score has since
   arrived, looks for highlight clips, and refreshes the opening post of every
   game that has not kicked off yet, so a kickoff time that moved is corrected
-  (up to 100 a run). An opener is only rewritten while it is still Game Day's
-  own: the first post, by the account Game Day posts as, still ending with its
-  usual closing line, and only if the text would actually change. A post
-  someone has rewritten past that is left alone.
+  (up to 100 a run). Un-edited openers are kept up to date until kickoff;
+  anything someone has edited is left alone.
 
 ## Requires
 
