@@ -5,8 +5,10 @@ says how the game was won.
 
 Game Day reads the fixtures and box scores that
 [Picks](https://github.com/ernestdefoe/picks) already syncs from
-CollegeFootballData. It reaches nothing itself — Picks owns the provider, the
+CollegeFootballData. It calls no provider itself — Picks owns the provider, the
 API key and the call budget, and one place is what makes a budget enforceable.
+The one thing it does is ask Picks for fresh live scores while a game is on;
+see [Live scores](#live-scores).
 
 ## What it does
 
@@ -28,6 +30,30 @@ The recap is posted the moment a game settles and rewritten in place when the
 box score arrives — the provider publishes statistics minutes to hours after the
 final whistle, and waiting would delay the one thing everybody in the thread is
 waiting for. A game the provider never covered simply keeps the score.
+
+## Live scores
+
+While a game is being played, the scoreboard is fresher than Flarum's
+scheduler alone could make it. `schedule:run` fires once a minute, which is fine
+for a final score and visibly late for a game clock.
+
+So when a scoreboard is asked for — the board in a game thread
+(`GET /api/gameday/board/{id}`) or the current-games widget
+(`GET /api/gameday/board`) — Game Day first asks Picks to pull the live ESPN
+scores (`SyncScoresService::syncFromEspn()`), then answers with the new numbers.
+It is kept cheap and polite:
+
+- **Only while a game is on.** If no Picks game is `in_progress`, nothing is
+  fetched; that check is one indexed query.
+- **At most once every 8 seconds, for the whole forum.** The fetch is guarded
+  by an atomic cache lock, so a thread with four hundred readers makes the same
+  number of calls to ESPN as one with a single reader.
+- **Never at the board's expense.** A feed that is down, or a Picks without that
+  service, just means the board shows the last scores Picks synced.
+
+There is no setting for it: it is part of drawing the board. The calls are made
+by Picks' own code, with Picks' own feed, and Game Day still talks to no
+provider directly.
 
 ## Where to watch
 
@@ -127,7 +153,13 @@ puts a founder's name on a hundred threads they did not write.
 Two commands run on Flarum's scheduler and need nothing else:
 
 - `gameday:tick` — every minute; opens, starts and resolves threads.
-- `gameday:enrich` — hourly; fills out recaps whose box score has since arrived.
+- `gameday:enrich` — hourly; fills out recaps whose box score has since
+  arrived, looks for highlight clips, and refreshes the opening post of every
+  game that has not kicked off yet, so a kickoff time that moved is corrected
+  (up to 100 a run). An opener is only rewritten while it is still Game Day's
+  own: the first post, by the account Game Day posts as, still ending with its
+  usual closing line, and only if the text would actually change. A post
+  someone has rewritten past that is left alone.
 
 ## Requires
 
