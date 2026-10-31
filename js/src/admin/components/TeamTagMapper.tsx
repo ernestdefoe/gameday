@@ -183,7 +183,11 @@ export default class TeamTagMapper extends Component {
       m('label', t('title')),
       m('.helpText', t('description')),
 
-      this.loading
+      // 🚨 Wait for the tag list too. A select drawn before its options exist
+      // shows "None", and Mithril sets a select's value before it adds the
+      // options that arrive later, so every team looked unmapped until one
+      // select was changed and the page redrew.
+      this.loading || TAGS === null
         ? m('.GamedayTagMapper-loading', [LoadingIndicator.component({ size: 'small' }), ' ', t('loading')])
         : this.rows.length === 0
           ? m('.helpText', t('empty'))
