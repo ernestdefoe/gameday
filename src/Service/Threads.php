@@ -12,6 +12,7 @@ use Flarum\Foundation\Config;
 use Flarum\Post\CommentPost;
 use Flarum\User\User;
 use Illuminate\Database\ConnectionInterface;
+use Psr\Log\LoggerInterface;
 use Resofire\Picks\PickEvent;
 
 /**
@@ -118,8 +119,19 @@ class Threads
                 continue;
             }
 
-            if ($this->openOne($game, $author)) {
-                $opened++;
+            /*
+             * 🚨 One game that cannot be opened must not hold back the rest.
+             * The games come in kickoff order and every minute starts again
+             * from the top, so an exception here used to stop every LATER
+             * game from ever getting its thread. It is logged and skipped, and
+             * the next minute tries it again.
+             */
+            try {
+                if ($this->openOne($game, $author)) {
+                    $opened++;
+                }
+            } catch (\Throwable $e) {
+                resolve(LoggerInterface::class)->error("[gameday] could not open a thread for event {$game->id}: {$e->getMessage()}");
             }
         }
 
