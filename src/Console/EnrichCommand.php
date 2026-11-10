@@ -35,8 +35,18 @@ class EnrichCommand extends Command
          * thread opens — or one first written from an unannounced placeholder —
          * stayed wrong in the post for good. Unchanged text is not rewritten,
          * so a quiet hour costs only the comparison.
+         *
+         * 🚨 The title too, so a team that drops out of the poll loses its
+         * "#18" before kickoff rather than wearing it all afternoon. Only a
+         * title Game Day wrote, and only until the game starts.
          */
-        $refreshed = $threads->rewriteOpeners(limit: 100, includeCurrent: true, state: \ErnestDefoe\Gameday\GamedayThread::OPEN)['rewritten'];
+        $refreshed = $threads->rewriteOpeners(
+            limit: 100,
+            withTitles: true,
+            includeCurrent: true,
+            state: \ErnestDefoe\Gameday\GamedayThread::OPEN,
+            upcomingOnly: true
+        )['rewritten'];
 
         if ($refreshed > 0) {
             $this->info("Brought {$refreshed} opening post(s) up to date.");

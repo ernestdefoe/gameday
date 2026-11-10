@@ -322,7 +322,8 @@ class Threads
         bool $includeCurrent = false,
         bool $dryRun = false,
         ?callable $report = null,
-        ?string $state = null
+        ?string $state = null,
+        bool $upcomingOnly = false
     ): array {
         $author = $this->author();
 
@@ -336,50 +337,65 @@ class Threads
 
         $rows = GamedayThread::query()
             ->when($state !== null, fn ($q) => $q->where('state', $state))
+            /*
+             * 🚨 Frozen from kickoff. "#18 Texas A&M at Auburn" is the true
+             * title of a game played while they were eighteenth, and Picks
+             * stops moving the rank at the same moment — so a game under way
+             * or over is history, not something to keep current.
+             */
+            ->when($upcomingOnly, fn ($q) => $q->whereIn('event_id', PickEvent::query()->select('id')->where('match_date', '>', Carbon::now())))
             ->orderByDesc('id')
             ->get();
+
+        /*
+         * 🚨 Loaded once for the whole pass rather than per thread. This runs
+         * hourly over every thread waiting for its game, and three lookups per
+         * thread was three queries for every game on a Saturday's slate.
+         */
+        $games = PickEvent::with(['homeTeam', 'awayTeam', 'week.season'])->whereIn('id', $rows->pluck('event_id'))->get()->keyBy('id');
+        $discussions = Discussion::whereIn('id', $rows->pluck('discussion_id'))->get()->keyBy('id');
+        $posts = CommentPost::whereIn('id', $discussions->pluck('first_post_id')->filter())->get()->keyBy('id');
 
         foreach ($rows as $row) {
             if ($rewritten >= $limit) {
                 break;
             }
 
-            $game = PickEvent::with(['homeTeam', 'awayTeam', 'week.season'])->find($row->event_id);
-            $discussion = Discussion::find($row->discussion_id);
+            $game = $games->get($row->event_id);
+            $discussion = $discussions->get($row->discussion_id);
 
-            if ($game === null || $discussion === null || $discussion->first_post_id === null) {
+            if ($game === null || $discussion === null) {
                 $skipped++;
 
                 continue;
             }
 
-            $post = CommentPost::find($discussion->first_post_id);
+            $post = $posts->get($discussion->first_post_id);
+            $content = (string) $post?->content;
 
-            // 🚨 edited_at is set only when a person edits through Flarum; this
-            // method's own rewrite saves content without touching it. So an
-            // edit that kept the closing line is still never overwritten.
-            if ($post === null || (int) $post->user_id !== (int) $author->id || $post->edited_at !== null) {
-                $skipped++;
+            /*
+             * 🚨 edited_at is set only when a person edits through Flarum; this
+             * method's own rewrite saves content without touching it. So an
+             * edit that kept the closing line is still never overwritten.
+             *
+             * The opener and the title are judged apart: a moderator who
+             * rewrote the post has not thereby renamed the thread, and the
+             * other way round.
+             */
+            $ours = $post !== null
+                && (int) $post->user_id === (int) $author->id
+                && $post->edited_at === null
+                && $this->isGeneratedOpener($content, $includeCurrent);
 
-                continue;
-            }
-
-            $content = (string) $post->content;
-
-            if (! $this->isGeneratedOpener($content, $includeCurrent)) {
-                $skipped++;
-
-                continue;
-            }
-
-            $text = $this->preview($game)->text($this->previewOf($game));
+            $text = $ours ? $this->preview($game)->text($this->previewOf($game)) : $content;
+            $textChanges = $text !== $content;
 
             $title = $withTitles ? $this->title($game) : $discussion->title;
             $titleChanges = $withTitles && $title !== $discussion->title && $this->isGeneratedTitle($discussion->title, $game);
 
             // Nothing new to say is not a rewrite. A rerun over a season should
             // cost nothing and change nothing.
-            if ($text === $content && ! $titleChanges) {
+            if (! $textChanges && ! $titleChanges) {
                 $skipped++;
 
                 continue;
@@ -390,8 +406,10 @@ class Threads
             }
 
             if (! $dryRun) {
-                $post->setContentAttribute($text, $author);
-                $post->save();
+                if ($textChanges) {
+                    $post->setContentAttribute($text, $author);
+                    $post->save();
+                }
 
                 if ($titleChanges) {
                     /*
@@ -454,16 +472,29 @@ class Threads
     /**
      * Whether the thread still has the title this extension gave it.
      *
-     * 🚨 Compared against the UNRANKED form, because that is what the title was
-     * before there were ranks — and a title that no longer matches is a title
-     * somebody renamed. Renaming it back would undo a moderator's decision,
-     * silently, across a whole season.
+     * 🚨 The matchup with ANY rank, or none, on either side — "Texas A&M at
+     * Auburn", "#18 Texas A&M at #9 Auburn" — because the rank in it is the one
+     * the poll had when the title was last written, and that is exactly what is
+     * being brought up to date. Anything else is a title somebody renamed, and
+     * renaming it back would undo a moderator's decision, silently, across a
+     * whole season.
      */
     protected function isGeneratedTitle(string $title, PickEvent $game): bool
     {
-        $plain = trim($this->matchup($game, $this->awayName($game), $this->homeName($game)));
+        $ranked = preg_quote(Words::t('api.thread.ranked', ['rank' => "\x01", 'name' => "\x02"]), '/');
 
-        return $title === $plain;
+        $side = function (string $name) use ($ranked): string {
+            $name = preg_quote($name, '/');
+
+            return '(?:'.strtr($ranked, ["\x01" => '\d+', "\x02" => $name]).'|'.$name.')';
+        };
+
+        $pattern = strtr(preg_quote(trim($this->matchup($game, "\x03", "\x04")), '/'), [
+            "\x03" => $side($this->awayName($game)),
+            "\x04" => $side($this->homeName($game)),
+        ]);
+
+        return preg_match('/^'.$pattern.'$/u', $title) === 1;
     }
 
     protected function openOne(PickEvent $game, User $author): bool
@@ -652,12 +683,12 @@ class Threads
         // Away team first: "Alabama at Auburn" is how anybody would say it.
 
         /*
-         * 🚨 The rank goes in the TITLE, which is the one place it cannot be
-         * corrected later — and that is exactly why it is safe to put there.
-         * Picks freezes the rank onto the fixture, so "#4 Alabama at Wisconsin"
-         * is still what that game was a year afterwards, however far the poll
-         * has moved since. A title built from a rank kept on the CLUB would
-         * have to be rewritten every Sunday, or lie.
+         * 🚨 The rank in the title is the FIXTURE'S, which Picks keeps current
+         * until the game is played and then freezes — so "#4 Alabama at
+         * Wisconsin" is still what that game was a year afterwards, however far
+         * the poll has moved since. The hourly enrich pass rewrites it while
+         * the game is still to come; a rank kept on the CLUB would have to be
+         * rewritten every Sunday for ever, or lie.
          *
          * An unranked team is named plainly, so a board whose feed carries no
          * ranks at all gets exactly the titles it got before.
