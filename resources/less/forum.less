@@ -1400,7 +1400,9 @@ html[data-theme^='dark'] .GdPerformers { .gdp-dark(); }
 }
 
 // The title keeps clear of the crest rather than running under it.
-.DiscussionHero-items .item-title {
+// 🚨 Only on a hero that HAS one: the hero is core's, shared with every
+// discussion, and an unscoped rule wrapped every title on the site 136px early.
+.DiscussionHero-items:has(> .item-gamedayCrest) > .item-title {
   padding-right: 136px;
 }
 
@@ -1410,7 +1412,7 @@ html[data-theme^='dark'] .GdPerformers { .gdp-dark(); }
     max-width: 72px;
   }
 
-  .DiscussionHero-items .item-title {
+  .DiscussionHero-items:has(> .item-gamedayCrest) > .item-title {
     padding-right: 84px;
   }
 }
